@@ -3,6 +3,7 @@ package cu
 //#include <cuda.h>
 import "C"
 
+// DeviceAttribute represents the device attributes that the user can query CUDA for.
 type DeviceAttribute int
 
 const (

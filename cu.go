@@ -1,4 +1,4 @@
-// package cu provides an idiomatic interface to the CUDA Driver API.
+// Package cu provides an idiomatic interface to the CUDA Driver API.
 package cu
 
 // This file implements CUDA driver context management

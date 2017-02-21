@@ -287,7 +287,7 @@ func MemcpyAsync(dst, src DevicePtr, byteCount int64, hStream Stream) error {
 // 	return nil
 // }
 
-// Copies a number of bytes from host to device.
+// MemCpyDtoD copies a number of bytes from host to device.
 func MemcpyDtoD(dst, src DevicePtr, byteCount int64) error {
 	d := C.CUdeviceptr(dst)
 	s := C.CUdeviceptr(src)
@@ -295,7 +295,7 @@ func MemcpyDtoD(dst, src DevicePtr, byteCount int64) error {
 	return result(C.cuMemcpyDtoD(d, s, size))
 }
 
-// Asynchronously copies a number of bytes from host to device.
+// MemcpyDtoDAsync asynchronously copies a number of bytes from host to device.
 func MemcpyDtoDAsync(dst, src DevicePtr, byteCount int64, hStream Stream) error {
 	d := C.CUdeviceptr(dst)
 	s := C.CUdeviceptr(src)
@@ -304,14 +304,14 @@ func MemcpyDtoDAsync(dst, src DevicePtr, byteCount int64, hStream Stream) error 
 	return result(C.cuMemcpyDtoDAsync(d, s, size, stream))
 }
 
-// Copies a number of bytes from host to device.
+// MemcpyHtoD copies a number of bytes from host to device.
 func MemcpyHtoD(dst DevicePtr, src unsafe.Pointer, byteCount int64) error {
 	d := C.CUdeviceptr(dst)
 	size := C.size_t(byteCount)
 	return result(C.cuMemcpyHtoD(d, src, size))
 }
 
-// Asynchronously copies a number of bytes from host to device.
+// MemcpyHtoDAsync asynchronously copies a number of bytes from host to device.
 // The host memory must be page-locked (see MemRegister)
 func MemcpyHtoDAsync(dst DevicePtr, src unsafe.Pointer, byteCount int64, hStream Stream) error {
 	d := C.CUdeviceptr(dst)
@@ -320,14 +320,14 @@ func MemcpyHtoDAsync(dst DevicePtr, src unsafe.Pointer, byteCount int64, hStream
 	return result(C.cuMemcpyHtoDAsync(d, src, size, stream))
 }
 
-// Copies a number of bytes from device to host.
+// MemcpyDtoH copies a number of bytes from device to host.
 func MemcpyDtoH(dst unsafe.Pointer, src DevicePtr, byteCount int64) error {
 	s := C.CUdeviceptr(src)
 	size := C.size_t(byteCount)
 	return result(C.cuMemcpyDtoH(dst, s, size))
 }
 
-// Asynchronously copies a number of bytes device host to host.
+// MemcpyDtoHAsync asynchronously copies a number of bytes device host to host.
 // The host memory must be page-locked (see MemRegister)
 func MemcpyDtoHAsync(dst unsafe.Pointer, src DevicePtr, byteCount int64, hStream Stream) error {
 	s := C.CUdeviceptr(src)
@@ -336,7 +336,7 @@ func MemcpyDtoHAsync(dst unsafe.Pointer, src DevicePtr, byteCount int64, hStream
 	return result(C.cuMemcpyDtoHAsync(dst, s, size, stream))
 }
 
-// Copies from device memory in one context (device) to another.
+// MemcpyPeer copies from device memory in one context (device) to another.
 func MemcpyPeer(dst DevicePtr, dstCtx Context, src DevicePtr, srcCtx Context, byteCount int64) error {
 	d := C.CUdeviceptr(dst)
 	s := C.CUdeviceptr(src)
@@ -346,7 +346,7 @@ func MemcpyPeer(dst DevicePtr, dstCtx Context, src DevicePtr, srcCtx Context, by
 	return result(C.cuMemcpyPeer(d, dctx, s, sctx, size))
 }
 
-// Asynchronously copies from device memory in one context (device) to another.
+// MemcpyPeerAsync asynchronously copies from device memory in one context (device) to another.
 func MemcpyPeerAsync(dst DevicePtr, dstCtx Context, src DevicePtr, srcCtx Context, byteCount int64, hStream Stream) error {
 	d := C.CUdeviceptr(dst)
 	s := C.CUdeviceptr(src)
@@ -357,7 +357,7 @@ func MemcpyPeerAsync(dst DevicePtr, dstCtx Context, src DevicePtr, srcCtx Contex
 	return result(C.cuMemcpyPeerAsync(d, dctx, s, sctx, size, stream))
 }
 
-// Sets the first N 32-bit values of dst array to value.
+// MemsetD32 sets the first N 32-bit values of dst array to value.
 // Asynchronous.
 func MemsetD32(mem DevicePtr, value uint32, N int64) error {
 	d := C.CUdeviceptr(mem)
@@ -366,7 +366,7 @@ func MemsetD32(mem DevicePtr, value uint32, N int64) error {
 	return result(C.cuMemsetD32(d, v, n))
 }
 
-// Asynchronously sets the first N 32-bit values of dst array to value.
+// MemsetD32Async asynchronously sets the first N 32-bit values of dst array to value.
 func MemsetD32Async(mem DevicePtr, value uint32, N int64, hStream Stream) error {
 	d := C.CUdeviceptr(mem)
 	v := C.uint(value)
@@ -375,7 +375,7 @@ func MemsetD32Async(mem DevicePtr, value uint32, N int64, hStream Stream) error 
 	return result(C.cuMemsetD32Async(d, v, n, s))
 }
 
-// Sets the first N 8-bit values of dst array to value.
+// MemsetD8 sets the first N 8-bit values of dst array to value.
 // Asynchronous.
 func MemsetD8(mem DevicePtr, value uint8, N int64) error {
 	d := C.CUdeviceptr(mem)
@@ -384,7 +384,7 @@ func MemsetD8(mem DevicePtr, value uint8, N int64) error {
 	return result(C.cuMemsetD8(d, v, n))
 }
 
-// Asynchronously sets the first N 32-bit values of dst array to value.
+// MemsetD8Async asynchronously sets the first N 32-bit values of dst array to value.
 func MemsetD8Async(mem DevicePtr, value uint8, N int64, hStream Stream) error {
 	d := C.CUdeviceptr(mem)
 	v := C.uchar(value)

@@ -4,6 +4,7 @@ package cu
 import "C"
 import "unsafe"
 
+// Function represents a CUDA function
 type Function uintptr
 
 const pointerSize = 8 // sorry, 64 bits only.

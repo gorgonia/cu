@@ -27,7 +27,7 @@ const (
 	FlagsMas          ContextFlags = C.CU_CTX_FLAGS_MASK          // Mask for setting other options to flags
 )
 
-// Limits are flags that can be used to query and set on a context
+// Limit is a flag that can be used to query and set on a context
 type Limit byte
 
 const (

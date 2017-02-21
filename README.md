@@ -1,4 +1,4 @@
-# cu 
+# cu [![GoDoc](https://godoc.org/github.com/chewxy/cu?status.svg)](https://godoc.org/github.com/chewxy/cu)
 
 Package `cu` is a package that interfaces with the [CUDA Driver API](http://docs.nvidia.com/cuda/cuda-driver-api/). This package was directly inspired by Arne Vansteenkiste's [`cu` package](https://github.com/barnex/cuda5).
 
@@ -63,4 +63,4 @@ This author loves pull requests from everyone. Here's how to contribute to this 
 We understand that this package is an interfacing package with a third party API. As such, tests may not always be viable. However, please do try to include as much tests as possible.
 
 #Licence#
-The package is licenced with a MIT-like licence. There one file (`cgoflags.go`) where code is directly copied from Arne Vansteenkiste's package, which is unlicenced (but to be safe, just assume a GPL-like licence, as [mumax/3](https://github.com/mumax/3) is licenced under GPL).
+The package is licenced with a MIT-like licence. Ther is one file (`cgoflags.go`) where code is directly copied  and two files (`execution.go` and `memory.go`) where code was partially copied from Arne Vansteenkiste's package, which is unlicenced (but to be safe, just assume a GPL-like licence, as [mumax/3](https://github.com/mumax/3) is licenced under GPL).

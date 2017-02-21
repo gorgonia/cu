@@ -32,7 +32,7 @@ func MakeStreamWithPriority(priority int, flags StreamFlags) (Stream, error) {
 	return Stream(uintptr(unsafe.Pointer(s))), nil
 }
 
-//DstroyStream destroys the stream specified by hStream.
+// DestroyStream destroys the stream specified by hStream.
 //
 // In case the device is still doing work in the stream hStream when DestroyStrea() is called,
 // the function will return immediately and the resources associated with hStream will be released automatically once the device has completed all work in hStream.
