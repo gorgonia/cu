@@ -1,6 +1,6 @@
 package cu
 
-// #cgo CFLAGS: -g -O3
+// #cgo CFLAGS: -g -O3 -std=c99
 // #include <cuda.h>
 // #include "batch.h"
 import "C"
