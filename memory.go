@@ -103,16 +103,16 @@ func MemAllocHost(byteSize int64) (unsafe.Pointer, error) {
 // If bytesize is 0, cuMemAllocManaged returns error `InvalidValue`.
 //
 // More information: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__MEM.html#group__CUDA__MEM_1gb347ded34dc326af404aa02af5388a32
-func MemAllocManaged(bytesize int64, flags MemAttachFlags) error {
+func MemAllocManaged(bytesize int64, flags MemAttachFlags) (DevicePtr, error) {
 	if bytesize == 0 {
-		return errors.Wrapf(InvalidValue, "Cannot allocate memory with size 0")
+		return 0, errors.Wrapf(InvalidValue, "Cannot allocate memory with size 0")
 	}
 
 	var d C.CUdeviceptr
 	if err := result(C.cuMemAllocManaged(&d, C.size_t(bytesize), C.uint(flags))); err != nil {
-		return errors.Wrapf(err, "MemAllocManaged")
+		return 0, errors.Wrapf(err, "MemAllocManaged")
 	}
-	return nil
+	return DevicePtr(d), nil
 }
 
 // MemAllocPitch allocates pitched device memory.
