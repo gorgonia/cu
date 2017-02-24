@@ -53,7 +53,7 @@ CUresult processFn(fnargs_t* args){
 		break;
 	case fn_memcpyHtoD:
 		ret = cuMemcpyHtoD(args->devPtr0, (void*)(args->ptr0), args->size);
-		fprintf(stderr, "ret memcpyHtoD %d args->ptr0 %d\n", ret, args->ptr0);
+		// fprintf(stderr, "ret memcpyHtoD %d args->ptr0 %d\n", ret, args->ptr0);
 		break;
 	case fn_memcpyDtoH:
 		ret = cuMemcpyDtoH((void*)(args->ptr0), args->devPtr0, args->size);
@@ -87,12 +87,12 @@ CUresult processFn(fnargs_t* args){
 }
 
 void process(fnargs_t* args, CUresult* retVal, int count){
-	fprintf(stderr,"Processing: %d functions \n", count);
+	// fprintf(stderr,"Processing: %d functions \n", count);
 	for (int i = 0; i < count; ++i) {
-		fprintf(stderr, "Processing function %d\n", i);
+		// fprintf(stderr, "Processing function %d\n", i);
 		CUresult ret;
 		ret = processFn(&args[i]);
-		fprintf(stderr, "ret %d\n",ret);
+		// fprintf(stderr, "ret %d\n",ret);
 
 		retVal[i] = ret;
 	}

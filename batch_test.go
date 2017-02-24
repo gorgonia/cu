@@ -1,35 +1,38 @@
 package cu
 
 import (
+	"runtime"
 	"testing"
 	"unsafe"
 )
 
 func TestAttributes(t *testing.T) {
-	devices, _ := NumDevices()
+	var dev Device
+	var ctx Context
+	var err error
 
-	if devices == 0 {
-		return
+	if dev, ctx, err = testSetup(); err != nil {
+		if err.Error() == "NoDevice" {
+			return
+		}
+		t.Fatal(err)
 	}
 
-	d := Device(0)
-	mtpb, err := d.Attribute(MaxThreadsPerBlock)
-	if err != nil {
+	var mtpb, maj, min int
+	if mtpb, err = dev.Attribute(MaxThreadsPerBlock); err != nil {
 		t.Fatalf("Failed while getting MaxThreadsPerBlock: %v", err)
 	}
 
-	maj, err := d.Attribute(ComputeCapabilityMajor)
-	if err != nil {
+	if maj, err = dev.Attribute(ComputeCapabilityMajor); err != nil {
 		t.Fatalf("Failed while getting Compute Capability Major: %v", err)
 	}
 
-	min, err := d.Attribute(ComputeCapabilityMinor)
-	if err != nil {
+	if min, err = dev.Attribute(ComputeCapabilityMinor); err != nil {
 		t.Fatalf("Failed while getting Compute Capability Minor: %v", err)
 	}
 
-	attrs, err := d.Attributes(MaxThreadsPerBlock, ComputeCapabilityMajor, ComputeCapabilityMinor)
-	if err != nil {
+	var attrs []int
+	if attrs, err = dev.Attributes(MaxThreadsPerBlock, ComputeCapabilityMajor, ComputeCapabilityMinor); err != nil {
 		t.Error(err)
 	}
 
@@ -42,23 +45,29 @@ func TestAttributes(t *testing.T) {
 	if attrs[2] != min {
 		t.Errorf("Expected ComputeCapabilityMinor to be %v. Got %v instead", min, attrs[2])
 	}
+
+	DestroyContext(&ctx)
 }
 
 func TestLaunchAndSync(t *testing.T) {
-	devices, _ := NumDevices()
-
-	if devices == 0 {
-		return
-	}
-
 	var err error
 	var ctx Context
 	var mod Module
 	var fn Function
 
-	d := Device(0)
-	if ctx, err = d.MakeContext(SchedAuto); err != nil {
+	if _, ctx, err = testSetup(); err != nil {
+		if err.Error() == "NoDevice" {
+			return
+		}
 		t.Fatal(err)
+	}
+
+	if mod, err = LoadData(add32PTX); err != nil {
+		t.Fatalf("Cannot load add32: %v", err)
+	}
+
+	if fn, err = mod.Function("add32"); err != nil {
+		t.Fatalf("Cannot get add32(): %v", err)
 	}
 
 	a := make([]float32, 1000)
@@ -86,14 +95,6 @@ func TestLaunchAndSync(t *testing.T) {
 		t.Fatalf("Failed to copy memory from b: %v", err)
 	}
 
-	if mod, err = LoadData(add32PTX); err != nil {
-		t.Fatalf("Cannot load add32: %v", err)
-	}
-
-	if fn, err = mod.Function("add32"); err != nil {
-		t.Fatalf("Cannot get add32(): %v", err)
-	}
-
 	args := []unsafe.Pointer{
 		unsafe.Pointer(&memA),
 		unsafe.Pointer(&memB),
@@ -119,24 +120,23 @@ func TestLaunchAndSync(t *testing.T) {
 		}
 	}
 
+	MemFree(memA)
+	MemFree(memB)
 	Unload(mod)
 	DestroyContext(&ctx)
 }
 
 func TestBatchContext(t *testing.T) {
-	devices, _ := NumDevices()
-
-	if devices == 0 {
-		return
-	}
-
 	var err error
+	var dev Device
 	var ctx Context
 	var mod Module
 	var fn Function
 
-	d := Device(0)
-	if ctx, err = d.MakeContext(SchedAuto); err != nil {
+	if dev, ctx, err = testSetup(); err != nil {
+		if err.Error() == "NoDevice" {
+			return
+		}
 		t.Fatal(err)
 	}
 
@@ -148,7 +148,7 @@ func TestBatchContext(t *testing.T) {
 		t.Fatalf("Cannot get add32(): %v", err)
 	}
 
-	bctx := NewBatchedContext(ctx, d)
+	bctx := NewBatchedContext(ctx, dev)
 
 	a := make([]float32, 1000)
 	b := make([]float32, 1000)
@@ -188,6 +188,156 @@ func TestBatchContext(t *testing.T) {
 		}
 	}
 
+	MemFree(memA)
+	MemFree(memB)
 	Unload(mod)
 	DestroyContext(&ctx)
+}
+
+func BenchmarkNoBatching(bench *testing.B) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	var err error
+	var ctx Context
+	var mod Module
+	var fn Function
+
+	if _, ctx, err = testSetup(); err != nil {
+		if err.Error() == "NoDevice" {
+			return
+		}
+		bench.Fatal(err)
+	}
+
+	if mod, err = LoadData(add32PTX); err != nil {
+		bench.Fatalf("Cannot load add32: %v", err)
+	}
+
+	if fn, err = mod.Function("add32"); err != nil {
+		bench.Fatalf("Cannot get add32(): %v", err)
+	}
+
+	a := make([]float32, 1000000)
+	b := make([]float32, 1000000)
+	for i := range b {
+		a[i] = 1
+		b[i] = 1
+	}
+
+	size := int64(len(a) * 4)
+
+	var memA, memB DevicePtr
+	if memA, err = MemAlloc(size); err != nil {
+		bench.Fatalf("Failed to allocate for a: %v", err)
+	}
+	if memB, err = MemAlloc(size); err != nil {
+		bench.Fatalf("Failed to allocate for b: %v", err)
+	}
+
+	args := []unsafe.Pointer{
+		unsafe.Pointer(&memA),
+		unsafe.Pointer(&memB),
+		unsafe.Pointer(&size),
+	}
+
+	// ACTUAL BENCHMARK STARTS HERE
+	for i := 0; i < bench.N; i++ {
+		for j := 0; j < 1000; j++ {
+			if err = MemcpyHtoD(memA, unsafe.Pointer(&a[0]), size); err != nil {
+				bench.Fatalf("Failed to copy memory from a: %v", err)
+			}
+
+			if err = MemcpyHtoD(memB, unsafe.Pointer(&b[0]), size); err != nil {
+				bench.Fatalf("Failed to copy memory from b: %v", err)
+			}
+
+			if err = fn.LaunchAndSync(100, 10, 1, 1000, 1, 1, 1, Stream(0), args); err != nil {
+				bench.Error("Launch and Sync Failed: %v", err)
+			}
+
+			if err = MemcpyDtoH(unsafe.Pointer(&a[0]), memA, size); err != nil {
+				bench.Fatalf("Failed to copy memory to a: %v", err)
+			}
+
+			if err = MemcpyDtoH(unsafe.Pointer(&b[0]), memB, size); err != nil {
+				bench.Fatalf("Failed to copy memory to b: %v", err)
+			}
+		}
+	}
+	MemFree(memA)
+	MemFree(memB)
+	Unload(mod)
+	DestroyContext(&ctx)
+
+}
+
+func BenchmarkBatching(bench *testing.B) {
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	var err error
+	var dev Device
+	var ctx Context
+	var mod Module
+	var fn Function
+
+	if dev, ctx, err = testSetup(); err != nil {
+		if err.Error() == "NoDevice" {
+			return
+		}
+		bench.Fatal(err)
+	}
+
+	if mod, err = LoadData(add32PTX); err != nil {
+		bench.Fatalf("Cannot load add32: %v", err)
+	}
+
+	if fn, err = mod.Function("add32"); err != nil {
+		bench.Fatalf("Cannot get add32(): %v", err)
+	}
+
+	a := make([]float32, 1000000)
+	b := make([]float32, 1000000)
+	for i := range b {
+		a[i] = 1
+		b[i] = 1
+	}
+
+	size := int64(len(a) * 4)
+
+	var memA, memB DevicePtr
+	if memA, err = MemAlloc(size); err != nil {
+		bench.Fatalf("Failed to allocate for a: %v", err)
+	}
+	if memB, err = MemAlloc(size); err != nil {
+		bench.Fatalf("Failed to allocate for b: %v", err)
+	}
+
+	bctx := NewBatchedContext(ctx, dev)
+
+	args := []unsafe.Pointer{
+		unsafe.Pointer(&memA),
+		unsafe.Pointer(&memB),
+		unsafe.Pointer(&size),
+	}
+
+	// ACTUAL BENCHMARK STARTS HERE
+	for i := 0; i < bench.N; i++ {
+		for j := 0; j < 1000; j++ {
+			bctx.MemcpyHtoD(memA, unsafe.Pointer(&a[0]), size)
+			bctx.MemcpyHtoD(memB, unsafe.Pointer(&b[0]), size)
+			bctx.LaunchKernel(fn, 100, 10, 1, 1000, 1, 1, 0, Stream(0), args)
+			bctx.Synchronize()
+			bctx.MemcpyDtoH(unsafe.Pointer(&a[0]), memA, size)
+			bctx.MemcpyDtoH(unsafe.Pointer(&b[0]), memB, size)
+		}
+		bctx.DoWork()
+	}
+
+	MemFree(memA)
+	MemFree(memB)
+	Unload(mod)
+	DestroyContext(&ctx)
+
 }
