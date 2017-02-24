@@ -5,11 +5,11 @@ package cu
 // #include "batch.h"
 import "C"
 import (
-	"runtime"
+	"log"
 	"unsafe"
 )
 
-const workBufLen = 7
+const workBufLen = 15
 
 type call struct {
 	fnargs   *fnargs
@@ -49,6 +49,9 @@ type BatchedContext struct {
 	Context
 	Device
 
+	workAvailable chan struct{}
+	work          chan call // queue of calls to exec
+
 	queue   []call
 	fns     []C.fnargs_t
 	results []C.CUresult
@@ -61,39 +64,82 @@ func NewBatchedContext(c Context, d Device) *BatchedContext {
 		Context: c,
 		Device:  d,
 
-		queue:   make([]call, 0, workBufLen+1),
-		fns:     make([]C.fnargs_t, workBufLen+1, workBufLen+1),
-		results: make([]C.CUresult, workBufLen+1),
-		frees:   make([]unsafe.Pointer, 0, workBufLen*2),
+		workAvailable: make(chan struct{}, 1),
+		work:          make(chan call, workBufLen),
+		queue:         make([]call, 0, workBufLen),
+		fns:           make([]C.fnargs_t, workBufLen),
+		results:       make([]C.CUresult, workBufLen),
 	}
 }
 
 func (ctx *BatchedContext) enqueue(c call) {
-	if len(ctx.queue) == workBufLen-1 || c.blocking {
-		ctx.queue = append(ctx.queue, c)
-		ctx.DoWork()
-		return
+	ctx.work <- c
+	select {
+	case ctx.workAvailable <- struct{}{}:
+	default:
 	}
-	ctx.queue = append(ctx.queue, c)
+
+	if c.blocking {
+		// do something
+	}
 }
 
+func (ctx *BatchedContext) WorkAvailable() <-chan struct{} { return ctx.workAvailable }
+
 func (ctx *BatchedContext) DoWork() {
-	runtime.LockOSThread()
-	for i, c := range ctx.queue {
-		// log.Printf("B4 %d: %# v", i, pretty.Formatter(c.fnargs))
-		ctx.fns[i] = c.fnargs.c()
-		// log.Printf("AT %d: %# v", i, pretty.Formatter(ctx.fns[i]))
-	}
-	C.process(&ctx.fns[0], &ctx.results[0], C.int(len(ctx.queue)))
+	for {
+		select {
+		case w := <-ctx.work:
+			if w.fnargs == nil {
+				continue
+			}
+			ctx.queue = append(ctx.queue, w)
+		default:
+			return
+		}
 
-	for _, f := range ctx.frees {
-		C.free(f)
+		blocking := ctx.queue[len(ctx.queue)-1].blocking
+	enqueue:
+		for len(ctx.queue) < cap(ctx.queue) && !blocking {
+			select {
+			case w := <-ctx.work:
+				if w.fnargs == nil {
+					continue
+				}
+				ctx.queue = append(ctx.queue, w)
+				blocking = ctx.queue[len(ctx.queue)-1].blocking
+			default:
+				break enqueue
+			}
+		}
+
+		for i, c := range ctx.queue {
+			// log.Printf("B4 %d: %# v", i, pretty.Formatter(c.fnargs))
+			ctx.fns[i] = *(*C.fnargs_t)(unsafe.Pointer(c.fnargs))
+			// log.Printf("AT %d: %# v", i, pretty.Formatter(ctx.fns[i]))
+		}
+		C.process(&ctx.fns[0], &ctx.results[0], C.int(len(ctx.queue)))
+
+		for _, f := range ctx.frees {
+			C.free(f)
+		}
+
+		// clear queue
+		ctx.queue = ctx.queue[:0]
+		ctx.frees = ctx.frees[:0]
 	}
 
-	// clear queue
-	ctx.queue = ctx.queue[:0]
-	ctx.frees = ctx.frees[:0]
-	runtime.UnlockOSThread()
+}
+
+func (ctx *BatchedContext) Errors() error {
+	for i, v := range ctx.results {
+		if cuResult(v) != Success {
+			log.Printf("Error at %dth call: %v", i, cuResult(v))
+			return result(v)
+		}
+		ctx.results[i] = C.CUDA_SUCCESS
+	}
+	return nil
 }
 
 func (ctx *BatchedContext) Memcpy(dst, src DevicePtr, byteCount int64) {

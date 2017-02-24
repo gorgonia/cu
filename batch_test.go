@@ -243,7 +243,7 @@ func BenchmarkNoBatching(bench *testing.B) {
 
 	// ACTUAL BENCHMARK STARTS HERE
 	for i := 0; i < bench.N; i++ {
-		for j := 0; j < 1000; j++ {
+		for j := 0; j < 100; j++ {
 			if err = MemcpyHtoD(memA, unsafe.Pointer(&a[0]), size); err != nil {
 				bench.Fatalf("Failed to copy memory from a: %v", err)
 			}
@@ -323,16 +323,21 @@ func BenchmarkBatching(bench *testing.B) {
 	}
 
 	// ACTUAL BENCHMARK STARTS HERE
+	workAvailable := bctx.WorkAvailable()
 	for i := 0; i < bench.N; i++ {
-		for j := 0; j < 1000; j++ {
-			bctx.MemcpyHtoD(memA, unsafe.Pointer(&a[0]), size)
-			bctx.MemcpyHtoD(memB, unsafe.Pointer(&b[0]), size)
-			bctx.LaunchKernel(fn, 100, 10, 1, 1000, 1, 1, 0, Stream(0), args)
-			bctx.Synchronize()
-			bctx.MemcpyDtoH(unsafe.Pointer(&a[0]), memA, size)
-			bctx.MemcpyDtoH(unsafe.Pointer(&b[0]), memB, size)
+		for j := 0; j < 100; j++ {
+			select {
+			case <-workAvailable:
+				bctx.DoWork()
+			default:
+				bctx.MemcpyHtoD(memA, unsafe.Pointer(&a[0]), size)
+				bctx.MemcpyHtoD(memB, unsafe.Pointer(&b[0]), size)
+				bctx.LaunchKernel(fn, 100, 10, 1, 1000, 1, 1, 0, Stream(0), args)
+				bctx.Synchronize()
+				bctx.MemcpyDtoH(unsafe.Pointer(&a[0]), memA, size)
+				bctx.MemcpyDtoH(unsafe.Pointer(&b[0]), memB, size)
+			}
 		}
-		bctx.DoWork()
 	}
 
 	MemFree(memA)
