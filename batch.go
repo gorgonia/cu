@@ -147,7 +147,7 @@ func (ctx *BatchedContext) Errors() error {
 func (ctx *BatchedContext) SetCurrent() {
 	fn := &fnargs{
 		fn:  C.fn_setCurrent,
-		ctx: ctx.Context(C.CUcontext(unsafe.Pointer(uintptr(ctx.Context)))),
+		ctx: C.CUcontext(unsafe.Pointer(uintptr(ctx.Context))),
 	}
 	c := call{fn, false}
 	ctx.enqueue(c)
