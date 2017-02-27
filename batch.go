@@ -21,6 +21,8 @@ type call struct {
 type fnargs struct {
 	fn C.batchFn
 
+	ctx C.CUcontext
+
 	devptr0 C.CUdeviceptr
 	devptr1 C.CUdeviceptr
 
@@ -90,9 +92,9 @@ func (ctx *BatchedContext) DoWork() {
 	for {
 		select {
 		case w := <-ctx.work:
-			if w.fnargs == nil {
-				continue
-			}
+			// if w.fnargs == nil {
+			// 	continue
+			// }
 			ctx.queue = append(ctx.queue, w)
 		default:
 			return
@@ -103,9 +105,9 @@ func (ctx *BatchedContext) DoWork() {
 		for len(ctx.queue) < cap(ctx.queue) && !blocking {
 			select {
 			case w := <-ctx.work:
-				if w.fnargs == nil {
-					continue
-				}
+				// if w.fnargs == nil {
+				// 	continue
+				// }
 				ctx.queue = append(ctx.queue, w)
 				blocking = ctx.queue[len(ctx.queue)-1].blocking
 			default:
@@ -140,6 +142,15 @@ func (ctx *BatchedContext) Errors() error {
 		ctx.results[i] = C.CUDA_SUCCESS
 	}
 	return nil
+}
+
+func (ctx *BatchedContext) SetCurrent() {
+	fn := &fnargs{
+		fn:  C.fn_setCurrent,
+		ctx: ctx.Context(C.CUcontext(unsafe.Pointer(uintptr(ctx.Context)))),
+	}
+	c := call{fn, false}
+	ctx.enqueue(c)
 }
 
 func (ctx *BatchedContext) Memcpy(dst, src DevicePtr, byteCount int64) {

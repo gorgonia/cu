@@ -7,6 +7,8 @@ extern CUresult cuLaunchAndSync(CUfunction f, unsigned int  gridDimX, unsigned i
 		unsigned int  sharedMemBytes, CUstream hStream, void** kernelParams, void** extra);
 
 typedef enum {
+	fn_setCurrent,
+
 	fn_mallocD,
 	fn_mallocH,
 	fn_mallocManaged,
@@ -30,6 +32,8 @@ typedef enum {
 
 typedef struct fnargs {
 	batchFn fn;
+
+	CUcontext ctx;
 
 	CUdeviceptr devPtr0;
 	CUdeviceptr devPtr1;
