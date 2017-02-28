@@ -43,10 +43,10 @@ CUresult processFn(fnargs_t* args){
 		abort();
 		break;
 	case fn_memfreeD:
-		abort();
+		ret = cuMemFree(args->devPtr0);
 		break;
 	case fn_memfreeH:
-		abort();
+		ret = cuMemFreeHost((void*)(args->ptr0));
 		break;
 	case fn_memcpy:
 		ret = cuMemcpy(args->devPtr0, args->devPtr1, args->size);

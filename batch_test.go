@@ -179,6 +179,8 @@ func TestBatchContext(t *testing.T) {
 	bctx.Synchronize()
 	bctx.MemcpyDtoH(unsafe.Pointer(&a[0]), memA, size)
 	bctx.MemcpyDtoH(unsafe.Pointer(&b[0]), memB, size)
+	bctx.MemFree(memA)
+	bctx.MemFree(memB)
 	bctx.DoWork()
 
 	for _, v := range a {
@@ -188,8 +190,6 @@ func TestBatchContext(t *testing.T) {
 		}
 	}
 
-	MemFree(memA)
-	MemFree(memB)
 	Unload(mod)
 	DestroyContext(&ctx)
 }

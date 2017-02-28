@@ -186,6 +186,24 @@ func (ctx *BatchedContext) MemcpyDtoH(dst unsafe.Pointer, src DevicePtr, byteCou
 	ctx.enqueue(c)
 }
 
+func (ctx *BatchedContext) MemFree(mem DevicePtr) {
+	fn := &fnargs{
+		fn:      C.fn_memfreeD,
+		devptr0: C.CUdeviceptr(mem),
+	}
+	c := call{fn, false}
+	ctx.enqueue(c)
+}
+
+func (ctx *BatchedContext) MemFreeHost(p unsafe.Pointer) {
+	fn := &fnargs{
+		fn:   C.fn_memfreeH,
+		ptr0: p,
+	}
+	c := call{fn, false}
+	ctx.enqueue(c)
+}
+
 func (ctx *BatchedContext) LaunchKernel(function Function, gridDimX, gridDimY, gridDimZ int, blockDimX, blockDimY, blockDimZ int, sharedMemBytes int, stream Stream, kernelParams []unsafe.Pointer) {
 	argv := C.malloc(C.size_t(len(kernelParams) * pointerSize))
 	argp := C.malloc(C.size_t(len(kernelParams) * pointerSize))
