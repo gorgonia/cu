@@ -241,6 +241,11 @@ func (ctx *BatchedContext) Synchronize() {
 	ctx.enqueue(c)
 }
 
+func (ctx *BatchedContext) LaunchAndSync(function Function, gridDimX, gridDimY, gridDimZ int, blockDimX, blockDimY, blockDimZ int, sharedMemBytes int, stream Stream, kernelParams []unsafe.Pointer) {
+	ctx.LaunchKernel(function, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, stream, kernelParams)
+	ctx.Synchronize()
+}
+
 /* COMMON PATTERNS */
 
 // Attributes gets multiple attributes as provided
