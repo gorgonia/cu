@@ -5,8 +5,12 @@ package cu
 // #include "batch.h"
 import "C"
 import (
+	"bytes"
+	"fmt"
 	"log"
 	"unsafe"
+
+	"github.com/pkg/errors"
 )
 
 const workBufLen = 15
@@ -42,8 +46,48 @@ type fnargs struct {
 	stream C.CUstream // for async
 }
 
-func (fn *fnargs) c() C.fnargs_t {
-	return *(*C.fnargs_t)(unsafe.Pointer(fn))
+func (fn *fnargs) String() string {
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "%s. ", batchFnString[fn.fn])
+	switch fn.fn {
+	case C.fn_setCurrent:
+		fmt.Fprintf(&buf, "Current Context %d", fn.ctx)
+	case C.fn_mallocD:
+		fmt.Fprintf(&buf, "Size %d", fn.size)
+	case C.fn_mallocH:
+		fmt.Fprintf(&buf, "Size %d", fn.size)
+	case C.fn_mallocManaged:
+		fmt.Fprintf(&buf, "Size %d", fn.size)
+	case C.fn_memfreeD:
+		fmt.Fprintf(&buf, "mem: 0x%x", fn.devptr0)
+	case C.fn_memfreeH:
+		fmt.Fprintf(&buf, "mem: 0x%x", fn.devptr0)
+	case C.fn_memcpy:
+		fmt.Fprintf(&buf, "dest: 0x%x, src: 0x%x", fn.devptr0, fn.devptr1)
+	case C.fn_memcpyHtoD:
+		fmt.Fprintf(&buf, "dest: 0x%x, src: 0x%x", fn.devptr0, fn.ptr0)
+	case C.fn_memcpyDtoH:
+		fmt.Fprintf(&buf, "dest: 0x%x, src: 0x%x", fn.ptr0, fn.devptr0)
+	case C.fn_memcpyDtoD:
+
+	case C.fn_memcpyHtoDAsync:
+
+	case C.fn_memcpyDtoHAsync:
+
+	case C.fn_memcpyDtoDAsync:
+
+	case C.fn_launchKernel:
+		fmt.Fprintf(&buf, "fn: 0x%v, KernelParams: %v", fn.f, fn.kernelParams)
+	case C.fn_sync:
+		fmt.Fprintf(&buf, "Current Context %d", fn.ctx)
+	case C.fn_lauchAndSync:
+
+	}
+	return buf.String()
+}
+
+func (fn *fnargs) c() C.uintptr_t {
+	return C.uintptr_t(uintptr(unsafe.Pointer(fn)))
 }
 
 // BatchedContext is a CUDA context where the cgo calls are batched up.
@@ -54,11 +98,12 @@ type BatchedContext struct {
 	workAvailable chan struct{}
 	work          chan call // queue of calls to exec
 
-	queue   []call
-	fns     []C.fnargs_t
+	queue []call
+	// fns     []*C.fnargs_t
+	fns     []C.uintptr_t
 	results []C.CUresult
 	frees   []unsafe.Pointer
-	retVals []interface{}
+	retVal  interface{}
 }
 
 func NewBatchedContext(c Context, d Device) *BatchedContext {
@@ -69,8 +114,9 @@ func NewBatchedContext(c Context, d Device) *BatchedContext {
 		workAvailable: make(chan struct{}, 1),
 		work:          make(chan call, workBufLen),
 		queue:         make([]call, 0, workBufLen),
-		fns:           make([]C.fnargs_t, workBufLen),
+		fns:           make([]C.uintptr_t, 0, workBufLen),
 		results:       make([]C.CUresult, workBufLen),
+		// fns:           make([]*C.fnargs_t, workBufLen),
 	}
 }
 
@@ -83,6 +129,7 @@ func (ctx *BatchedContext) enqueue(c call) {
 
 	if c.blocking {
 		// do something
+		ctx.DoWork()
 	}
 }
 
@@ -115,28 +162,46 @@ func (ctx *BatchedContext) DoWork() {
 			}
 		}
 
-		for i, c := range ctx.queue {
+		for _, c := range ctx.queue {
 			// log.Printf("B4 %d: %# v", i, pretty.Formatter(c.fnargs))
-			ctx.fns[i] = *(*C.fnargs_t)(unsafe.Pointer(c.fnargs))
+			// ctx.fns[i] = (*C.fnargs_t)(unsafe.Pointer(c.fnargs))
 			// log.Printf("AT %d: %# v", i, pretty.Formatter(ctx.fns[i]))
+			ctx.fns = append(ctx.fns, c.fnargs.c())
 		}
-		C.process(&ctx.fns[0], &ctx.results[0], C.int(len(ctx.queue)))
+		log.Printf("GOING TO PROCESS")
+		log.Println(ctx.Introspect())
+		ctx.results = ctx.results[:cap(ctx.results)]                   // make sure of the maximum availability for ctx.results
+		C.process(&ctx.fns[0], &ctx.results[0], C.int(len(ctx.queue))) // process the queue
+		ctx.results = ctx.results[:len(ctx.queue)]                     // then  truncate it to the len of queue for reporting purposes
+		log.Printf("ERRORS %v", ctx.results)
 
 		for _, f := range ctx.frees {
 			C.free(f)
 		}
 
+		if blocking {
+			b := ctx.queue[len(ctx.queue)-1]
+			switch b.fnargs.fn {
+			case C.fn_mallocD:
+				retVal := (*fnargs)(unsafe.Pointer(uintptr(ctx.fns[len(ctx.fns)-1])))
+				ctx.retVal = DevicePtr(retVal.devptr0)
+			case C.fn_mallocH:
+			case C.fn_mallocManaged:
+			}
+		}
+
 		// clear queue
 		ctx.queue = ctx.queue[:0]
 		ctx.frees = ctx.frees[:0]
+		ctx.fns = ctx.fns[:0]
 	}
-
 }
+
+func (ctx *BatchedContext) Retval() interface{} { retVal := ctx.retVal; ctx.retVal = nil; return retVal }
 
 func (ctx *BatchedContext) Errors() error {
 	for i, v := range ctx.results {
 		if cuResult(v) != Success {
-			log.Printf("Error at %dth call: %v", i, cuResult(v))
 			return result(v)
 		}
 		ctx.results[i] = C.CUDA_SUCCESS
@@ -151,6 +216,26 @@ func (ctx *BatchedContext) SetCurrent() {
 	}
 	c := call{fn, false}
 	ctx.enqueue(c)
+}
+
+func (ctx *BatchedContext) MemAlloc(bytesize int64) (retVal DevicePtr, err error) {
+	fn := &fnargs{
+		fn:   C.fn_mallocD,
+		size: C.size_t(bytesize),
+	}
+	c := call{fn, true}
+	ctx.enqueue(c)
+
+	if err = ctx.errors(); err != nil {
+		return
+	}
+
+	var ok bool
+	ret := ctx.Retval()
+	if retVal, ok = ret.(DevicePtr); !ok {
+		err = errors.Errorf("Expected retVal to be DevicePtr. Got %T instead", ret)
+	}
+	return
 }
 
 func (ctx *BatchedContext) Memcpy(dst, src DevicePtr, byteCount int64) {
@@ -246,53 +331,57 @@ func (ctx *BatchedContext) LaunchAndSync(function Function, gridDimX, gridDimY, 
 	ctx.Synchronize()
 }
 
-/* COMMON PATTERNS */
+/* Debugging Utility Methods */
 
-// Attributes gets multiple attributes as provided
-func (dev Device) Attributes(attrs ...DeviceAttribute) ([]int, error) {
-	if len(attrs) == 0 {
-		return nil, nil
+// Introspect is useful for finding out what calls are going to be made in the batched call
+func (ctx *BatchedContext) Introspect() string {
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "Queue: %d\n", len(ctx.queue))
+	for _, v := range ctx.queue {
+		fmt.Fprintf(&buf, "%s\n", v.fnargs)
 	}
-	cAttrs := make([]C.CUdevice_attribute, len(attrs))
-	cRetVal := make([]C.int, len(attrs))
-	size := C.int(len(attrs))
-
-	for i, v := range attrs {
-		cAttrs[i] = C.CUdevice_attribute(v)
-	}
-
-	err := result(C.cuDeviceGetAttributes(&cRetVal[0], &cAttrs[0], size, C.CUdevice(dev)))
-	retVal := make([]int, len(attrs))
-	for i, v := range cRetVal {
-		retVal[i] = int(v)
-	}
-
-	return retVal, err
+	return buf.String()
 }
 
-// LaunchAndSync launches the kernel and synchronizes the context
-func (fn Function) LaunchAndSync(gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes int, stream Stream, kernelParams []unsafe.Pointer) error {
-	argv := C.malloc(C.size_t(len(kernelParams) * pointerSize))
-	argp := C.malloc(C.size_t(len(kernelParams) * pointerSize))
-	defer C.free(argv)
-	defer C.free(argp)
-	for i := range kernelParams {
-		*((*unsafe.Pointer)(offset(argp, i))) = offset(argv, i)       // argp[i] = &argv[i]
-		*((*uint64)(offset(argv, i))) = *((*uint64)(kernelParams[i])) // argv[i] = *kernelParams[i]
-	}
+/* PRIVATE METHODS */
 
-	f := C.CUfunction(unsafe.Pointer(uintptr(fn)))
-	err := result(C.cuLaunchAndSync(
-		f,
-		C.uint(gridDimX),
-		C.uint(gridDimY),
-		C.uint(gridDimZ),
-		C.uint(blockDimX),
-		C.uint(blockDimY),
-		C.uint(blockDimZ),
-		C.uint(sharedMemBytes),
-		C.CUstream(unsafe.Pointer(uintptr(stream))),
-		(*unsafe.Pointer)(argp),
-		(*unsafe.Pointer)(unsafe.Pointer(uintptr(0)))))
+// checkResults returns true if an error has occured while processing the queue
+func (ctx *BatchedContext) checkResults() bool {
+	for _, v := range ctx.results {
+		if v != C.CUDA_SUCCESS {
+			return true
+		}
+	}
+	return false
+}
+
+// errors convert ctx.results into errors
+func (ctx *BatchedContext) errors() error {
+	if !ctx.checkResults() {
+		return nil
+	}
+	err := make(errorSlice, len(ctx.results))
+	for i, res := range ctx.results {
+		err[i] = result(res)
+	}
 	return err
+}
+
+var batchFnString = map[C.batchFn]string{
+	C.fn_setCurrent:      "setCurrent",
+	C.fn_mallocD:         "mallocD",
+	C.fn_mallocH:         "mallocH",
+	C.fn_mallocManaged:   "mallocManaged",
+	C.fn_memfreeD:        "memfreeD",
+	C.fn_memfreeH:        "memfreeH",
+	C.fn_memcpy:          "memcpy",
+	C.fn_memcpyHtoD:      "memcpyHtoD",
+	C.fn_memcpyDtoH:      "memcpyDtoH",
+	C.fn_memcpyDtoD:      "memcpyDtoD",
+	C.fn_memcpyHtoDAsync: "memcpyHtoDAsync",
+	C.fn_memcpyDtoHAsync: "memcpyDtoHAsync",
+	C.fn_memcpyDtoDAsync: "memcpyDtoDAsync",
+	C.fn_launchKernel:    "launchKernel",
+	C.fn_sync:            "sync",
+	C.fn_lauchAndSync:    "lauchAndSync",
 }
