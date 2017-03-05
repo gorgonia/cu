@@ -37,9 +37,9 @@ CUresult processFn(fnargs_t* args){
 		ret =  cuCtxSetCurrent(args->ctx);
 		break;
 	case fn_mallocD:
-		fprintf(stderr, "setcurrent\n");
+		// fprintf(stderr, "setcurrent\n");
 		ret = cuMemAlloc(&args->devPtr0, args->size);
-		fprintf(stderr, "ret %d\n", ret);
+		// fprintf(stderr, "ret %d\n", ret);
 		break;
 	case fn_mallocH:
 		abort();
@@ -48,28 +48,28 @@ CUresult processFn(fnargs_t* args){
 		abort();
 		break;
 	case fn_memfreeD:
-		fprintf(stderr, "memfree %p\n", args->devPtr0);
+		// fprintf(stderr, "memfree %p\n", args->devPtr0);
 		ret = cuMemFree(args->devPtr0);
-		fprintf(stderr, "ret %d\n", ret);
+		// fprintf(stderr, "ret %d\n", ret);
 		break;
 	case fn_memfreeH:
 		ret = cuMemFreeHost((void*)(args->ptr0));
 		break;
 	case fn_memcpy:
-		fprintf(stderr, "memCpy cgo \n");
+		// fprintf(stderr, "memCpy cgo \n");
 		ret = cuMemcpy(args->devPtr0, args->devPtr1, args->size);
-		fprintf(stderr, "Ret %d\n", ret);
+		// fprintf(stderr, "Ret %d\n", ret);
 		break;
 	case fn_memcpyHtoD:
-		fprintf(stderr, "memcpyHtoD\n");
+		// fprintf(stderr, "memcpyHtoD\n");
 		ret = cuMemcpyHtoD(args->devPtr0, (void*)(args->ptr0), args->size);
-		fprintf(stderr,"ret %d\n", ret);
-		// fprintf(stderr, "ret memcpyHtoD %d args->ptr0 %d\n", ret, args->ptr0);
+		// fprintf(stderr,"ret %d\n", ret);
+		// // fprintf(stderr, "ret memcpyHtoD %d args->ptr0 %d\n", ret, args->ptr0);
 		break;
 	case fn_memcpyDtoH:
-		fprintf(stderr, "memcpyDtoH\n");
+		// fprintf(stderr, "memcpyDtoH\n");
 		ret = cuMemcpyDtoH((void*)(args->ptr0), args->devPtr0, args->size);
-		fprintf(stderr,"ret %d\n", ret);
+		// fprintf(stderr,"ret %d\n", ret);
 		break;
 	case fn_memcpyDtoD:
 		abort();
@@ -84,17 +84,17 @@ CUresult processFn(fnargs_t* args){
 		abort();
 		break;
 	case fn_launchKernel:
-		fprintf(stderr, "launch kernel\n");
+		// fprintf(stderr, "launch kernel\n");
 		ret = cuLaunchKernel(args->f, args->gridDimX, args->gridDimY, args->gridDimZ, 
 			args->blockDimX, args->blockDimY, args->blockDimZ, 
 			args->sharedMemBytes, args->stream, 
 			(void**)(args->kernelParams), (void**)(args->extra));
-		fprintf(stderr, "ret %d\n", ret);
+		// fprintf(stderr, "ret %d\n", ret);
 		break;
 	case fn_sync:
-		fprintf(stderr, "sync\n");
+		// fprintf(stderr, "sync\n");
 		ret = cuCtxSynchronize();
-		fprintf(stderr, "ret %d\n", ret);
+		// fprintf(stderr, "ret %d\n", ret);
 		break;
 	case fn_lauchAndSync:
 		abort();
@@ -104,13 +104,13 @@ CUresult processFn(fnargs_t* args){
 }
 
 void process(uintptr_t* args, CUresult* retVal, int count){
-	// fprintf(stderr,"Processing: %d functions \n", count);
+	// // fprintf(stderr,"Processing: %d functions \n", count);
 	for (int i = 0; i < count; ++i) {
-		// fprintf(stderr, "Processing function %d\n", i);
+		// // fprintf(stderr, "Processing function %d\n", i);
 		CUresult ret;
 		fnargs_t* toProc = (fnargs_t*)(args[i]);
 		ret = processFn(toProc);
-		// fprintf(stderr, "ret %d\n",ret);
+		// // fprintf(stderr, "ret %d\n",ret);
 
 		retVal[i] = ret;
 	}

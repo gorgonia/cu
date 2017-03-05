@@ -7,7 +7,6 @@ import "C"
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -139,9 +138,6 @@ func (ctx *BatchedContext) DoWork() {
 	for {
 		select {
 		case w := <-ctx.work:
-			// if w.fnargs == nil {
-			// 	continue
-			// }
 			ctx.queue = append(ctx.queue, w)
 		default:
 			return
@@ -152,9 +148,6 @@ func (ctx *BatchedContext) DoWork() {
 		for len(ctx.queue) < cap(ctx.queue) && !blocking {
 			select {
 			case w := <-ctx.work:
-				// if w.fnargs == nil {
-				// 	continue
-				// }
 				ctx.queue = append(ctx.queue, w)
 				blocking = ctx.queue[len(ctx.queue)-1].blocking
 			default:
@@ -163,17 +156,14 @@ func (ctx *BatchedContext) DoWork() {
 		}
 
 		for _, c := range ctx.queue {
-			// log.Printf("B4 %d: %# v", i, pretty.Formatter(c.fnargs))
-			// ctx.fns[i] = (*C.fnargs_t)(unsafe.Pointer(c.fnargs))
-			// log.Printf("AT %d: %# v", i, pretty.Formatter(ctx.fns[i]))
 			ctx.fns = append(ctx.fns, c.fnargs.c())
 		}
-		log.Printf("GOING TO PROCESS")
-		log.Println(ctx.Introspect())
+		// log.Printf("GOING TO PROCESS")
+		// log.Println(ctx.introspect())
 		ctx.results = ctx.results[:cap(ctx.results)]                   // make sure of the maximum availability for ctx.results
 		C.process(&ctx.fns[0], &ctx.results[0], C.int(len(ctx.queue))) // process the queue
 		ctx.results = ctx.results[:len(ctx.queue)]                     // then  truncate it to the len of queue for reporting purposes
-		log.Printf("ERRORS %v", ctx.results)
+		// log.Printf("ERRORS %v", ctx.results)
 
 		for _, f := range ctx.frees {
 			C.free(f)
@@ -333,8 +323,8 @@ func (ctx *BatchedContext) LaunchAndSync(function Function, gridDimX, gridDimY, 
 
 /* Debugging Utility Methods */
 
-// Introspect is useful for finding out what calls are going to be made in the batched call
-func (ctx *BatchedContext) Introspect() string {
+// introspect is useful for finding out what calls are going to be made in the batched call
+func (ctx *BatchedContext) introspect() string {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "Queue: %d\n", len(ctx.queue))
 	for _, v := range ctx.queue {

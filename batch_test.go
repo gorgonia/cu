@@ -1,7 +1,6 @@
 package cu
 
 import (
-	"log"
 	"runtime"
 	"testing"
 	"unsafe"
@@ -167,8 +166,6 @@ func TestBatchContext(t *testing.T) {
 	if memB, err = bctx.MemAlloc(size); err != nil {
 		t.Fatalf("Cannot allocate B: %v", err)
 	}
-
-	log.Printf("memA %v memB %v", memA, memB)
 
 	args := []unsafe.Pointer{
 		unsafe.Pointer(&memA),
