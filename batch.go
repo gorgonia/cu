@@ -81,6 +81,8 @@ func (fn *fnargs) String() string {
 		fmt.Fprintf(&buf, "Current Context %d", fn.ctx)
 	case C.fn_lauchAndSync:
 
+	case C.fn_allocAndCopy:
+		fmt.Fprintf(&buf, "AllocAndCopy Size: %v, src: %v", fn.size, fn.ptr0)
 	}
 	return buf.String()
 }
@@ -177,6 +179,9 @@ func (ctx *BatchedContext) DoWork() {
 				ctx.retVal = DevicePtr(retVal.devptr0)
 			case C.fn_mallocH:
 			case C.fn_mallocManaged:
+			case C.fn_allocAndCopy:
+				retVal := (*fnargs)(unsafe.Pointer(uintptr(ctx.fns[len(ctx.fns)-1])))
+				ctx.retVal = DevicePtr(retVal.devptr0)
 			}
 		}
 
@@ -319,6 +324,27 @@ func (ctx *BatchedContext) Synchronize() {
 func (ctx *BatchedContext) LaunchAndSync(function Function, gridDimX, gridDimY, gridDimZ int, blockDimX, blockDimY, blockDimZ int, sharedMemBytes int, stream Stream, kernelParams []unsafe.Pointer) {
 	ctx.LaunchKernel(function, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, stream, kernelParams)
 	ctx.Synchronize()
+}
+
+func (ctx *BatchedContext) AllocAndCopy(p unsafe.Pointer, bytesize int64) (retVal DevicePtr, err error) {
+	fn := &fnargs{
+		fn:   C.fn_allocAndCopy,
+		size: C.size_t(bytesize),
+		ptr0: p,
+	}
+	c := call{fn, true}
+	ctx.enqueue(c)
+
+	if err = ctx.errors(); err != nil {
+		return
+	}
+
+	var ok bool
+	ret := ctx.Retval()
+	if retVal, ok = ret.(DevicePtr); !ok {
+		err = errors.Errorf("Expected retVal to be DevicePtr. Got %T instead", ret)
+	}
+	return
 }
 
 /* Debugging Utility Methods */

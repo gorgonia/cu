@@ -30,6 +30,19 @@ CUresult cuLaunchAndSync(CUfunction f, unsigned int  gridDimX, unsigned int  gri
 	return cuCtxSynchronize();
 }
 
+CUresult cuAllocAndCopy(CUdeviceptr* mem, const void* src, size_t bytesize) {
+	CUresult retVal;
+
+	retVal = cuMemAlloc(mem, bytesize);
+	if (retVal != CUDA_SUCCESS){
+		fprintf(stderr,"wtf\n");
+		return retVal;
+	}
+
+	retVal = cuMemcpyHtoD(*mem, src, bytesize);
+	return retVal;
+}
+
 CUresult processFn(fnargs_t* args){
 	CUresult ret;
 	switch (args->fn) {
@@ -98,6 +111,9 @@ CUresult processFn(fnargs_t* args){
 		break;
 	case fn_lauchAndSync:
 		abort();
+		break;
+	case fn_allocAndCopy:
+		ret = cuAllocAndCopy(&args->devPtr0, (void*)(args->ptr0), args->size);
 		break;
 	}
 	return ret;

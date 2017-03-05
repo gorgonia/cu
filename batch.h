@@ -6,6 +6,8 @@ extern CUresult cuLaunchAndSync(CUfunction f, unsigned int  gridDimX, unsigned i
 		unsigned int  blockDimX, unsigned int  blockDimY, unsigned int  blockDimZ, 
 		unsigned int  sharedMemBytes, CUstream hStream, void** kernelParams, void** extra);
 
+extern CUresult cuAllocAndCopy(CUdeviceptr* mem, const void* src, size_t bytesize);
+
 typedef enum {
 	fn_setCurrent,
 
@@ -20,7 +22,6 @@ typedef enum {
 	fn_memcpyDtoH,
 	fn_memcpyDtoD,
 
-
 	fn_memcpyHtoDAsync,
 	fn_memcpyDtoHAsync,
 	fn_memcpyDtoDAsync,
@@ -28,6 +29,8 @@ typedef enum {
 	fn_launchKernel,
 	fn_sync,
 	fn_lauchAndSync,
+
+	fn_allocAndCopy,
 } batchFn;
 
 typedef struct fnargs {

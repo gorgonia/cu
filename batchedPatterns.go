@@ -3,7 +3,11 @@ package cu
 // #include <cuda.h>
 // #include "batch.h"
 import "C"
-import "unsafe"
+import (
+	"unsafe"
+
+	"github.com/pkg/errors"
+)
 
 /* COMMON PATTERNS */
 
@@ -54,4 +58,17 @@ func (fn Function) LaunchAndSync(gridDimX, gridDimY, gridDimZ, blockDimX, blockD
 		(*unsafe.Pointer)(argp),
 		(*unsafe.Pointer)(unsafe.Pointer(uintptr(0)))))
 	return err
+}
+
+// AllocAndCopy abstracts away the common pattern of allocating and then copying a Go slice to the GPU
+func AllocAndCopy(p unsafe.Pointer, bytesize int64) (DevicePtr, error) {
+	if bytesize == 0 {
+		return 0, errors.Wrapf(InvalidValue, "Cannot allocate memory with size 0")
+	}
+
+	var d C.CUdeviceptr
+	if err := result(C.cuAllocAndCopy(&d, p, C.size_t(bytesize))); err != nil {
+		return 0, errors.Wrapf(err, "AllocAndCopy")
+	}
+	return DevicePtr(d), nil
 }
