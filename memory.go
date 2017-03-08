@@ -3,6 +3,7 @@ package cu
 //#include <cuda.h>
 import "C"
 import (
+	"fmt"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -10,6 +11,8 @@ import (
 
 // DevicePtr is a pointer to the device memory. It is equivalent to CUDA's CUdeviceptr
 type DevicePtr uintptr
+
+func (d DevicePtr) String() string { return fmt.Sprintf("0x%x", uintptr(d)) }
 
 // Make3DArray creates a 3D CUDA array.
 func Make3DArray(desc Array3Desc) (Array, error) {

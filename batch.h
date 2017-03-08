@@ -65,5 +65,6 @@ typedef struct fnargs {
 } fnargs_t;
 
 extern CUresult processFn(fnargs_t* args);
-extern void process(uintptr_t* args, CUresult* retVal, int count);
+extern void process(CUcontext ctx, uintptr_t* args, CUresult* retVal, int count);
+// extern void process(uintptr_t* args, CUresult* retVal, int count);
 // extern CUresult batchMalloc(uintptr_t* args, CUdeviceptr* ptrs, int count);

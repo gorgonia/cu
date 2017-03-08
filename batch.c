@@ -35,7 +35,6 @@ CUresult cuAllocAndCopy(CUdeviceptr* mem, const void* src, size_t bytesize) {
 
 	retVal = cuMemAlloc(mem, bytesize);
 	if (retVal != CUDA_SUCCESS){
-		fprintf(stderr,"wtf\n");
 		return retVal;
 	}
 
@@ -119,8 +118,9 @@ CUresult processFn(fnargs_t* args){
 	return ret;
 }
 
-void process(uintptr_t* args, CUresult* retVal, int count){
-	// // fprintf(stderr,"Processing: %d functions \n", count);
+void process(CUcontext ctx, uintptr_t* args, CUresult* retVal, int count){
+	cuCtxSetCurrent(ctx);
+	// fprintf(stderr,"Processing: %d functions \n", count);
 	for (int i = 0; i < count; ++i) {
 		// // fprintf(stderr, "Processing function %d\n", i);
 		CUresult ret;

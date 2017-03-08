@@ -7,6 +7,7 @@ import "C"
 import (
 	"bytes"
 	"fmt"
+	"runtime"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -82,7 +83,7 @@ func (fn *fnargs) String() string {
 	case C.fn_lauchAndSync:
 
 	case C.fn_allocAndCopy:
-		fmt.Fprintf(&buf, "AllocAndCopy Size: %v, src: %v", fn.size, fn.ptr0)
+		fmt.Fprintf(&buf, "Size: %v, src: %v", fn.size, fn.ptr0)
 	}
 	return buf.String()
 }
@@ -105,6 +106,8 @@ type BatchedContext struct {
 	results []C.CUresult
 	frees   []unsafe.Pointer
 	retVal  interface{}
+
+	// sync.Mutex
 }
 
 func NewBatchedContext(c Context, d Device) *BatchedContext {
@@ -137,6 +140,8 @@ func (ctx *BatchedContext) enqueue(c call) {
 func (ctx *BatchedContext) WorkAvailable() <-chan struct{} { return ctx.workAvailable }
 
 func (ctx *BatchedContext) DoWork() {
+	// ctx.Lock()
+	// defer ctx.Unlock()
 	for {
 		select {
 		case w := <-ctx.work:
@@ -160,11 +165,13 @@ func (ctx *BatchedContext) DoWork() {
 		for _, c := range ctx.queue {
 			ctx.fns = append(ctx.fns, c.fnargs.c())
 		}
-		// log.Printf("GOING TO PROCESS")
-		// log.Println(ctx.introspect())
-		ctx.results = ctx.results[:cap(ctx.results)]                   // make sure of the maximum availability for ctx.results
-		C.process(&ctx.fns[0], &ctx.results[0], C.int(len(ctx.queue))) // process the queue
-		ctx.results = ctx.results[:len(ctx.queue)]                     // then  truncate it to the len of queue for reporting purposes
+		logf("GOING TO PROCESS")
+		logf(ctx.introspect())
+
+		cctx := C.CUcontext(unsafe.Pointer(uintptr(ctx.Context)))
+		ctx.results = ctx.results[:cap(ctx.results)]                         // make sure of the maximum availability for ctx.results
+		C.process(cctx, &ctx.fns[0], &ctx.results[0], C.int(len(ctx.queue))) // process the queue
+		ctx.results = ctx.results[:len(ctx.queue)]                           // then  truncate it to the len of queue for reporting purposes
 		// log.Printf("ERRORS %v", ctx.results)
 
 		for _, f := range ctx.frees {
@@ -183,6 +190,7 @@ func (ctx *BatchedContext) DoWork() {
 				retVal := (*fnargs)(unsafe.Pointer(uintptr(ctx.fns[len(ctx.fns)-1])))
 				ctx.retVal = DevicePtr(retVal.devptr0)
 			}
+			logf("\t[RET] %v", ctx.retVal)
 		}
 
 		// clear queue
@@ -192,9 +200,14 @@ func (ctx *BatchedContext) DoWork() {
 	}
 }
 
+// Retval is used to acquire any buffered return value from the calls
 func (ctx *BatchedContext) Retval() interface{} { retVal := ctx.retVal; ctx.retVal = nil; return retVal }
 
-func (ctx *BatchedContext) Errors() error {
+// Errors returns any errors that may have occured during a batch processing
+func (ctx *BatchedContext) Errors() error { return ctx.errors() }
+
+// FirstError returns the first error if there was any
+func (ctx *BatchedContext) FirstError() error {
 	for i, v := range ctx.results {
 		if cuResult(v) != Success {
 			return result(v)
@@ -267,6 +280,8 @@ func (ctx *BatchedContext) MemcpyDtoH(dst unsafe.Pointer, src DevicePtr, byteCou
 }
 
 func (ctx *BatchedContext) MemFree(mem DevicePtr) {
+	pc, _, _, _ := runtime.Caller(1)
+	logf("MEMFREE  %v CALLED BY %v", mem, runtime.FuncForPC(pc).Name())
 	fn := &fnargs{
 		fn:      C.fn_memfreeD,
 		devptr0: C.CUdeviceptr(mem),
@@ -347,18 +362,6 @@ func (ctx *BatchedContext) AllocAndCopy(p unsafe.Pointer, bytesize int64) (retVa
 	return
 }
 
-/* Debugging Utility Methods */
-
-// introspect is useful for finding out what calls are going to be made in the batched call
-func (ctx *BatchedContext) introspect() string {
-	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "Queue: %d\n", len(ctx.queue))
-	for _, v := range ctx.queue {
-		fmt.Fprintf(&buf, "%s\n", v.fnargs)
-	}
-	return buf.String()
-}
-
 /* PRIVATE METHODS */
 
 // checkResults returns true if an error has occured while processing the queue
@@ -400,4 +403,6 @@ var batchFnString = map[C.batchFn]string{
 	C.fn_launchKernel:    "launchKernel",
 	C.fn_sync:            "sync",
 	C.fn_lauchAndSync:    "lauchAndSync",
+
+	C.fn_allocAndCopy: "allocAndCopy",
 }
