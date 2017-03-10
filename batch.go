@@ -13,7 +13,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-const workBufLen = 15
+const workBufLen = 32
 
 type call struct {
 	fnargs   *fnargs
@@ -97,11 +97,11 @@ type BatchedContext struct {
 	Context
 	Device
 
-	workAvailable chan struct{}
-	work          chan call // queue of calls to exec
+	workAvailable chan struct{} // an empty struct is sent down workAvailable when there is work
+	sync          chan struct{} // sync is the channel to wait on when a DoNow has been called
+	work          chan call     // queue of calls to exec
 
-	queue []call
-	// fns     []*C.fnargs_t
+	queue   []call
 	fns     []C.uintptr_t
 	results []C.CUresult
 	frees   []unsafe.Pointer
@@ -110,12 +110,14 @@ type BatchedContext struct {
 	// sync.Mutex
 }
 
+// NewBatchedContext creates a batched CUDA context.
 func NewBatchedContext(c Context, d Device) *BatchedContext {
 	return &BatchedContext{
 		Context: c,
 		Device:  d,
 
 		workAvailable: make(chan struct{}, 1),
+		sync:          make(chan struct{}, 1),
 		work:          make(chan call, workBufLen),
 		queue:         make([]call, 0, workBufLen),
 		fns:           make([]C.uintptr_t, 0, workBufLen),
@@ -137,11 +139,12 @@ func (ctx *BatchedContext) enqueue(c call) {
 	}
 }
 
+// WorkAvailable returns the chan where work availability is broadcasted on.
 func (ctx *BatchedContext) WorkAvailable() <-chan struct{} { return ctx.workAvailable }
 
+// DoWork waits for work to come in from the queue. If it's blocking, the entire queue will be processed immediately.
+// Otherwise it will be added to the batch queue.
 func (ctx *BatchedContext) DoWork() {
-	// ctx.Lock()
-	// defer ctx.Unlock()
 	for {
 		select {
 		case w := <-ctx.work:
@@ -158,6 +161,10 @@ func (ctx *BatchedContext) DoWork() {
 				ctx.queue = append(ctx.queue, w)
 				blocking = ctx.queue[len(ctx.queue)-1].blocking
 			default:
+				// break enqueue
+				if !blocking {
+					return
+				}
 				break enqueue
 			}
 		}
@@ -165,14 +172,17 @@ func (ctx *BatchedContext) DoWork() {
 		for _, c := range ctx.queue {
 			ctx.fns = append(ctx.fns, c.fnargs.c())
 		}
+
+		// debug and instrumentation related stuff
 		logf("GOING TO PROCESS")
 		logf(ctx.introspect())
+		addQueueLength(len(ctx.queue))
+		addBlockingCallers()
 
 		cctx := C.CUcontext(unsafe.Pointer(uintptr(ctx.Context)))
 		ctx.results = ctx.results[:cap(ctx.results)]                         // make sure of the maximum availability for ctx.results
 		C.process(cctx, &ctx.fns[0], &ctx.results[0], C.int(len(ctx.queue))) // process the queue
 		ctx.results = ctx.results[:len(ctx.queue)]                           // then  truncate it to the len of queue for reporting purposes
-		// log.Printf("ERRORS %v", ctx.results)
 
 		for _, f := range ctx.frees {
 			C.free(f)
@@ -302,6 +312,7 @@ func (ctx *BatchedContext) MemFreeHost(p unsafe.Pointer) {
 func (ctx *BatchedContext) LaunchKernel(function Function, gridDimX, gridDimY, gridDimZ int, blockDimX, blockDimY, blockDimZ int, sharedMemBytes int, stream Stream, kernelParams []unsafe.Pointer) {
 	argv := C.malloc(C.size_t(len(kernelParams) * pointerSize))
 	argp := C.malloc(C.size_t(len(kernelParams) * pointerSize))
+	logf("Launch Kernel: %v - %v", kernelParams, (*unsafe.Pointer)(argp))
 	ctx.frees = append(ctx.frees, argv)
 	ctx.frees = append(ctx.frees, argp)
 

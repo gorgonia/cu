@@ -3,6 +3,7 @@ package cu
 // #include <cuda.h>
 import "C"
 import (
+	"log"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -26,7 +27,11 @@ func (mem DevicePtr) Uintptr() uintptr { return uintptr(mem) }
 
 // MemSize returns the size of the memory slab in bytes. Returns 0 if errors occured
 func (mem DevicePtr) MemSize() uintptr {
-	size, _, _ := mem.AddressRange()
+	size, _, err := mem.AddressRange()
+	if err != nil {
+		log.Printf("MEMSIZE ERR %v", err)
+	}
+	log.Printf("MEMSIZE %v", size)
 	return uintptr(size)
 }
 

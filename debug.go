@@ -64,3 +64,15 @@ func (ctx *BatchedContext) introspect() string {
 	}
 	return buf.String()
 }
+
+func addQueueLength(l int) {}
+
+// QueueLengths return the queue lengths recorded
+func QueueLengths() []int { return nil }
+
+// AverageQueueLength returns the average queue length recorded. This allows for optimizations.
+func AverageQueueLength() int { return 0 }
+
+func addBlockingCallers() {}
+
+func BlockingCallers() map[string]int { return nil }
