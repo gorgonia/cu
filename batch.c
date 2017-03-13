@@ -49,7 +49,7 @@ CUresult processFn(fnargs_t* args){
 		ret =  cuCtxSetCurrent(args->ctx);
 		break;
 	case fn_mallocD:
-		// fprintf(stderr, "setcurrent\n");
+		// fprintf(stderr, "mallocD %d\n", args->size);
 		ret = cuMemAlloc(&args->devPtr0, args->size);
 		// fprintf(stderr, "ret %d\n", ret);
 		break;
@@ -68,18 +68,17 @@ CUresult processFn(fnargs_t* args){
 		ret = cuMemFreeHost((void*)(args->ptr0));
 		break;
 	case fn_memcpy:
-		// fprintf(stderr, "memCpy cgo \n");
+		// fprintf(stderr, "memCpy(%p, %p, %d) \n", args->devPtr0, args->devPtr1, args->size);
 		ret = cuMemcpy(args->devPtr0, args->devPtr1, args->size);
 		// fprintf(stderr, "Ret %d\n", ret);
 		break;
 	case fn_memcpyHtoD:
-		// fprintf(stderr, "memcpyHtoD\n");
+		// fprintf(stderr, "memcpyHtoD(%p, %p, %d)\n", args->devPtr0, args->ptr0, args->size);
 		ret = cuMemcpyHtoD(args->devPtr0, (void*)(args->ptr0), args->size);
 		// fprintf(stderr,"ret %d\n", ret);
-		// // fprintf(stderr, "ret memcpyHtoD %d args->ptr0 %d\n", ret, args->ptr0);
 		break;
 	case fn_memcpyDtoH:
-		// fprintf(stderr, "memcpyDtoH\n");
+		// fprintf(stderr, "memcpyDtoH(%p, %p, %d)\n", args->ptr0, args->devPtr0, args->size);
 		ret = cuMemcpyDtoH((void*)(args->ptr0), args->devPtr0, args->size);
 		// fprintf(stderr,"ret %d\n", ret);
 		break;
@@ -96,7 +95,7 @@ CUresult processFn(fnargs_t* args){
 		abort();
 		break;
 	case fn_launchKernel:
-		// fprintf(stderr, "launch kernel\n");
+		// fprintf(stderr, "launch kernel. Kernel Params: %p\n", args->kernelParams);
 		ret = cuLaunchKernel(args->f, args->gridDimX, args->gridDimY, args->gridDimZ, 
 			args->blockDimX, args->blockDimY, args->blockDimZ, 
 			args->sharedMemBytes, args->stream, 
@@ -108,11 +107,13 @@ CUresult processFn(fnargs_t* args){
 		ret = cuCtxSynchronize();
 		// fprintf(stderr, "ret %d\n", ret);
 		break;
-	case fn_lauchAndSync:
+	case fn_launchAndSync:
 		abort();
 		break;
 	case fn_allocAndCopy:
+		// fprintf(stderr, "alloc and copy\n");
 		ret = cuAllocAndCopy(&args->devPtr0, (void*)(args->ptr0), args->size);
+		// fprintf(stderr, "ret %d\n", ret);
 		break;
 	}
 	return ret;

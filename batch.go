@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"runtime"
 	"unsafe"
-
-	"github.com/pkg/errors"
 )
 
 const workBufLen = 32
@@ -80,7 +78,7 @@ func (fn *fnargs) String() string {
 		fmt.Fprintf(&buf, "fn: 0x%v, KernelParams: %v", fn.f, fn.kernelParams)
 	case C.fn_sync:
 		fmt.Fprintf(&buf, "Current Context %d", fn.ctx)
-	case C.fn_lauchAndSync:
+	case C.fn_launchAndSync:
 
 	case C.fn_allocAndCopy:
 		fmt.Fprintf(&buf, "Size: %v, src: %v", fn.size, fn.ptr0)
@@ -105,7 +103,7 @@ type BatchedContext struct {
 	fns     []C.uintptr_t
 	results []C.CUresult
 	frees   []unsafe.Pointer
-	retVal  interface{}
+	retVal  chan DevicePtr
 
 	// sync.Mutex
 }
@@ -122,21 +120,27 @@ func NewBatchedContext(c Context, d Device) *BatchedContext {
 		queue:         make([]call, 0, workBufLen),
 		fns:           make([]C.uintptr_t, 0, workBufLen),
 		results:       make([]C.CUresult, workBufLen),
+
+		retVal: make(chan DevicePtr),
 		// fns:           make([]*C.fnargs_t, workBufLen),
 	}
 }
 
-func (ctx *BatchedContext) enqueue(c call) {
-	ctx.work <- c
-	select {
-	case ctx.workAvailable <- struct{}{}:
-	default:
+func (ctx *BatchedContext) enqueue(c call) (retVal DevicePtr, err error) {
+	if len(ctx.work) >= workBufLen-1 {
+		ctx.workAvailable <- struct{}{}
 	}
+	ctx.work <- c
 
 	if c.blocking {
-		// do something
-		ctx.DoWork()
+		logf("Sending something down workAvailable")
+		ctx.workAvailable <- struct{}{}
+		logf("Done. Waiting on RetVal")
+		retVal = <-ctx.retVal
+		logf("Got retVal")
+		return retVal, ctx.errors()
 	}
+	return 0, ctx.errors()
 }
 
 // WorkAvailable returns the chan where work availability is broadcasted on.
@@ -162,9 +166,9 @@ func (ctx *BatchedContext) DoWork() {
 				blocking = ctx.queue[len(ctx.queue)-1].blocking
 			default:
 				// break enqueue
-				if !blocking {
-					return
-				}
+				// if !blocking || len(ctx.queue) == cap(ctx.queue) {
+				// 	return
+				// }
 				break enqueue
 			}
 		}
@@ -175,43 +179,53 @@ func (ctx *BatchedContext) DoWork() {
 
 		// debug and instrumentation related stuff
 		logf("GOING TO PROCESS")
+		pc, _, _, _ := runtime.Caller(1)
+		logf("Called by %v", runtime.FuncForPC(pc).Name())
 		logf(ctx.introspect())
 		addQueueLength(len(ctx.queue))
 		addBlockingCallers()
+		logf("Errors found %v", ctx.checkResults())
 
 		cctx := C.CUcontext(unsafe.Pointer(uintptr(ctx.Context)))
 		ctx.results = ctx.results[:cap(ctx.results)]                         // make sure of the maximum availability for ctx.results
 		C.process(cctx, &ctx.fns[0], &ctx.results[0], C.int(len(ctx.queue))) // process the queue
 		ctx.results = ctx.results[:len(ctx.queue)]                           // then  truncate it to the len of queue for reporting purposes
 
-		for _, f := range ctx.frees {
+		// find out how many to free
+		var toFree int
+		for _, c := range ctx.queue {
+			if c.fnargs.fn == C.fn_launchKernel || c.fnargs.fn == C.fn_launchAndSync {
+				toFree += 2
+			}
+		}
+
+		for _, f := range ctx.frees[:toFree] {
+			// logf("FREEING %v | %v, %v", f, len(ctx.frees), toFree)
 			C.free(f)
 		}
 
 		if blocking {
 			b := ctx.queue[len(ctx.queue)-1]
+			var retVal *fnargs
 			switch b.fnargs.fn {
 			case C.fn_mallocD:
-				retVal := (*fnargs)(unsafe.Pointer(uintptr(ctx.fns[len(ctx.fns)-1])))
-				ctx.retVal = DevicePtr(retVal.devptr0)
+				retVal = (*fnargs)(unsafe.Pointer(uintptr(ctx.fns[len(ctx.fns)-1])))
+				ctx.retVal <- DevicePtr(retVal.devptr0)
 			case C.fn_mallocH:
 			case C.fn_mallocManaged:
 			case C.fn_allocAndCopy:
-				retVal := (*fnargs)(unsafe.Pointer(uintptr(ctx.fns[len(ctx.fns)-1])))
-				ctx.retVal = DevicePtr(retVal.devptr0)
+				retVal = (*fnargs)(unsafe.Pointer(uintptr(ctx.fns[len(ctx.fns)-1])))
+				ctx.retVal <- DevicePtr(retVal.devptr0)
 			}
-			logf("\t[RET] %v", ctx.retVal)
+			logf("\t[RET] %v", DevicePtr(retVal.devptr0))
 		}
 
 		// clear queue
 		ctx.queue = ctx.queue[:0]
-		ctx.frees = ctx.frees[:0]
 		ctx.fns = ctx.fns[:0]
+		ctx.frees = ctx.frees[toFree:]
 	}
 }
-
-// Retval is used to acquire any buffered return value from the calls
-func (ctx *BatchedContext) Retval() interface{} { retVal := ctx.retVal; ctx.retVal = nil; return retVal }
 
 // Errors returns any errors that may have occured during a batch processing
 func (ctx *BatchedContext) Errors() error { return ctx.errors() }
@@ -242,18 +256,8 @@ func (ctx *BatchedContext) MemAlloc(bytesize int64) (retVal DevicePtr, err error
 		size: C.size_t(bytesize),
 	}
 	c := call{fn, true}
-	ctx.enqueue(c)
-
-	if err = ctx.errors(); err != nil {
-		return
-	}
-
-	var ok bool
-	ret := ctx.Retval()
-	if retVal, ok = ret.(DevicePtr); !ok {
-		err = errors.Errorf("Expected retVal to be DevicePtr. Got %T instead", ret)
-	}
-	return
+	logf("MEMALLOC")
+	return ctx.enqueue(c)
 }
 
 func (ctx *BatchedContext) Memcpy(dst, src DevicePtr, byteCount int64) {
@@ -312,10 +316,10 @@ func (ctx *BatchedContext) MemFreeHost(p unsafe.Pointer) {
 func (ctx *BatchedContext) LaunchKernel(function Function, gridDimX, gridDimY, gridDimZ int, blockDimX, blockDimY, blockDimZ int, sharedMemBytes int, stream Stream, kernelParams []unsafe.Pointer) {
 	argv := C.malloc(C.size_t(len(kernelParams) * pointerSize))
 	argp := C.malloc(C.size_t(len(kernelParams) * pointerSize))
-	logf("Launch Kernel: %v - %v", kernelParams, (*unsafe.Pointer)(argp))
 	ctx.frees = append(ctx.frees, argv)
 	ctx.frees = append(ctx.frees, argp)
 
+	logf("Launch Kernel: %v - %v", kernelParams, (*unsafe.Pointer)(argp))
 	for i := range kernelParams {
 		*((*unsafe.Pointer)(offset(argp, i))) = offset(argv, i)       // argp[i] = &argv[i]
 		*((*uint64)(offset(argv, i))) = *((*uint64)(kernelParams[i])) // argv[i] = *kernelParams[i]
@@ -359,18 +363,8 @@ func (ctx *BatchedContext) AllocAndCopy(p unsafe.Pointer, bytesize int64) (retVa
 		ptr0: p,
 	}
 	c := call{fn, true}
-	ctx.enqueue(c)
-
-	if err = ctx.errors(); err != nil {
-		return
-	}
-
-	var ok bool
-	ret := ctx.Retval()
-	if retVal, ok = ret.(DevicePtr); !ok {
-		err = errors.Errorf("Expected retVal to be DevicePtr. Got %T instead", ret)
-	}
-	return
+	logf("Alloc And Copy")
+	return ctx.enqueue(c)
 }
 
 /* PRIVATE METHODS */
@@ -413,7 +407,7 @@ var batchFnString = map[C.batchFn]string{
 	C.fn_memcpyDtoDAsync: "memcpyDtoDAsync",
 	C.fn_launchKernel:    "launchKernel",
 	C.fn_sync:            "sync",
-	C.fn_lauchAndSync:    "lauchAndSync",
+	C.fn_launchAndSync:   "lauchAndSync",
 
 	C.fn_allocAndCopy: "allocAndCopy",
 }

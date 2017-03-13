@@ -28,7 +28,7 @@ typedef enum {
 
 	fn_launchKernel,
 	fn_sync,
-	fn_lauchAndSync,
+	fn_launchAndSync,
 
 	fn_allocAndCopy,
 } batchFn;
