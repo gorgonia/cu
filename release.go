@@ -17,9 +17,6 @@ func logf(format string, others ...interface{}) {}
 
 /* Debugging Utility Methods */
 
-// introspect is useful for finding out what calls are going to be made in the batched call
-func (ctx *BatchedContext) introspect() string { return "" }
-
 // instrumentation related functions
 
 func addQueueLength(l int) {}

@@ -4,8 +4,6 @@
 package cu
 
 import (
-	"bytes"
-	"fmt"
 	"log"
 	"runtime"
 	"sync"
@@ -22,16 +20,6 @@ func tabcount() int                             { return 0 }
 func enterLoggingContext()                      {}
 func leaveLoggingContext()                      {}
 func logf(format string, others ...interface{}) {}
-
-// introspect is useful for finding out what calls are going to be made in the batched call
-func (ctx *BatchedContext) introspect() string {
-	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "Queue: %d", len(ctx.queue))
-	for _, v := range ctx.queue {
-		fmt.Fprintf(&buf, "\n\t[QUEUE] %s", v.fnargs)
-	}
-	return buf.String()
-}
 
 /* Operational statistics related debugging */
 
