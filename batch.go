@@ -13,7 +13,7 @@ import (
 	"unsafe"
 )
 
-const workBufLen = 8
+const workBufLen = 32
 
 type call struct {
 	fnargs   *fnargs
@@ -120,8 +120,8 @@ func NewBatchedContext(c Context, d Device) *BatchedContext {
 		queue:         make([]call, 0, workBufLen),
 		fns:           make([]C.uintptr_t, 0, workBufLen),
 		results:       make([]C.CUresult, workBufLen),
-
-		retVal: make(chan DevicePtr),
+		frees:         make([]unsafe.Pointer, 0, 2*workBufLen),
+		retVal:        make(chan DevicePtr),
 		// fns:           make([]*C.fnargs_t, workBufLen),
 	}
 }
@@ -197,18 +197,6 @@ func (ctx *BatchedContext) DoWork() {
 			log.Printf(ctx.introspect())
 		}
 
-		// find out how many to free
-		var toFree int
-		for _, c := range ctx.queue {
-			if c.fnargs.fn == C.fn_launchKernel || c.fnargs.fn == C.fn_launchAndSync {
-				toFree += 2
-			}
-		}
-
-		for _, f := range ctx.frees[:toFree] {
-			C.free(f)
-		}
-
 		if blocking {
 			b := ctx.queue[len(ctx.queue)-1]
 			var retVal *fnargs
@@ -225,12 +213,20 @@ func (ctx *BatchedContext) DoWork() {
 			logf("\t[RET] %v", DevicePtr(retVal.devptr0))
 		}
 
+		// for i, f := range ctx.frees {
+		// 	log.Printf("free %v", f)
+		// 	if f != nil {
+		// 		log.Printf("Actua free %v", f)
+		// 		C.free(f)
+		// 		ctx.frees[i] = nil
+		// 	}
+		// }
+
 		// clear queue
 		ctx.queue = ctx.queue[:0]
 		ctx.fns = ctx.fns[:0]
-		if toFree > 0 {
-			ctx.frees = ctx.frees[toFree:]
-		}
+		ctx.frees = ctx.frees[:0]
+
 	}
 }
 
@@ -263,7 +259,6 @@ func (ctx *BatchedContext) MemAlloc(bytesize int64) (retVal DevicePtr, err error
 		size: C.size_t(bytesize),
 	}
 	c := call{fn, true}
-	logf("MEMALLOC")
 	return ctx.enqueue(c)
 }
 
@@ -321,19 +316,16 @@ func (ctx *BatchedContext) MemFreeHost(p unsafe.Pointer) {
 }
 
 func (ctx *BatchedContext) LaunchKernel(function Function, gridDimX, gridDimY, gridDimZ int, blockDimX, blockDimY, blockDimZ int, sharedMemBytes int, stream Stream, kernelParams []unsafe.Pointer) {
-	if len(kernelParams) == 0 {
-		panic("ZERO LENGTH KERNEL PARAMS")
-	}
 	argv := C.malloc(C.size_t(len(kernelParams) * pointerSize))
 	argp := C.malloc(C.size_t(len(kernelParams) * pointerSize))
-	ctx.frees = append(ctx.frees, argv)
-	ctx.frees = append(ctx.frees, argp)
-
-	logf("Launch Kernel: %v - %v", kernelParams, (*unsafe.Pointer)(argp))
 	for i := range kernelParams {
 		*((*unsafe.Pointer)(offset(argp, i))) = offset(argv, i)       // argp[i] = &argv[i]
 		*((*uint64)(offset(argv, i))) = *((*uint64)(kernelParams[i])) // argv[i] = *kernelParams[i]
 	}
+
+	// ctx.frees = append(ctx.frees, argv)
+	// ctx.frees = append(ctx.frees, argp)
+
 	f := C.CUfunction(unsafe.Pointer(uintptr(function)))
 	fn := &fnargs{
 		fn:             C.fn_launchKernel,
