@@ -1,5 +1,16 @@
 package cu
 
+/*
+This file deals with the batching of CUDA calls. The design of the batch calls is very much
+inspired, and later, copied directly from the golang.org/x/mobile/gl package (it turns out that the
+design was much better than what I had originally been inspired with).
+
+There are some differences and modifications made, due to the nature of the intended use of this package.
+
+The gl package is licenced under the Go licence.
+
+*/
+
 // #cgo CFLAGS: -g -O3 -std=c99
 // #include <cuda.h>
 // #include "batch.h"
@@ -9,11 +20,10 @@ import (
 	"fmt"
 	"log"
 	"runtime"
-	"sync"
 	"unsafe"
 )
 
-const workBufLen = 32
+const workBufLen = 64
 
 type call struct {
 	fnargs   *fnargs
@@ -92,7 +102,36 @@ func (fn *fnargs) c() C.uintptr_t {
 	return C.uintptr_t(uintptr(unsafe.Pointer(fn)))
 }
 
-// BatchedContext is a CUDA context where the cgo calls are batched up.
+// BatchedContext is a CUDA context where the CUDA calls are batched up.
+//
+// Typically a locked OS thread is made to execute the CUDA calls like so:
+// 		func main() {
+//			ctx := NewBatchedContext(...)
+//
+//			runtime.LockOSThread()
+//			defer runtime.UnlockOSThread()
+//
+//			workAvailable := ctx.WorkAvailable()
+//			go doWhatever(ctx)
+//			for {
+//				select {
+//					case <- workAvailable:
+//						ctx.DoWork()
+//						err := ctx.Errors()
+//						handleErrors(err)
+//					case ...:
+//				}
+//			}
+//		}
+//
+//		func doWhatever(ctx *BatchedContext) {
+//			ctx.Memcpy(...)
+//			// et cetera
+//			// et cetera
+//		}
+//
+// For the moment, BatchedContext only supports a limited number of CUDA Runtime APIs.
+// Feel free to send a pull request with more APIs.
 type BatchedContext struct {
 	Context
 	Device
@@ -106,7 +145,7 @@ type BatchedContext struct {
 	frees   []unsafe.Pointer
 	retVal  chan DevicePtr
 
-	sync.Mutex
+	// sync.Mutex
 }
 
 // NewBatchedContext creates a batched CUDA context.
@@ -122,15 +161,22 @@ func NewBatchedContext(c Context, d Device) *BatchedContext {
 		results:       make([]C.CUresult, workBufLen),
 		frees:         make([]unsafe.Pointer, 0, 2*workBufLen),
 		retVal:        make(chan DevicePtr),
-		// fns:           make([]*C.fnargs_t, workBufLen),
 	}
 }
 
+// enqueue puts a CUDA call into the queue (which is the `work` channel).
+//
+// Here a difference between this package and package `gl` exists.
 func (ctx *BatchedContext) enqueue(c call) (retVal DevicePtr, err error) {
 	if len(ctx.work) >= workBufLen-1 {
 		ctx.workAvailable <- struct{}{}
 	}
 	ctx.work <- c
+
+	// where in package `gl` a signal is opportunistically
+	// sent to the `workAvailable` channel, here it isn't. This is because
+	// the intended use of this package's batch processing capability is
+	// to only process when the queue is full, or when a call is blocking.
 
 	if c.blocking {
 		select {
@@ -149,8 +195,8 @@ func (ctx *BatchedContext) WorkAvailable() <-chan struct{} { return ctx.workAvai
 // DoWork waits for work to come in from the queue. If it's blocking, the entire queue will be processed immediately.
 // Otherwise it will be added to the batch queue.
 func (ctx *BatchedContext) DoWork() {
-	ctx.Lock()
-	defer ctx.Unlock()
+	// ctx.Lock()
+	// defer ctx.Unlock()
 	for {
 		select {
 		case w := <-ctx.work:
@@ -213,21 +259,22 @@ func (ctx *BatchedContext) DoWork() {
 			logf("\t[RET] %v", DevicePtr(retVal.devptr0))
 		}
 
-		// for i, f := range ctx.frees {
-		// 	log.Printf("free %v", f)
-		// 	if f != nil {
-		// 		log.Printf("Actua free %v", f)
-		// 		C.free(f)
-		// 		ctx.frees[i] = nil
-		// 	}
-		// }
-
 		// clear queue
 		ctx.queue = ctx.queue[:0]
 		ctx.fns = ctx.fns[:0]
-		ctx.frees = ctx.frees[:0]
-
 	}
+}
+
+// Cleanup is the cleanup function. It cleans up all the ancilliary allocations that has happened for all the batched calls.
+// This method should be called when the context is done with - otherwise there'd be a lot of leaked memory.
+//
+// The main reason why this method exists is because there is no way to reliably free memory without causing weird issues in the CUDA calls.
+func (ctx *BatchedContext) Cleanup() {
+	for i, f := range ctx.frees {
+		C.free(f)
+		ctx.frees[i] = nil
+	}
+	ctx.frees = ctx.frees[:0]
 }
 
 // Errors returns any errors that may have occured during a batch processing
@@ -244,6 +291,7 @@ func (ctx *BatchedContext) FirstError() error {
 	return nil
 }
 
+// SetCurrent sets the current context. This is usually unnecessary because SetCurrent will be called before batch processing the calls.
 func (ctx *BatchedContext) SetCurrent() {
 	fn := &fnargs{
 		fn:  C.fn_setCurrent,
@@ -253,6 +301,7 @@ func (ctx *BatchedContext) SetCurrent() {
 	ctx.enqueue(c)
 }
 
+// MemAlloc allocates memory. It is a blocking call.
 func (ctx *BatchedContext) MemAlloc(bytesize int64) (retVal DevicePtr, err error) {
 	fn := &fnargs{
 		fn:   C.fn_mallocD,
