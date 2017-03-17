@@ -41,17 +41,17 @@ Memory    :	4233297920 bytes
 Compute   : 5.2
 ```
 
-#Progress #
+# Progress #
 The work to fully represent the CUDA Driver API is a work in progress. At the moment, it is not complete. However, most of the API that are required for GPGPU purposes are complete. None of the texture, surface and graphics related APIs are handled yet. Please feel free to send a pull request.
 
-##Roadmap##
+## Roadmap ##
 
 * [ ] All texture, surface and graphics related API have an equivalent Go prototype.
-* [ ] Batching of common operations (see for example `Device.Attributes(...)`
-* [ ] Generic queueing/batching of API calls (by some definition of generic)
+* [x] Batching of common operations (see for example `Device.Attributes(...)`
+* [x] Generic queueing/batching of API calls (by some definition of generic)
 
 
-#Contributing #
+# Contributing #
 This author loves pull requests from everyone. Here's how to contribute to this package:
 
 1. Fork then clone this repo:
@@ -62,5 +62,5 @@ This author loves pull requests from everyone. Here's how to contribute to this 
 
 We understand that this package is an interfacing package with a third party API. As such, tests may not always be viable. However, please do try to include as much tests as possible.
 
-#Licence#
+# Licence #
 The package is licenced with a MIT-like licence. Ther is one file (`cgoflags.go`) where code is directly copied  and two files (`execution.go` and `memory.go`) where code was partially copied from Arne Vansteenkiste's package, which is unlicenced (but to be safe, just assume a GPL-like licence, as [mumax/3](https://github.com/mumax/3) is licenced under GPL).
