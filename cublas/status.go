@@ -3,6 +3,7 @@ package cublas
 // #include <cublas_v2.h>
 import "C"
 
+// Status is the cublas status.
 type Status int
 
 func (err Status) Error() string  { return err.String() }

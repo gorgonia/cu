@@ -12,9 +12,19 @@ var (
 	_ blas.Complex128 = &Implementation{}
 )
 
+// Implementation is a BLAS implementation that fulfils the gonum/blas interface
 type Implementation struct {
 	h C.cublasHandle_t
 	e error
+}
+
+// NewImplementation creates a new implementation.
+func NewImplementation() *Implementation {
+	var handle C.cublasHandle_t
+	C.cublasCreate(&handle)
+	return &Implementation{
+		h: handle,
+	}
 }
 
 // Err returns the error if there is any
