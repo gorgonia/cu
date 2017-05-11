@@ -31,7 +31,6 @@ func (mem DevicePtr) MemSize() uintptr {
 	if err != nil {
 		log.Printf("MEMSIZE ERR %v", err)
 	}
-	log.Printf("MEMSIZE %v", size)
 	return uintptr(size)
 }
 

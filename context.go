@@ -3,6 +3,7 @@ package cu
 // #include <cuda.h>
 import "C"
 import (
+	"fmt"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -10,6 +11,8 @@ import (
 
 // Context is a CUDA context
 type Context uintptr
+
+func (ctx Context) String() string { return fmt.Sprintf("0x%x", uintptr(ctx)) }
 
 // DestroyContext destroys the context. It returns an error if it wasn't properly destroyed
 //

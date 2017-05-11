@@ -73,11 +73,11 @@ func (fn *fnargs) String() string {
 	case C.fn_memfreeH:
 		fmt.Fprintf(&buf, "mem: 0x%x", fn.devptr0)
 	case C.fn_memcpy:
-		fmt.Fprintf(&buf, "dest: 0x%x, src: 0x%x", fn.devptr0, fn.devptr1)
+		fmt.Fprintf(&buf, "dest: 0x%x, src: 0x%x, size: %v", fn.devptr0, fn.devptr1, fn.size)
 	case C.fn_memcpyHtoD:
-		fmt.Fprintf(&buf, "dest: 0x%x, src: 0x%x", fn.devptr0, fn.ptr0)
+		fmt.Fprintf(&buf, "dest: 0x%x, src: 0x%x, size: %v", fn.devptr0, fn.ptr0, fn.size)
 	case C.fn_memcpyDtoH:
-		fmt.Fprintf(&buf, "dest: 0x%x, src: 0x%x", fn.ptr0, fn.devptr0)
+		fmt.Fprintf(&buf, "dest: 0x%x, src: 0x%x, size: %v", fn.ptr0, fn.devptr0, fn.size)
 	case C.fn_memcpyDtoD:
 
 	case C.fn_memcpyHtoDAsync:
@@ -87,7 +87,7 @@ func (fn *fnargs) String() string {
 	case C.fn_memcpyDtoDAsync:
 
 	case C.fn_launchKernel:
-		fmt.Fprintf(&buf, "fn: 0x%v, KernelParams: %v", fn.f, fn.kernelParams)
+		fmt.Fprintf(&buf, "KernelParams: %v", fn.kernelParams)
 	case C.fn_sync:
 		fmt.Fprintf(&buf, "Current Context %d", fn.ctx)
 	case C.fn_launchAndSync:
@@ -312,6 +312,9 @@ func (ctx *BatchedContext) MemAlloc(bytesize int64) (retVal DevicePtr, err error
 }
 
 func (ctx *BatchedContext) Memcpy(dst, src DevicePtr, byteCount int64) {
+	// pc, _, _, _ := runtime.Caller(1)
+	// logf("Memcpy %v %v| called by %v", dst, src, runtime.FuncForPC(pc).Name())
+
 	fn := &fnargs{
 		fn:      C.fn_memcpy,
 		devptr0: C.CUdeviceptr(dst),
@@ -323,6 +326,8 @@ func (ctx *BatchedContext) Memcpy(dst, src DevicePtr, byteCount int64) {
 }
 
 func (ctx *BatchedContext) MemcpyHtoD(dst DevicePtr, src unsafe.Pointer, byteCount int64) {
+	// logf("Memcpy H2D: 0x%v, %v", dst, src)
+	// log.Printf("Memcpy H2D: 0x%v, %v", dst, src)
 	fn := &fnargs{
 		fn:      C.fn_memcpyHtoD,
 		devptr0: C.CUdeviceptr(dst),
@@ -334,6 +339,9 @@ func (ctx *BatchedContext) MemcpyHtoD(dst DevicePtr, src unsafe.Pointer, byteCou
 }
 
 func (ctx *BatchedContext) MemcpyDtoH(dst unsafe.Pointer, src DevicePtr, byteCount int64) {
+	// pc, _, _, _ := runtime.Caller(2)
+	// log.Printf("MemcpyD2H %v %v| called by %v", dst, src, runtime.FuncForPC(pc).Name())
+	// logf("Memcpy D2H: %v 0x%v", dst, src)
 	fn := &fnargs{
 		fn:      C.fn_memcpyDtoH,
 		devptr0: C.CUdeviceptr(src),
@@ -345,8 +353,8 @@ func (ctx *BatchedContext) MemcpyDtoH(dst unsafe.Pointer, src DevicePtr, byteCou
 }
 
 func (ctx *BatchedContext) MemFree(mem DevicePtr) {
-	pc, _, _, _ := runtime.Caller(1)
-	logf("MEMFREE  %v CALLED BY %v", mem, runtime.FuncForPC(pc).Name())
+	// pc, _, _, _ := runtime.Caller(1)
+	// logf("MEMFREE  %v CALLED BY %v", mem, runtime.FuncForPC(pc).Name())
 	fn := &fnargs{
 		fn:      C.fn_memfreeD,
 		devptr0: C.CUdeviceptr(mem),

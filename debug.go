@@ -67,3 +67,7 @@ func AverageQueueLength() int { return 0 }
 func addBlockingCallers() {}
 
 func BlockingCallers() map[string]int { return nil }
+
+func init() {
+	logf("DEBUG MODE FOR PACKAGE cu")
+}
