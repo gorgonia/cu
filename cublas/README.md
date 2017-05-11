@@ -11,3 +11,5 @@ The [CUDA Toolkit 8.0](https://developer.nvidia.com/cuda-toolkit) is required. L
 # How This Package Is Developed #
 
 The majority of the CUDA interface was generated with the `cublasgen` program. The `cublasgen` program was adapted from the `cgo` generator from the `gonum/blas` package.
+
+The `cudagen.h` file was generated based off the propietary header from nvidia, then further edited (several variable names were renamed) to match the cblas interface in order to quickly generate the API.
