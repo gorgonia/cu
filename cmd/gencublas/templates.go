@@ -37,11 +37,11 @@ type drotmParams struct {
 	h    [4]float64
 }
 
-func (impl *Implementation) Srotg(a float32, b float32) (c float32, s float32, r float32, z float32) {
+func (impl *Standalone) Srotg(a float32, b float32) (c float32, s float32, r float32, z float32) {
 	impl.e = status(C.cublasSrotg(C.cublasHandle_t(impl.h), (*C.float)(&a), (*C.float)(&b), (*C.float)(&c), (*C.float)(&s)))
 	return c, s, a, b
 }
-func (impl *Implementation) Srotmg(d1 float32, d2 float32, b1 float32, b2 float32) (p blas.SrotmParams, rd1 float32, rd2 float32, rb1 float32) {
+func (impl *Standalone) Srotmg(d1 float32, d2 float32, b1 float32, b2 float32) (p blas.SrotmParams, rd1 float32, rd2 float32, rb1 float32) {
 	if impl.e != nil {
 			return
 	}
@@ -50,7 +50,7 @@ func (impl *Implementation) Srotmg(d1 float32, d2 float32, b1 float32, b2 float3
 	return blas.SrotmParams{Flag: blas.Flag(pi.flag), H: pi.h}, d1, d2, b1
 }
 
-func (impl *Implementation) Srotm(n int, x []float32, incX int, y []float32, incY int, p blas.SrotmParams) {
+func (impl *Standalone) Srotm(n int, x []float32, incX int, y []float32, incY int, p blas.SrotmParams) {
 	if impl.e != nil {
 			return
 	}
@@ -83,7 +83,7 @@ func (impl *Implementation) Srotm(n int, x []float32, incX int, y []float32, inc
 	impl.e = status(C.cublasSrotm(C.cublasHandle_t(impl.h), C.int(n), (*C.float)(&x[0]), C.int(incX), (*C.float)(&y[0]), C.int(incY), (*C.float)(unsafe.Pointer(&pi))))
 }
 
-func (impl *Implementation) Drotg(a float64, b float64) (c float64, s float64, r float64, z float64) {
+func (impl *Standalone) Drotg(a float64, b float64) (c float64, s float64, r float64, z float64) {
 	if impl.e != nil {
 			return
 	}
@@ -91,7 +91,7 @@ func (impl *Implementation) Drotg(a float64, b float64) (c float64, s float64, r
 	return c, s, a, b
 }
 
-func (impl *Implementation) Drotmg(d1 float64, d2 float64, b1 float64, b2 float64) (p blas.DrotmParams, rd1 float64, rd2 float64, rb1 float64) {
+func (impl *Standalone) Drotmg(d1 float64, d2 float64, b1 float64, b2 float64) (p blas.DrotmParams, rd1 float64, rd2 float64, rb1 float64) {
 	if impl.e != nil {
 			return
 	}
@@ -100,7 +100,7 @@ func (impl *Implementation) Drotmg(d1 float64, d2 float64, b1 float64, b2 float6
 	return blas.DrotmParams{Flag: blas.Flag(pi.flag), H: pi.h}, d1, d2, b1
 }
 
-func (impl *Implementation) Drotm(n int, x []float64, incX int, y []float64, incY int, p blas.DrotmParams) {
+func (impl *Standalone) Drotm(n int, x []float64, incX int, y []float64, incY int, p blas.DrotmParams) {
 	if impl.e != nil {
 			return
 	}
@@ -132,7 +132,7 @@ func (impl *Implementation) Drotm(n int, x []float64, incX int, y []float64, inc
 	impl.e = status(C.cublasDrotm(C.cublasHandle_t(impl.h), C.int(n), (*C.double)(&x[0]), C.int(incX), (*C.double)(&y[0]), C.int(incY), (*C.double)(unsafe.Pointer(&pi))))
 }
 
-func (impl *Implementation) Cdotu(n int, x []complex64, incX int, y []complex64, incY int) (dotu complex64) {
+func (impl *Standalone) Cdotu(n int, x []complex64, incX int, y []complex64, incY int) (dotu complex64) {
 	if impl.e != nil {
 			return
 	}
@@ -157,7 +157,7 @@ func (impl *Implementation) Cdotu(n int, x []complex64, incX int, y []complex64,
 	impl.e = status(C.cublasCdotu(C.cublasHandle_t(impl.h), C.int(n), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuComplex)(unsafe.Pointer(&y[0])), C.int(incY), (*C.cuComplex)(unsafe.Pointer(&dotu))))
 	return dotu
 }
-func (impl *Implementation) Cdotc(n int, x []complex64, incX int, y []complex64, incY int) (dotc complex64) {
+func (impl *Standalone) Cdotc(n int, x []complex64, incX int, y []complex64, incY int) (dotc complex64) {
 	if impl.e != nil {
 			return
 	}
@@ -183,7 +183,7 @@ func (impl *Implementation) Cdotc(n int, x []complex64, incX int, y []complex64,
 	impl.e = status(C.cublasCdotc(C.cublasHandle_t(impl.h), C.int(n), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuComplex)(unsafe.Pointer(&y[0])), C.int(incY), (*C.cuComplex)(unsafe.Pointer(&dotc))))
 	return dotc
 }
-func (impl *Implementation) Zdotu(n int, x []complex128, incX int, y []complex128, incY int) (dotu complex128) {
+func (impl *Standalone) Zdotu(n int, x []complex128, incX int, y []complex128, incY int) (dotu complex128) {
 	if impl.e != nil {
 			return
 	}
@@ -209,7 +209,7 @@ func (impl *Implementation) Zdotu(n int, x []complex128, incX int, y []complex12
 	impl.e = status(C.cublasZdotu(C.cublasHandle_t(impl.h), C.int(n), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuDoubleComplex)(unsafe.Pointer(&y[0])), C.int(incY), (*C.cuDoubleComplex)(unsafe.Pointer(&dotu))))
 	return dotu
 }
-func (impl *Implementation) Zdotc(n int, x []complex128, incX int, y []complex128, incY int) (dotc complex128) {
+func (impl *Standalone) Zdotc(n int, x []complex128, incX int, y []complex128, incY int) (dotc complex128) {
 	if impl.e != nil {
 			return
 	}
@@ -235,27 +235,27 @@ func (impl *Implementation) Zdotc(n int, x []complex128, incX int, y []complex12
 	return dotc
 }
 
-func (impl *Implementation) Sdsdot(n int, alpha float32, x []float32, incX int, y []float32, incY int) float32 {
+func (impl *Standalone) Sdsdot(n int, alpha float32, x []float32, incX int, y []float32, incY int) float32 {
 	panic("Unimplemented in cuBLAS. Please contact nvidia.")
 }
 
-func (impl *Implementation) Dsdot(n int, x []float32, incX int, y []float32, incY int) float64 {
+func (impl *Standalone) Dsdot(n int, x []float32, incX int, y []float32, incY int) float64 {
 	panic("Unimplemented in cuBLAS. Please contact nvidia.")
 }
 
-func (impl *Implementation) Strmm(s blas.Side, ul blas.Uplo, tA blas.Transpose, d blas.Diag, m, n int, alpha float32, a []float32, lda int, b []float32, ldb int){
+func (impl *Standalone) Strmm(s blas.Side, ul blas.Uplo, tA blas.Transpose, d blas.Diag, m, n int, alpha float32, a []float32, lda int, b []float32, ldb int){
 	panic("Unimplemented in cuBLAS. Please contact nvidia.")	
 }
 
-func (impl *Implementation) Dtrmm(s blas.Side, ul blas.Uplo, tA blas.Transpose, d blas.Diag, m, n int, alpha float64, a []float64, lda int, b []float64, ldb int){
+func (impl *Standalone) Dtrmm(s blas.Side, ul blas.Uplo, tA blas.Transpose, d blas.Diag, m, n int, alpha float64, a []float64, lda int, b []float64, ldb int){
 	panic("Unimplemented in cuBLAS. Please contact nvidia.")	
 }
 
-func (impl *Implementation) Ctrmm(s blas.Side, ul blas.Uplo, tA blas.Transpose, d blas.Diag, m, n int, alpha complex64, a []complex64, lda int, b []complex64, ldb int){
+func (impl *Standalone) Ctrmm(s blas.Side, ul blas.Uplo, tA blas.Transpose, d blas.Diag, m, n int, alpha complex64, a []complex64, lda int, b []complex64, ldb int){
 	panic("Unimplemented in cuBLAS. Please contact nvidia.")	
 }
 
-func (impl *Implementation) Ztrmm(s blas.Side, ul blas.Uplo, tA blas.Transpose, d blas.Diag, m, n int, alpha complex128, a []complex128, lda int, b []complex128, ldb int){
+func (impl *Standalone) Ztrmm(s blas.Side, ul blas.Uplo, tA blas.Transpose, d blas.Diag, m, n int, alpha complex128, a []complex128, lda int, b []complex128, ldb int){
 	panic("Unimplemented in cuBLAS. Please contact nvidia.")	
 }
 
@@ -265,10 +265,10 @@ func (impl *Implementation) Ztrmm(s blas.Side, ul blas.Uplo, tA blas.Transpose, 
 
 // TODO: complex scale
 const complexScales = `
-func (impl *Implementation) Cscal(n int, alpha complex64, x []complex64, incX int) {}
-func (impl *Implementation) Zscal(n int, alpha complex64, x []complex128, incX int){}
-func (impl *Implementation) Csscal(n int, alpha float32, x []complex64, incX int) {}
-func (impl *Implementation) Zsscal(n int, alpha float64, x []complex128, incX int){}
+func (impl *Standalone) Cscal(n int, alpha complex64, x []complex64, incX int) {}
+func (impl *Standalone) Zscal(n int, alpha complex64, x []complex128, incX int){}
+func (impl *Standalone) Csscal(n int, alpha float32, x []complex64, incX int) {}
+func (impl *Standalone) Zsscal(n int, alpha float64, x []complex128, incX int){}
 `
 
 const amaxRaw = `

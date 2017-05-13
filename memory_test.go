@@ -334,7 +334,7 @@ func BenchmarkMemcpy(b *testing.B) {
 
 	var dev1, dev2 DevicePtr
 	var err error
-	var ctx Context
+	var ctx CUContext
 	if ctx, err = Device(0).MakeContext(SchedAuto); err != nil {
 		b.Fatal(err)
 	}

@@ -4,12 +4,21 @@ package cublas
 import "C"
 import "github.com/gonum/blas"
 
-// Type order is used to specify the matrix storage format. We still interact with
+// Order is used to specify the matrix storage format. We still interact with
 // an API that allows client calls to specify order, so this is here to document that fact.
-type order int
+type Order byte
 
 const (
-	rowMajor order = 101 + iota
+	RowMajor Order = iota // Row Major
+	ColMajor              // Column Major (cublas assumes all matrices be stored in this order)
+)
+
+// PointerMode
+type PointerMode byte
+
+const (
+	Host PointerMode = iota
+	Device
 )
 
 const (

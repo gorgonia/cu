@@ -9,7 +9,7 @@ import (
 func TestBatchContext(t *testing.T) {
 	var err error
 	var dev Device
-	var ctx Context
+	var ctx CUContext
 	var mod Module
 	var fn Function
 
@@ -97,7 +97,7 @@ loop:
 func TestLargeBatch(t *testing.T) {
 	var err error
 	var dev Device
-	var ctx Context
+	var ctx CUContext
 	var mod Module
 	var fn Function
 
@@ -210,7 +210,7 @@ func BenchmarkNoBatching(bench *testing.B) {
 	defer runtime.UnlockOSThread()
 
 	var err error
-	var ctx Context
+	var ctx CUContext
 	var mod Module
 	var fn Function
 
@@ -289,7 +289,7 @@ func BenchmarkBatching(bench *testing.B) {
 
 	var err error
 	var dev Device
-	var ctx Context
+	var ctx CUContext
 	var mod Module
 	var fn Function
 

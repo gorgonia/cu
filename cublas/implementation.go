@@ -1,31 +1,41 @@
 package cublas
 
-// #include <cublas_v2.h>
 import "C"
-import "github.com/gonum/blas"
+import (
+	"runtime"
 
-// Type check assertions:
-var (
-	_ blas.Float32    = &Implementation{}
-	_ blas.Float64    = &Implementation{}
-	_ blas.Complex64  = &Implementation{}
-	_ blas.Complex128 = &Implementation{}
+	"github.com/chewxy/cu"
+	"github.com/gonum/blas"
 )
 
-// Implementation is a BLAS implementation that fulfils the gonum/blas interface
-type Implementation struct {
+var (
+	_ blas.Float32    = &Standalone{}
+	_ blas.Float64    = &Standalone{}
+	_ blas.Complex64  = &Standalone{}
+	_ blas.Complex128 = &Standalone{}
+)
+
+type Standalone struct {
+	cu.Context
 	h C.cublasHandle_t
+
+	o Order
+	m PointerMode
 	e error
 }
 
-// NewImplementation creates a new implementation.
-func NewImplementation() *Implementation {
+func NewImplementation(opts ...ConsOpt) *Standalone {
 	var handle C.cublasHandle_t
 	C.cublasCreate(&handle)
-	return &Implementation{
+	impl := &Standalone{
 		h: handle,
 	}
+	runtime.SetFinalizer(impl, finalizeImpl)
+	return impl
 }
 
-// Err returns the error if there is any
-func (impl *Implementation) Err() error { return impl.e }
+func (impl *Standalone) Err() error { return impl.e }
+
+func finalizeImpl(impl *Standalone) {
+	C.cublasDestroy(&impl.h)
+}

@@ -133,7 +133,7 @@ func (fn *fnargs) c() C.uintptr_t {
 // For the moment, BatchedContext only supports a limited number of CUDA Runtime APIs.
 // Feel free to send a pull request with more APIs.
 type BatchedContext struct {
-	Context
+	CUContext
 	Device
 
 	workAvailable chan struct{} // an empty struct is sent down workAvailable when there is work
@@ -149,10 +149,10 @@ type BatchedContext struct {
 }
 
 // NewBatchedContext creates a batched CUDA context.
-func NewBatchedContext(c Context, d Device) *BatchedContext {
+func NewBatchedContext(c CUContext, d Device) *BatchedContext {
 	return &BatchedContext{
-		Context: c,
-		Device:  d,
+		CUContext: c,
+		Device:    d,
 
 		workAvailable: make(chan struct{}, 1),
 		work:          make(chan call, workBufLen),
@@ -232,7 +232,7 @@ func (ctx *BatchedContext) DoWork() {
 		addQueueLength(len(ctx.queue))
 		addBlockingCallers()
 
-		cctx := C.CUcontext(unsafe.Pointer(uintptr(ctx.Context)))
+		cctx := C.CUcontext(unsafe.Pointer(uintptr(ctx.CUContext)))
 		ctx.results = ctx.results[:cap(ctx.results)]                         // make sure of the maximum availability for ctx.results
 		C.process(cctx, &ctx.fns[0], &ctx.results[0], C.int(len(ctx.queue))) // process the queue
 		ctx.results = ctx.results[:len(ctx.queue)]                           // then  truncate it to the len of queue for reporting purposes
@@ -252,6 +252,8 @@ func (ctx *BatchedContext) DoWork() {
 				ctx.retVal <- DevicePtr(retVal.devptr0)
 			case C.fn_mallocH:
 			case C.fn_mallocManaged:
+				retVal = (*fnargs)(unsafe.Pointer(uintptr(ctx.fns[len(ctx.fns)-1])))
+				ctx.retVal <- DevicePtr(retVal.devptr0)
 			case C.fn_allocAndCopy:
 				retVal = (*fnargs)(unsafe.Pointer(uintptr(ctx.fns[len(ctx.fns)-1])))
 				ctx.retVal <- DevicePtr(retVal.devptr0)
@@ -295,7 +297,7 @@ func (ctx *BatchedContext) FirstError() error {
 func (ctx *BatchedContext) SetCurrent() {
 	fn := &fnargs{
 		fn:  C.fn_setCurrent,
-		ctx: C.CUcontext(unsafe.Pointer(uintptr(ctx.Context))),
+		ctx: C.CUcontext(unsafe.Pointer(uintptr(ctx.CUContext))),
 	}
 	c := call{fn, false}
 	ctx.enqueue(c)
@@ -305,6 +307,15 @@ func (ctx *BatchedContext) SetCurrent() {
 func (ctx *BatchedContext) MemAlloc(bytesize int64) (retVal DevicePtr, err error) {
 	fn := &fnargs{
 		fn:   C.fn_mallocD,
+		size: C.size_t(bytesize),
+	}
+	c := call{fn, true}
+	return ctx.enqueue(c)
+}
+
+func (ctx *BatchedContext) MemAllocManaged(bytesize int64, flags MemAttachFlags) (retVal DevicePtr, err error) {
+	fn := &fnargs{
+		fn:   C.fn_mallocManaged,
 		size: C.size_t(bytesize),
 	}
 	c := call{fn, true}

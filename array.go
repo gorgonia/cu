@@ -2,7 +2,11 @@ package cu
 
 // #include <cuda.h>
 import "C"
-import "unsafe"
+import (
+	"unsafe"
+
+	"github.com/pkg/errors"
+)
 
 // Format is the type of array (think array types)
 type Format byte
@@ -18,10 +22,11 @@ const (
 	Float32 Format = C.CU_AD_FORMAT_FLOAT          // 32-bit floating point
 )
 
-// Array is the pointer to a CUDA array. The name is a bit of a misnomer, as it would lead one to imply that it's rangeable. It's not.
+// Array is the pointer to a CUDA array. The name is a bit of a misnomer,
+// as it would lead one to imply that it's rangeable. It's not.
 type Array uintptr
 
-func (arr Array) cuda() C.CUarray {
+func (arr Array) c() C.CUarray {
 	return *(*C.CUarray)(unsafe.Pointer(uintptr(arr)))
 }
 
@@ -128,4 +133,29 @@ func goArrayDesc(desc *C.CUDA_ARRAY_DESCRIPTOR) ArrayDesc {
 		Format:      Format(ad.Format),
 		NumChannels: uint(ad.NumChannels),
 	}
+}
+
+// Descriptor3 get a 3D CUDA array descriptor
+func (arr Array) Descriptor3() (Array3Desc, error) {
+	hArray := arr.c()
+	var desc C.CUDA_ARRAY3D_DESCRIPTOR
+	if err := result(C.cuArray3DGetDescriptor(&desc, hArray)); err != nil {
+		return Array3Desc{}, errors.Wrapf(err, "Array3DGetDescriptor")
+	}
+	return goArray3Desc(&desc), nil
+}
+
+// Descriptor gets a 1D or 2D CUDA array descriptor
+func (arr Array) Descriptor() (ArrayDesc, error) {
+	hArray := arr.c()
+	var desc C.CUDA_ARRAY_DESCRIPTOR
+	if err := result(C.cuArrayGetDescriptor(&desc, hArray)); err != nil {
+		return ArrayDesc{}, errors.Wrapf(err, "ArrayGetDescriptor")
+	}
+	return goArrayDesc(&desc), nil
+
+}
+
+func cuArrayToArray(arr *C.CUarray) Array {
+	return Array(uintptr(unsafe.Pointer(arr)))
 }

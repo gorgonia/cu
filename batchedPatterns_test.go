@@ -8,7 +8,7 @@ import (
 
 func TestAttributes(t *testing.T) {
 	var dev Device
-	var ctx Context
+	var ctx CUContext
 	var err error
 
 	if dev, ctx, err = testSetup(); err != nil {
@@ -51,7 +51,7 @@ func TestAttributes(t *testing.T) {
 
 func TestLaunchAndSync(t *testing.T) {
 	var err error
-	var ctx Context
+	var ctx CUContext
 	var mod Module
 	var fn Function
 
@@ -128,7 +128,7 @@ func TestLaunchAndSync(t *testing.T) {
 
 func TestAllocAndCopy(t *testing.T) {
 	var err error
-	var ctx Context
+	var ctx CUContext
 	var mem DevicePtr
 
 	if _, ctx, err = testSetup(); err != nil {

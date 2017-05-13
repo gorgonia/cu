@@ -57,7 +57,7 @@ CUresult processFn(fnargs_t* args){
 		abort();
 		break;
 	case fn_mallocManaged:
-		abort();
+		ret = cuMemAllocManaged(&args->devPtr0, args->size, CU_MEM_ATTACH_GLOBAL);
 		break;
 	case fn_memfreeD:
 		// fprintf(stderr, "memfree %p\n", args->devPtr0);
