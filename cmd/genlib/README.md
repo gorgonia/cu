@@ -29,10 +29,17 @@ The first line preprocesses all the macros, leaving a singular header file. The 
 * `QueryEvent`
 * `FunctionAttribute`
 * `DeviceAttribute`
-* `SetFunctionSharedMemConfig` 
+* `SetFunctionSharedMemConfig`
+* `SetTexRefFlags`
 * `TexRefFlags`
 * `StreamFlags`
 * `TexRefSetArray`
 * `SurfRefSetArray`
 * `SetBorderColor`
 * `BorderColor`
+* `NumDevices` - deleted
+* `TotalMem` - deleted
+* `DeviceAttribute` - deleted
+* `GetDevice` - deleted
+
+## Ctx related methods - manually written ##

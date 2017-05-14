@@ -52,7 +52,7 @@ func main() {
 	}
 
 	// generateAPIFile(gss)
-	generateContextFile(gss)
+	// generateContextFile(gss)
 
 	var err error
 	filename := apiFile

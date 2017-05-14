@@ -89,9 +89,9 @@ func writeContextMethodBody(buf io.Writer, sig *GoSignature) {
 	fmt.Fprintf(buf, "}\n")
 
 	if len(sig.RetVals) == 0 {
-		buf.Write([]byte("return ctx.Do(f) "))
+		buf.Write([]byte("ctx.err = ctx.Do(f) "))
 	} else {
-		fmt.Fprintf(buf, "if err = ctx.Do(f); err != nil {\n err = errors.Wrapf(err, \"%s\")\n return }\n", sig.Name)
+		fmt.Fprintf(buf, "if err = ctx.Do(f); err != nil {\n err = errors.Wrap(err, \"%s\")\n }\n", sig.Name)
 
 	}
 
@@ -163,7 +163,8 @@ func writeContextSig(buf io.Writer, sig *GoSignature) {
 				fmt.Fprintf(buf, ", ")
 			}
 		}
+		buf.Write([]byte("err error"))
 	}
 
-	buf.Write([]byte("err error)"))
+	buf.Write([]byte(")"))
 }

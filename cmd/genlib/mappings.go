@@ -39,8 +39,9 @@ var ignoredFunctions = map[string]struct{}{
 	"cuEventDestroy": empty,
 
 	// stream stuff
-	"cuStreamCreate":  empty,
-	"cuStreamDestroy": empty,
+	"cuStreamCreate":             empty,
+	"cuStreamCreateWithPriority": empty,
+	"cuStreamDestroy":            empty,
 
 	// arrays
 	"cuArrayCreate":   empty,
