@@ -15,9 +15,10 @@ var pkgContext CUContext
 type Context interface {
 	// Operational stuff
 	Init()
-	Err() error
+	Error() error
 	LockAndRun(waitOn chan struct{})
 	Do(fn func() error) error
+	Work() chan func() error
 
 	// actual methods
 	Address(hTexRef TexRef) (pdptr DevicePtr, err error)
@@ -190,7 +191,10 @@ func (ctx *Ctx) Do(fn func() error) error {
 	return <-ctx.errChan
 }
 
-func (ctx *Ctx) Err() error { return ctx.err }
+func (ctx *Ctx) Error() error { return ctx.err }
+
+// Work returns the channel where work will be passed in. In most cases you don't need this. Use LockAndRun instead
+func (ctx *Ctx) Work() chan func() error { return ctx.work }
 
 func (ctx *Ctx) SetCurrent() error {
 	f := func() (err error) {
@@ -200,6 +204,18 @@ func (ctx *Ctx) SetCurrent() error {
 		return
 	}
 	return ctx.Do(f)
+}
+
+func (ctx *Ctx) LockAndRun(waitOn chan struct{}) {
+	runtime.LockOSThread()
+	ctx.locked = true
+	close(waitOn)
+
+	for w := range ctx.work {
+		ctx.errChan <- w()
+	}
+	runtime.UnlockOSThread()
+	ctx.locked = false
 }
 
 func (ctx *Ctx) init() {
@@ -226,18 +242,6 @@ func (ctx *Ctx) init() {
 	contextLock.Lock()
 	pkgContext = cuctx
 	contextLock.Unlock()
-}
-
-func (ctx *Ctx) LockAndRun(waitOn chan struct{}) {
-	runtime.LockOSThread()
-	ctx.locked = true
-	close(waitOn)
-
-	for w := range ctx.work {
-		ctx.errChan <- w()
-	}
-	runtime.UnlockOSThread()
-	ctx.locked = false
 }
 
 func finalizeCtx(ctx *Ctx) {

@@ -133,7 +133,7 @@ func (fn *fnargs) c() C.uintptr_t {
 // For the moment, BatchedContext only supports a limited number of CUDA Runtime APIs.
 // Feel free to send a pull request with more APIs.
 type BatchedContext struct {
-	CUContext
+	Context
 	Device
 
 	workAvailable chan struct{} // an empty struct is sent down workAvailable when there is work
@@ -149,10 +149,10 @@ type BatchedContext struct {
 }
 
 // NewBatchedContext creates a batched CUDA context.
-func NewBatchedContext(c CUContext, d Device) *BatchedContext {
+func NewBatchedContext(c Context, d Device) *BatchedContext {
 	return &BatchedContext{
-		CUContext: c,
-		Device:    d,
+		Context: c,
+		Device:  d,
 
 		workAvailable: make(chan struct{}, 1),
 		work:          make(chan call, workBufLen),
