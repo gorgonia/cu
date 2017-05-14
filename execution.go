@@ -7,34 +7,11 @@ import "unsafe"
 // Function represents a CUDA function
 type Function uintptr
 
-func (f Function) c() C.CUfunction {
+func (fn Function) c() C.CUfunction {
 	return C.CUfunction(unsafe.Pointer(uintptr(fn)))
 }
 
 const pointerSize = 8 // sorry, 64 bits only.
-
-// Attribute returns the attribute information about a Function
-func (fn Function) Attribute(attr FunctionAttribute) (int, error) {
-	var pi C.int
-	f := fn.c()
-	a := C.CUfunction_attribute(attr)
-	if err := result(C.cuFuncGetAttribute(&pi, a, f)); err != nil {
-		return 0, err
-	}
-	return int(pi), nil
-}
-
-// SetCacheConfig sets the preferred cache configuration for a device function
-func (fn Function) SetCacheConfig(conf FuncCacheConfig) error {
-	f := fn.c()
-	return result(C.cuFuncSetCacheConfig(f, C.CUfunc_cache(conf)))
-}
-
-// SetSharedMemConfig sets the shared memory configuration for a device function
-func (fn Function) SetSharedMemConfig(conf SharedConfig) error {
-	f := fn.c()
-	return result(C.cuFuncSetSharedMemConfig(f, C.CUsharedconfig(conf)))
-}
 
 // LaunchKernel launches a CUDA function
 func (fn Function) LaunchKernel(gridDimX, gridDimY, gridDimZ int, blockDimX, blockDimY, blockDimZ int, sharedMemBytes int, stream Stream, kernelParams []unsafe.Pointer) error {

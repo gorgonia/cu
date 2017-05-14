@@ -2,17 +2,13 @@ package cu
 
 // #include <cuda.h>
 import "C"
-import (
-	"unsafe"
-
-	"github.com/pkg/errors"
-)
+import "unsafe"
 
 // Array is the pointer to a CUDA array. The name is a bit of a misnomer,
 // as it would lead one to imply that it's rangeable. It's not.
 type Array uintptr
 
-func cuArrayToArray(arr *C.CUarray) Array {
+func goArray(arr *C.CUarray) Array {
 	return Array(uintptr(unsafe.Pointer(arr)))
 }
 
@@ -125,26 +121,26 @@ func goArrayDesc(desc *C.CUDA_ARRAY_DESCRIPTOR) ArrayDesc {
 	}
 }
 
-// Descriptor3 get a 3D CUDA array descriptor
-func (arr Array) Descriptor3() (Array3Desc, error) {
-	hArray := arr.c()
-	var desc C.CUDA_ARRAY3D_DESCRIPTOR
-	if err := result(C.cuArray3DGetDescriptor(&desc, hArray)); err != nil {
-		return Array3Desc{}, errors.Wrapf(err, "Array3DGetDescriptor")
-	}
-	return goArray3Desc(&desc), nil
-}
+// // Descriptor3 get a 3D CUDA array descriptor
+// func (arr Array) Descriptor3() (Array3Desc, error) {
+// 	hArray := arr.c()
+// 	var desc C.CUDA_ARRAY3D_DESCRIPTOR
+// 	if err := result(C.cuArray3DGetDescriptor(&desc, hArray)); err != nil {
+// 		return Array3Desc{}, errors.Wrapf(err, "Array3DGetDescriptor")
+// 	}
+// 	return goArray3Desc(&desc), nil
+// }
 
-// Descriptor gets a 1D or 2D CUDA array descriptor
-func (arr Array) Descriptor() (ArrayDesc, error) {
-	hArray := arr.c()
-	var desc C.CUDA_ARRAY_DESCRIPTOR
-	if err := result(C.cuArrayGetDescriptor(&desc, hArray)); err != nil {
-		return ArrayDesc{}, errors.Wrapf(err, "ArrayGetDescriptor")
-	}
-	return goArrayDesc(&desc), nil
+// // Descriptor gets a 1D or 2D CUDA array descriptor
+// func (arr Array) Descriptor() (ArrayDesc, error) {
+// 	hArray := arr.c()
+// 	var desc C.CUDA_ARRAY_DESCRIPTOR
+// 	if err := result(C.cuArrayGetDescriptor(&desc, hArray)); err != nil {
+// 		return ArrayDesc{}, errors.Wrapf(err, "ArrayGetDescriptor")
+// 	}
+// 	return goArrayDesc(&desc), nil
 
-}
+// }
 
 // Memcpy2dParam is a struct representing the params of a 2D memory copy instruction.
 // To aid usability, the fields are ordered as per the documentation (the actual struct is laid out differently).
@@ -152,14 +148,14 @@ type Memcpy2dParam struct {
 	Height        int64
 	WidthInBytes  int64
 	DstArray      Array
-	DstDevPtr     DevicePtr
+	DstDevice     DevicePtr
 	DstHost       unsafe.Pointer
 	DstMemoryType MemoryType
 	DstPitch      int64
 	DstXInBytes   int64
 	DstY          int64
 	SrcArray      Array
-	SrcDevPtr     DevicePtr
+	SrcDevice     DevicePtr
 	SrcHost       unsafe.Pointer
 	SrcMemoryType MemoryType
 	SrcPitch      int64
@@ -173,7 +169,7 @@ func (cpy Memcpy2dParam) c() *C.CUDA_MEMCPY2D {
 		SrcY:          C.size_t(cpy.SrcY),
 		SrcMemoryType: C.CUmemorytype(cpy.SrcMemoryType),
 		SrcHost:       cpy.SrcHost,
-		SrcDevice:     C.CUdevice(cpy.SrcDevice),
+		SrcDevice:     C.CUdeviceptr(cpy.SrcDevice),
 		SrcArray:      cpy.SrcArray.c(),
 		SrcPitch:      C.size_t(cpy.SrcPitch),
 		DstXInBytes:   C.size_t(cpy.DstXInBytes),
@@ -395,4 +391,20 @@ type cudaMemcpy3dPeer struct {
 
 func (cpy *cudaMemcpy3dPeer) c() *C.CUDA_MEMCPY3D_PEER {
 	return (*C.CUDA_MEMCPY3D_PEER)(unsafe.Pointer(cpy))
+}
+
+func MakeArray(pAllocateArray ArrayDesc) (pHandle Array, err error) {
+	var CpHandle C.CUarray
+	CpAllocateArray := pAllocateArray.c()
+	err = result(C.cuArrayCreate(&CpHandle, CpAllocateArray))
+	pHandle = goArray(&CpHandle)
+	return
+}
+
+func Make3DArray(pAllocateArray Array3Desc) (pHandle Array, err error) {
+	var CpHandle C.CUarray
+	CpAllocateArray := pAllocateArray.c()
+	err = result(C.cuArray3DCreate(&CpHandle, CpAllocateArray))
+	pHandle = goArray(&CpHandle)
+	return
 }

@@ -27,8 +27,8 @@ type Context interface {
 	Synchronize()
 }
 
-// Standalone is a standalone CUDA Context that is threadlocked.
-type Standalone struct {
+// Ctx is a standalone CUDA Context that is threadlocked.
+type Ctx struct {
 	CUContext
 	work    chan (func() error)
 	errChan chan error
@@ -36,9 +36,9 @@ type Standalone struct {
 	err error
 }
 
-func NewContext(d Device, flags ContextFlags) *Standalone {
+func NewContext(d Device, flags ContextFlags) *Ctx {
 	work := make(chan func() error)
-	ctx := &Standalone{
+	ctx := &Ctx{
 		work:    work,
 		errChan: make(chan error),
 	}
@@ -66,28 +66,28 @@ func NewContext(d Device, flags ContextFlags) *Standalone {
 
 	ctx.CUContext = cuctx
 
-	runtime.SetFinalizer(ctx, finalizeStandalone)
+	runtime.SetFinalizer(ctx, finalizeCtx)
 	return ctx
 }
 
-func (ctx *Standalone) Do(fn func() error) error {
+func (ctx *Ctx) Do(fn func() error) error {
 	ctx.work <- fn
 	return <-ctx.errChan
 }
 
-func (ctx *Standalone) Err() error { return ctx.err }
+func (ctx *Ctx) Err() error { return ctx.err }
 
-func (ctx *Standalone) SetCurrent() error {
+func (ctx *Ctx) SetCurrent() error {
 	f := func() (err error) {
 		if ctx.CUContext != pkgContext {
-			return SetCurrent(ctx.CUContext)
+			return SetCurrentContext(ctx.CUContext)
 		}
 		return
 	}
 	return ctx.Do(f)
 }
 
-func (ctx *Standalone) run() {
+func (ctx *Ctx) run() {
 	runtime.LockOSThread()
 	for w := range ctx.work {
 		ctx.errChan <- w()
@@ -95,7 +95,7 @@ func (ctx *Standalone) run() {
 	runtime.UnlockOSThread()
 }
 
-func finalizeStandalone(ctx *Standalone) {
+func finalizeCtx(ctx *Ctx) {
 	f := func() error {
 		return result(C.cuCtxDestroy(C.CUcontext(unsafe.Pointer(&ctx.CUContext))))
 	}

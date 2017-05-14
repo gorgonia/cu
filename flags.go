@@ -113,9 +113,9 @@ type EventFlags byte
 
 const (
 	DefaultEvent      EventFlags = C.CU_EVENT_DEFAULT        // Default event flag
-	BlockingSyncEvent EventFlags = C.CU_BLOCKING_SYNC        // Event uses blocking synchronization
+	BlockingSyncEvent EventFlags = C.CU_EVENT_BLOCKING_SYNC  // Event uses blocking synchronization
 	DisableTiming     EventFlags = C.CU_EVENT_DISABLE_TIMING // Event will not record timing data
-	InterprocessEvent EventFlags = C.CUEVENT_INTERPROCESS    // Event is suitable for interprocess use. DisableTiming must be set
+	InterprocessEvent EventFlags = C.CU_EVENT_INTERPROCESS   // Event is suitable for interprocess use. DisableTiming must be set
 )
 
 // AddressMode are texture reference addressing modes
@@ -134,4 +134,12 @@ type FilterMode byte
 const (
 	PointFilterMode  FilterMode = C.CU_TR_FILTER_MODE_POINT  // Point filter mode
 	LinearFilterMode FilterMode = C.CU_TR_FILTER_MODE_LINEAR // Linear filter mode
+)
+
+type TexRefFlags byte
+
+const (
+	ReadAsInteger        TexRefFlags = C.CU_TRSF_READ_AS_INTEGER        // Override the texref format with a format inferred from the array.
+	NormalizeCoordinates TexRefFlags = C.CU_TRSF_NORMALIZED_COORDINATES // Use normalized texture coordinates in the range [0,1) instead of [0,dim).
+	SRGB                 TexRefFlags = C.CU_TRSF_READ_AS_INTEGER        // Perform sRGB->linear conversion during texture read.
 )

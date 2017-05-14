@@ -1,6 +1,6 @@
 package cu
 
-// include <cuda.h>
+// #include <cuda.h>
 import "C"
 import "unsafe"
 

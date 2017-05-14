@@ -7,7 +7,7 @@ import "unsafe"
 // Module represents a CUDA Module, which is a pointer to a CUmod_st struct
 type Module uintptr
 
-func (m Module) c() C.CUModule {
+func (m Module) c() C.CUmodule {
 	return C.CUmodule(unsafe.Pointer(uintptr(m)))
 }
 
@@ -32,12 +32,6 @@ func LoadData(image string) (Module, error) {
 		return 0, err
 	}
 	return Module(uintptr(unsafe.Pointer(mod))), nil
-}
-
-// Unload unloads a module
-func Unload(m Module) error {
-	mod := C.CUmodule(unsafe.Pointer(uintptr(m)))
-	return result(C.cuModuleUnload(mod))
 }
 
 // Function returns a pointer to the function in the module by the name. If it's not found, the error NotFound is returned

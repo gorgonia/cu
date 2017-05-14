@@ -138,7 +138,7 @@ func TestAllocAndCopy(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	SetCurrent(ctx)
+	SetCurrentContext(ctx)
 
 	a := make([]float32, 1024)
 	p := unsafe.Pointer(&a[0])
