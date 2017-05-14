@@ -8,23 +8,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Format is the type of array (think array types)
-type Format byte
-
-const (
-	Uint8   Format = C.CU_AD_FORMAT_UNSIGNED_INT8  // Unsigned 8-bit integers
-	Uint16  Format = C.CU_AD_FORMAT_UNSIGNED_INT16 // Unsigned 16-bit integers
-	Uin32   Format = C.CU_AD_FORMAT_UNSIGNED_INT32 // Unsigned 32-bit integers
-	Int8    Format = C.CU_AD_FORMAT_SIGNED_INT8    // Signed 8-bit integers
-	Int16   Format = C.CU_AD_FORMAT_SIGNED_INT16   // Signed 16-bit integers
-	Int32   Format = C.CU_AD_FORMAT_SIGNED_INT32   // Signed 32-bit integers
-	Float16 Format = C.CU_AD_FORMAT_HALF           // 16-bit floating point
-	Float32 Format = C.CU_AD_FORMAT_FLOAT          // 32-bit floating point
-)
-
 // Array is the pointer to a CUDA array. The name is a bit of a misnomer,
 // as it would lead one to imply that it's rangeable. It's not.
 type Array uintptr
+
+func cuArrayToArray(arr *C.CUarray) Array {
+	return Array(uintptr(unsafe.Pointer(arr)))
+}
 
 func (arr Array) c() C.CUarray {
 	return *(*C.CUarray)(unsafe.Pointer(uintptr(arr)))
@@ -48,7 +38,7 @@ type Array3Desc struct {
 	Flags                uint
 }
 
-func (desc Array3Desc) cstruct() *C.CUDA_ARRAY3D_DESCRIPTOR {
+func (desc Array3Desc) c() *C.CUDA_ARRAY3D_DESCRIPTOR {
 	a := &array3Desc{
 		Width:       C.ulong(desc.Width),
 		Height:      C.ulong(desc.Height),
@@ -57,7 +47,7 @@ func (desc Array3Desc) cstruct() *C.CUDA_ARRAY3D_DESCRIPTOR {
 		NumChannels: C.uint(desc.NumChannels),
 		Flags:       C.uint(desc.Flags),
 	}
-	return a.cstruct()
+	return a.c()
 }
 
 // array3Desc is the unexported, C-comnpatible version of the Array3Desc
@@ -73,7 +63,7 @@ type array3Desc struct {
 }
 
 // cstruct casts the descriptor to a C struct for CUDA consumption.
-func (desc *array3Desc) cstruct() *C.CUDA_ARRAY3D_DESCRIPTOR {
+func (desc *array3Desc) c() *C.CUDA_ARRAY3D_DESCRIPTOR {
 	return (*C.CUDA_ARRAY3D_DESCRIPTOR)(unsafe.Pointer(desc))
 }
 
@@ -99,14 +89,14 @@ type ArrayDesc struct {
 	NumChannels   uint
 }
 
-func (desc ArrayDesc) cstruct() *C.CUDA_ARRAY_DESCRIPTOR {
+func (desc ArrayDesc) c() *C.CUDA_ARRAY_DESCRIPTOR {
 	a := &arrayDesc{
 		Width:       C.ulong(desc.Width),
 		Height:      C.ulong(desc.Height),
 		Format:      C.CUarray_format(desc.Format),
 		NumChannels: C.uint(desc.NumChannels),
 	}
-	return a.cstruct()
+	return a.c()
 }
 
 // arrayDesc is the unexported, C-compatible version of the Array3Desc
@@ -121,7 +111,7 @@ type arrayDesc struct {
 	NumChannels C.uint
 }
 
-func (desc *arrayDesc) cstruct() *C.CUDA_ARRAY_DESCRIPTOR {
+func (desc *arrayDesc) c() *C.CUDA_ARRAY_DESCRIPTOR {
 	return (*C.CUDA_ARRAY_DESCRIPTOR)(unsafe.Pointer(desc))
 }
 
@@ -156,6 +146,253 @@ func (arr Array) Descriptor() (ArrayDesc, error) {
 
 }
 
-func cuArrayToArray(arr *C.CUarray) Array {
-	return Array(uintptr(unsafe.Pointer(arr)))
+// Memcpy2dParam is a struct representing the params of a 2D memory copy instruction.
+// To aid usability, the fields are ordered as per the documentation (the actual struct is laid out differently).
+type Memcpy2dParam struct {
+	Height        int64
+	WidthInBytes  int64
+	DstArray      Array
+	DstDevPtr     DevicePtr
+	DstHost       unsafe.Pointer
+	DstMemoryType MemoryType
+	DstPitch      int64
+	DstXInBytes   int64
+	DstY          int64
+	SrcArray      Array
+	SrcDevPtr     DevicePtr
+	SrcHost       unsafe.Pointer
+	SrcMemoryType MemoryType
+	SrcPitch      int64
+	SrcXInBytes   int64
+	SrcY          int64
+}
+
+func (cpy Memcpy2dParam) c() *C.CUDA_MEMCPY2D {
+	cpyInstr := &cudamemcpy2d{
+		SrcXInBytes:   C.size_t(cpy.SrcXInBytes),
+		SrcY:          C.size_t(cpy.SrcY),
+		SrcMemoryType: C.CUmemorytype(cpy.SrcMemoryType),
+		SrcHost:       cpy.SrcHost,
+		SrcDevice:     C.CUdevice(cpy.SrcDevice),
+		SrcArray:      cpy.SrcArray.c(),
+		SrcPitch:      C.size_t(cpy.SrcPitch),
+		DstXInBytes:   C.size_t(cpy.DstXInBytes),
+		DstY:          C.size_t(cpy.DstY),
+		DstMemoryType: C.CUmemorytype(cpy.DstMemoryType),
+		DstHost:       cpy.DstHost,
+		DstDevice:     C.CUdeviceptr(cpy.DstDevice),
+		DstArray:      cpy.DstArray.c(),
+		DstPitch:      C.size_t(cpy.DstPitch),
+		WidthInBytes:  C.size_t(cpy.WidthInBytes),
+		Height:        C.size_t(cpy.Height),
+	}
+	return cpyInstr.c()
+}
+
+// cudamemcpy2d is a struct that is laid out exactly like the CUDA_MEMCPY2D struct, which allows for easy conversion.
+type cudamemcpy2d struct {
+	SrcXInBytes   C.size_t
+	SrcY          C.size_t
+	SrcMemoryType C.CUmemorytype
+	SrcHost       unsafe.Pointer
+	SrcDevice     C.CUdeviceptr
+	SrcArray      C.CUarray
+	SrcPitch      C.size_t
+	DstXInBytes   C.size_t
+	DstY          C.size_t
+	DstMemoryType C.CUmemorytype
+	DstHost       unsafe.Pointer
+	DstDevice     C.CUdeviceptr
+	DstArray      C.CUarray
+	DstPitch      C.size_t
+	WidthInBytes  C.size_t
+	Height        C.size_t
+}
+
+func (cpy *cudamemcpy2d) c() *C.CUDA_MEMCPY2D {
+	return (*C.CUDA_MEMCPY2D)(unsafe.Pointer(cpy))
+}
+
+// Memcpy3dParam is a struct representing the params of a 3D memory copy instruction.
+// To aid usability, the fields are ordered as per the documentation (the actual struct is laid out differently).
+type Memcpy3dParam struct {
+	Depth         int64
+	Height        int64
+	WidthInBytes  int64
+	DstArray      Array
+	DstDevice     DevicePtr
+	DstHeight     int64
+	DstHost       unsafe.Pointer
+	DstLOD        int64
+	DstMemoryType MemoryType
+	DstPitch      int64
+	DstXInBytes   int64
+	DstY          int64
+	DstZ          int64
+	SrcArray      Array
+	SrcDevice     DevicePtr
+	SrcHeight     int64
+	SrcHost       unsafe.Pointer
+	SrcLOD        int64
+	SrcMemoryType MemoryType
+	SrcPitch      int64
+	SrcXInBytes   int64
+	SrcY          int64
+	SrcZ          int64
+}
+
+func (cpy Memcpy3dParam) c() *C.CUDA_MEMCPY3D {
+	instr := &cudamemcpy3d{
+		SrcXInBytes:   C.size_t(cpy.SrcXInBytes),
+		SrcY:          C.size_t(cpy.SrcY),
+		SrcZ:          C.size_t(cpy.SrcZ),
+		SrcLOD:        C.size_t(cpy.SrcLOD),
+		SrcMemoryType: C.CUmemorytype(cpy.SrcMemoryType),
+		SrcHost:       cpy.SrcHost,
+		SrcDevice:     C.CUdeviceptr(cpy.SrcDevice),
+		SrcArray:      cpy.SrcArray.c(),
+		Reserved0:     nil,
+		SrcPitch:      C.size_t(cpy.SrcPitch),
+		SrcHeight:     C.size_t(cpy.SrcHeight),
+		DstXInBytes:   C.size_t(cpy.DstXInBytes),
+		DstY:          C.size_t(cpy.DstY),
+		DstZ:          C.size_t(cpy.DstZ),
+		DstLOD:        C.size_t(cpy.DstLOD),
+		DstMemoryType: C.CUmemorytype(cpy.DstMemoryType),
+		DstHost:       cpy.DstHost,
+		DstDevice:     C.CUdeviceptr(cpy.DstDevice),
+		DstArray:      cpy.DstArray.c(),
+		Reserved1:     nil,
+		DstPitch:      C.size_t(cpy.DstPitch),
+		DstHeight:     C.size_t(cpy.DstHeight),
+		WidthInBytes:  C.size_t(cpy.WidthInBytes),
+		Height:        C.size_t(cpy.Height),
+		Depth:         C.size_t(cpy.Depth),
+	}
+	return instr.c()
+}
+
+type cudamemcpy3d struct {
+	SrcXInBytes   C.size_t
+	SrcY          C.size_t
+	SrcZ          C.size_t
+	SrcLOD        C.size_t
+	SrcMemoryType C.CUmemorytype
+	SrcHost       unsafe.Pointer
+	SrcDevice     C.CUdeviceptr
+	SrcArray      C.CUarray
+	Reserved0     unsafe.Pointer // must be nil
+	SrcPitch      C.size_t
+	SrcHeight     C.size_t
+	DstXInBytes   C.size_t
+	DstY          C.size_t
+	DstZ          C.size_t
+	DstLOD        C.size_t
+	DstMemoryType C.CUmemorytype
+	DstHost       unsafe.Pointer
+	DstDevice     C.CUdeviceptr
+	DstArray      C.CUarray
+	Reserved1     unsafe.Pointer // must be nil
+	DstPitch      C.size_t
+	DstHeight     C.size_t
+	WidthInBytes  C.size_t
+	Height        C.size_t
+	Depth         C.size_t
+}
+
+func (cpy *cudamemcpy3d) c() *C.CUDA_MEMCPY3D {
+	return (*C.CUDA_MEMCPY3D)(unsafe.Pointer(cpy))
+}
+
+// Memcpy3dParam is a struct representing the params of a 3D memory copy instruction across contexts.
+// To aid usability, the fields are ordered as per the documentation (the actual struct is laid out differently).
+type Memcpy3dPeerParam struct {
+	Depth         int64
+	Height        int64
+	WidthInBytes  int64
+	DstArray      Array
+	DstContext    CUContext
+	DstDevice     DevicePtr
+	DstHeight     int64
+	DstHost       unsafe.Pointer
+	DstLOD        int64
+	DstMemoryType MemoryType
+	DstPitch      int64
+	DstXInBytes   int64
+	DstY          int64
+	DstZ          int64
+	SrcArray      Array
+	SrcContext    CUContext
+	SrcDevice     DevicePtr
+	SrcHeight     int64
+	SrcHost       unsafe.Pointer
+	SrcLOD        int64
+	SrcMemoryType MemoryType
+	SrcPitch      int64
+	SrcXInBytes   int64
+	SrcY          int64
+	SrcZ          int64
+}
+
+func (cpy *Memcpy3dPeerParam) c() *C.CUDA_MEMCPY3D_PEER {
+	instr := &cudaMemcpy3dPeer{
+		SrcXInBytes:   C.size_t(cpy.SrcXInBytes),
+		SrcY:          C.size_t(cpy.SrcY),
+		SrcZ:          C.size_t(cpy.SrcZ),
+		SrcLOD:        C.size_t(cpy.SrcLOD),
+		SrcMemoryType: C.CUmemorytype(cpy.SrcMemoryType),
+		SrcHost:       cpy.SrcHost,
+		SrcDevice:     C.CUdeviceptr(cpy.SrcDevice),
+		SrcArray:      cpy.SrcArray.c(),
+		SrcContext:    cpy.SrcContext.c(),
+		SrcPitch:      C.size_t(cpy.SrcPitch),
+		SrcHeight:     C.size_t(cpy.SrcHeight),
+		DstXInBytes:   C.size_t(cpy.DstXInBytes),
+		DstY:          C.size_t(cpy.DstY),
+		DstZ:          C.size_t(cpy.DstZ),
+		DstLOD:        C.size_t(cpy.DstLOD),
+		DstMemoryType: C.CUmemorytype(cpy.DstMemoryType),
+		DstHost:       cpy.DstHost,
+		DstDevice:     C.CUdeviceptr(cpy.DstDevice),
+		DstArray:      cpy.DstArray.c(),
+		DstContext:    cpy.DstContext.c(),
+		DstPitch:      C.size_t(cpy.DstPitch),
+		DstHeight:     C.size_t(cpy.DstHeight),
+		WidthInBytes:  C.size_t(cpy.WidthInBytes),
+		Height:        C.size_t(cpy.Height),
+		Depth:         C.size_t(cpy.Depth),
+	}
+	return instr.c()
+}
+
+type cudaMemcpy3dPeer struct {
+	SrcXInBytes   C.size_t
+	SrcY          C.size_t
+	SrcZ          C.size_t
+	SrcLOD        C.size_t
+	SrcMemoryType C.CUmemorytype
+	SrcHost       unsafe.Pointer
+	SrcDevice     C.CUdeviceptr
+	SrcArray      C.CUarray
+	SrcContext    C.CUcontext
+	SrcPitch      C.size_t
+	SrcHeight     C.size_t
+	DstXInBytes   C.size_t
+	DstY          C.size_t
+	DstZ          C.size_t
+	DstLOD        C.size_t
+	DstMemoryType C.CUmemorytype
+	DstHost       unsafe.Pointer
+	DstDevice     C.CUdeviceptr
+	DstArray      C.CUarray
+	DstContext    C.CUcontext
+	DstPitch      C.size_t
+	DstHeight     C.size_t
+	WidthInBytes  C.size_t
+	Height        C.size_t
+	Depth         C.size_t
+}
+
+func (cpy *cudaMemcpy3dPeer) c() *C.CUDA_MEMCPY3D_PEER {
+	return (*C.CUDA_MEMCPY3D_PEER)(unsafe.Pointer(cpy))
 }

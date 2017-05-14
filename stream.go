@@ -16,6 +16,8 @@ func MakeStream(flags StreamFlags) (Stream, error) {
 	return Stream(uintptr(unsafe.Pointer(s))), nil
 }
 
+func (s Stream) c() C.CUstream { return C.CUstream(unsafe.Pointer(uintptr(s))) }
+
 // MakeStreamWithPriority creates a stream with the given priority. The flags determines the behaviors of the stream.
 // This API alters the scheduler priority of work in the stream. Work in a higher priority stream may preempt work already executing in a low priority stream.
 //

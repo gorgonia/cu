@@ -3,6 +3,20 @@ package cu
 //#include <cuda.h>
 import "C"
 
+// Format is the type of array (think array types)
+type Format byte
+
+const (
+	Uint8   Format = C.CU_AD_FORMAT_UNSIGNED_INT8  // Unsigned 8-bit integers
+	Uint16  Format = C.CU_AD_FORMAT_UNSIGNED_INT16 // Unsigned 16-bit integers
+	Uin32   Format = C.CU_AD_FORMAT_UNSIGNED_INT32 // Unsigned 32-bit integers
+	Int8    Format = C.CU_AD_FORMAT_SIGNED_INT8    // Signed 8-bit integers
+	Int16   Format = C.CU_AD_FORMAT_SIGNED_INT16   // Signed 16-bit integers
+	Int32   Format = C.CU_AD_FORMAT_SIGNED_INT32   // Signed 32-bit integers
+	Float16 Format = C.CU_AD_FORMAT_HALF           // 16-bit floating point
+	Float32 Format = C.CU_AD_FORMAT_FLOAT          // 32-bit floating point
+)
+
 // FuncCacheConfig represents the CUfunc_cache enum type, which are enumerations for cache configurations
 type FuncCacheConfig byte
 
@@ -92,4 +106,32 @@ type OccupancyFlags byte
 const (
 	DefaultOccupancy       OccupancyFlags = C.CU_OCCUPANCY_DEFAULT                  // Default behavior
 	DisableCachingOverride OccupancyFlags = C.CU_OCCUPANCY_DISABLE_CACHING_OVERRIDE // Assume global caching is enabled and cannot be automatically turned off
+)
+
+// EventFlags are flags to be used with event creation
+type EventFlags byte
+
+const (
+	DefaultEvent      EventFlags = C.CU_EVENT_DEFAULT        // Default event flag
+	BlockingSyncEvent EventFlags = C.CU_BLOCKING_SYNC        // Event uses blocking synchronization
+	DisableTiming     EventFlags = C.CU_EVENT_DISABLE_TIMING // Event will not record timing data
+	InterprocessEvent EventFlags = C.CUEVENT_INTERPROCESS    // Event is suitable for interprocess use. DisableTiming must be set
+)
+
+// AddressMode are texture reference addressing modes
+type AddressMode byte
+
+const (
+	WrapMode   AddressMode = C.CU_TR_ADDRESS_MODE_WRAP   // Wrapping address mode
+	ClampMode  AddressMode = C.CU_TR_ADDRESS_MODE_CLAMP  // Clamp to edge address mode
+	MirrorMode AddressMode = C.CU_TR_ADDRESS_MODE_MIRROR // Mirror address mode
+	BorderMode AddressMode = C.CU_TR_ADDRESS_MODE_BORDER // Border address mode
+)
+
+// FilterMode are texture reference filtering modes
+type FilterMode byte
+
+const (
+	PointFilterMode  FilterMode = C.CU_TR_FILTER_MODE_POINT  // Point filter mode
+	LinearFilterMode FilterMode = C.CU_TR_FILTER_MODE_LINEAR // Linear filter mode
 )

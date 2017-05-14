@@ -133,3 +133,12 @@ const (
 	BufferIDAttr      PointerAttribute = C.CU_POINTER_ATTRIBUTE_BUFFER_ID      // A process-wide unique ID for an allocated memory region
 	IsManagedAttr     PointerAttribute = C.CU_POINTER_ATTRIBUTE_IS_MANAGED     // Indicates if the pointer points to managed memory
 )
+
+// P2PAttribute is a representation of P2P attributes
+type P2PAttribute byte
+
+const (
+	PerformanceRank         P2PAttribute = C.CU_DEVICE_P2P_ATTRIBUTE_PERFORMANCE_RANK        // A relative value indicating the performance of the link between two devices
+	P2PAccessSupported      P2PAttribute = C.CU_DEVICE_P2P_ATTRIBUTE_ACCESS_SUPPORTED        // P2P Access is enabled
+	P2PNativeAomicSupported P2PAttribute = C.CU_DEVICE_P2P_ATTRIBUTE_NATIVE_ATOMIC_SUPPORTED // Atomic operation over the link is supported
+)

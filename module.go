@@ -7,6 +7,10 @@ import "unsafe"
 // Module represents a CUDA Module, which is a pointer to a CUmod_st struct
 type Module uintptr
 
+func (m Module) c() C.CUModule {
+	return C.CUmodule(unsafe.Pointer(uintptr(m)))
+}
+
 // Load loaads a module into the current context.
 // The CUDA driver API does not attempt to lazily allocate the resources needed by a module;
 // if the memory for functions and data (constant and global) needed by the module cannot be allocated, `Load()` fails.
