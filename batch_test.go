@@ -1,19 +1,21 @@
 package cu
 
 import (
+	"log"
 	"runtime"
 	"testing"
 	"unsafe"
 )
 
 func TestBatchContext(t *testing.T) {
+	log.Print("BatchContext")
 	var err error
 	var dev Device
-	var ctx CUContext
+	var cuctx CUContext
 	var mod Module
 	var fn Function
 
-	if dev, ctx, err = testSetup(); err != nil {
+	if dev, cuctx, err = testSetup(); err != nil {
 		if err.Error() == "NoDevice" {
 			return
 		}
@@ -27,7 +29,7 @@ func TestBatchContext(t *testing.T) {
 	if fn, err = mod.Function("add32"); err != nil {
 		t.Fatalf("Cannot get add32(): %v", err)
 	}
-
+	ctx := newContext(cuctx)
 	bctx := NewBatchedContext(ctx, dev)
 
 	runtime.LockOSThread()
@@ -91,17 +93,18 @@ loop:
 	}
 
 	Unload(mod)
-	DestroyContext(&ctx)
+	// DestroyContext(&ctx)
 }
 
 func TestLargeBatch(t *testing.T) {
+	log.Printf("Large batch")
 	var err error
 	var dev Device
-	var ctx CUContext
+	var cuctx CUContext
 	var mod Module
 	var fn Function
 
-	if dev, ctx, err = testSetup(); err != nil {
+	if dev, cuctx, err = testSetup(); err != nil {
 		if err.Error() == "NoDevice" {
 			return
 		}
@@ -119,6 +122,7 @@ func TestLargeBatch(t *testing.T) {
 	dev.TotalMem()
 
 	beforeFree, _, _ := MemInfo()
+	ctx := newContext(cuctx)
 	bctx := NewBatchedContext(ctx, dev)
 
 	runtime.LockOSThread()
@@ -201,7 +205,7 @@ loop:
 	}
 
 	Unload(mod)
-	DestroyContext(&ctx)
+	// DestroyContext(&ctx)
 
 }
 
@@ -289,11 +293,11 @@ func BenchmarkBatching(bench *testing.B) {
 
 	var err error
 	var dev Device
-	var ctx CUContext
+	var cuctx CUContext
 	var mod Module
 	var fn Function
 
-	if dev, ctx, err = testSetup(); err != nil {
+	if dev, cuctx, err = testSetup(); err != nil {
 		if err.Error() == "NoDevice" {
 			return
 		}
@@ -325,6 +329,7 @@ func BenchmarkBatching(bench *testing.B) {
 		bench.Fatalf("Failed to allocate for b: %v", err)
 	}
 
+	ctx := newContext(cuctx)
 	bctx := NewBatchedContext(ctx, dev)
 
 	args := []unsafe.Pointer{
@@ -354,6 +359,6 @@ func BenchmarkBatching(bench *testing.B) {
 	MemFree(memA)
 	MemFree(memB)
 	Unload(mod)
-	DestroyContext(&ctx)
+	// DestroyContext(&ctx)
 
 }

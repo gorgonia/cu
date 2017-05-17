@@ -3,7 +3,6 @@ package cu
 // #include <cuda.h>
 import "C"
 import (
-	"runtime"
 	"sync"
 	"unsafe"
 )
@@ -14,9 +13,9 @@ var pkgContext CUContext
 // Context interface. Typically you'd just embed *Ctx. Rarely do you need to use CUContext
 type Context interface {
 	// Operational stuff
-	Init()
+	CUDAContext() CUContext
 	Error() error
-	LockAndRun(waitOn chan struct{})
+	Run(chan error) error
 	Do(fn func() error) error
 	Work() chan func() error
 
@@ -28,9 +27,8 @@ type Context interface {
 	BorderColor(hTexRef TexRef) (pBorderColor [3]float32, err error)
 	CanAccessPeer(dev Device, peerDev Device) (canAccessPeer int, err error)
 	CurrentCacheConfig() (pconfig FuncCacheConfig, err error)
-	CurrentContext() (pctx CUContext, err error)
 	CurrentDevice() (device Device, err error)
-	CurrentFlags() (flags uint, err error)
+	CurrentFlags() (flags ContextFlags, err error)
 	Descriptor(hArray Array) (pArrayDescriptor ArrayDesc, err error)
 	Descriptor3(hArray Array) (pArrayDescriptor Array3Desc, err error)
 	DestroyArray(hArray Array)
@@ -95,23 +93,16 @@ type Context interface {
 	ModuleFunction(m Module, name string) (function Function, err error)
 	ModuleGlobal(m Module, name string) (dptr DevicePtr, size int64, err error)
 	P2PAttribute(srcDevice Device, attrib P2PAttribute, dstDevice Device) (value int, err error)
-	PopCurrentCtx() (pctx CUContext, err error)
-	PrimaryCtxState(dev Device) (flags uint, active int, err error)
 	Priority(hStream Stream) (priority int, err error)
-	PushCurrentCtx()
 	QueryEvent(hEvent Event)
 	QueryStream(hStream Stream)
 	Record(hEvent Event, hStream Stream)
-	ReleasePrimaryCtx(dev Device)
-	ResetPrimaryCtx(dev Device)
 	SetAddress(hTexRef TexRef, dptr DevicePtr, bytes int64) (ByteOffset int64, err error)
 	SetAddress2D(hTexRef TexRef, desc ArrayDesc, dptr DevicePtr, Pitch int64)
 	SetAddressMode(hTexRef TexRef, dim int, am AddressMode)
 	SetBorderColor(hTexRef TexRef, pBorderColor [3]float32)
 	SetCacheConfig(fn Function, config FuncCacheConfig)
-	SetCurrent() error
 	SetCurrentCacheConfig(config FuncCacheConfig)
-	SetCurrentContext()
 	SetFilterMode(hTexRef TexRef, fm FilterMode)
 	SetFormat(hTexRef TexRef, fmt Format, NumPackedComponents int)
 	SetFunctionSharedMemConfig(fn Function, config SharedConfig)
@@ -120,7 +111,6 @@ type Context interface {
 	SetMipmapFilterMode(hTexRef TexRef, fm FilterMode)
 	SetMipmapLevelBias(hTexRef TexRef, bias float64)
 	SetMipmapLevelClamp(hTexRef TexRef, minMipmapLevelClamp float64, maxMipmapLevelClamp float64)
-	SetPrimaryCtxFlags(dev Device, flags ContextFlags)
 	SetSharedMemConfig(config SharedConfig)
 	SetTexRefFlags(hTexRef TexRef, Flags TexRefFlags)
 	SharedMemConfig() (pConfig SharedConfig, err error)
@@ -137,128 +127,3 @@ type Context interface {
 	WaitOnValue32(stream Stream, addr DevicePtr, value uint32, flags uint)
 	WriteValue32(stream Stream, addr DevicePtr, value uint32, flags uint)
 }
-
-// Ctx is a standalone CUDA Context that is threadlocked.
-type Ctx struct {
-	CUContext
-	work    chan (func() error)
-	errChan chan error
-	err     error
-
-	d      Device
-	flags  ContextFlags
-	once   sync.Once
-	locked bool
-}
-
-// NewContext creates a new context, and runs a listener locked to an OSThread. All work is piped through that goroutine
-func NewContext(d Device, flags ContextFlags) *Ctx {
-	work := make(chan func() error)
-	ctx := &Ctx{
-		work:    work,
-		errChan: make(chan error),
-		d:       d,
-		flags:   flags,
-	}
-
-	waitOn := make(chan struct{})
-	go ctx.LockAndRun(waitOn)
-	<-waitOn
-	ctx.Init()
-
-	runtime.SetFinalizer(ctx, finalizeCtx)
-	return ctx
-}
-
-// NewManualContext creates a new context. The user is expected to call LockAndRun() then Init() to initialize the context
-func NewManualContext(d Device, flags ContextFlags) *Ctx {
-	work := make(chan func() error)
-	ctx := &Ctx{
-		work:    work,
-		errChan: make(chan error),
-		d:       d,
-		flags:   flags,
-	}
-	runtime.SetFinalizer(ctx, finalizeCtx)
-}
-
-func (ctx *Ctx) Init() {
-	ctx.once.Do(ctx.init)
-}
-
-func (ctx *Ctx) Do(fn func() error) error {
-	ctx.work <- fn
-	return <-ctx.errChan
-}
-
-func (ctx *Ctx) Error() error { return ctx.err }
-
-// Work returns the channel where work will be passed in. In most cases you don't need this. Use LockAndRun instead
-func (ctx *Ctx) Work() chan func() error { return ctx.work }
-
-func (ctx *Ctx) SetCurrent() error {
-	f := func() (err error) {
-		if ctx.CUContext != pkgContext {
-			return SetCurrentContext(ctx.CUContext)
-		}
-		return
-	}
-	return ctx.Do(f)
-}
-
-func (ctx *Ctx) LockAndRun(waitOn chan struct{}) {
-	runtime.LockOSThread()
-	ctx.locked = true
-	close(waitOn)
-
-	for w := range ctx.work {
-		ctx.errChan <- w()
-	}
-	runtime.UnlockOSThread()
-	ctx.locked = false
-}
-
-func (ctx *Ctx) init() {
-	if !ctx.locked {
-		panic("Cannot init a CUDA context without it being locked to a OS thread. Did you miss a .LockAndRun() call?")
-	}
-
-	var cuctx CUContext
-	f := func() (err error) {
-		var cctx C.CUcontext
-		if err := result(C.cuCtxCreate(&cctx, C.uint(ctx.flags), C.CUdevice(ctx.d))); err != nil {
-			return err
-		}
-		cuctx = CUContext(uintptr(unsafe.Pointer(cctx)))
-
-		return nil
-	}
-	if err := ctx.Do(f); err != nil {
-		panic(err)
-	}
-	ctx.CUContext = cuctx
-
-	// set it to package context
-	contextLock.Lock()
-	pkgContext = cuctx
-	contextLock.Unlock()
-}
-
-func finalizeCtx(ctx *Ctx) {
-	if ctx.CUContext == 0 {
-		close(ctx.errChan)
-		close(ctx.work)
-		return
-	}
-
-	f := func() error {
-		return result(C.cuCtxDestroy(C.CUcontext(unsafe.Pointer(&ctx.CUContext))))
-	}
-	if err := ctx.Do(f); err != nil {
-		panic(err)
-	}
-	close(ctx.errChan)
-	close(ctx.work)
-}
-
-/* Manually Written Methods */

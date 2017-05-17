@@ -17,11 +17,10 @@ The first line preprocesses all the macros, leaving a singular header file. The 
 * `CurrentFlags`
 * `SetBorderColor`
 * `BorderColor`
+* `PrimaryCtxState`
 
 ## Ctx related methods ##
 * `(*Ctx)SetPrimaryCtxFlags`
-* `PushCurrentCtx`
-* `SetCurrentContext`
 * `SynchronizeStream`
 * `SynchronizeEvent`
 * `APIVersion` - deleted
@@ -41,5 +40,15 @@ The first line preprocesses all the macros, leaving a singular header file. The 
 * `TotalMem` - deleted
 * `DeviceAttribute` - deleted
 * `GetDevice` - deleted
+* `ReleasePrimaryCtx` - deleted
+* `SetPrimaryCtxFlags` - deleted
+* `PrimaryCtxState` - deleted
+* `ResetPrimaryCtx` - deleted
+* `PushCurrentCtx` - deleted
+* `PopCurrentCtx` - deleted
+* `SetCurrentContext` - deleted
+* `CurrentContext` - deleted
+* `CurrentDevice` 
+* `CurrentFlags`
 
 ## Ctx related methods - manually written ##

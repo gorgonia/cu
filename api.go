@@ -53,12 +53,12 @@ func (dev Device) SetPrimaryCtxFlags(flags ContextFlags) (err error) {
 	return result(C.cuDevicePrimaryCtxSetFlags(Cdev, Cflags))
 }
 
-func (dev Device) PrimaryCtxState() (flags uint, active int, err error) {
+func (dev Device) PrimaryCtxState() (flags ContextFlags, active int, err error) {
 	Cdev := C.CUdevice(dev)
 	var Cflags C.uint
 	var Cactive C.int
 	err = result(C.cuDevicePrimaryCtxGetState(Cdev, &Cflags, &Cactive))
-	flags = uint(Cflags)
+	flags = ContextFlags(Cflags)
 
 	active = int(Cactive)
 
