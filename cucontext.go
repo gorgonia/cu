@@ -4,6 +4,7 @@ package cu
 import "C"
 import (
 	"fmt"
+	"runtime"
 	"unsafe"
 )
 
@@ -25,6 +26,44 @@ func (d Device) MakeContext(flags ContextFlags) (CUContext, error) {
 		return 0, err
 	}
 	return makeContext(ctx), nil
+}
+
+// Lock ties the calling goroutine to an OS thread, then ties the CUDA context to the thread.
+// Do not call in a goroutine.
+//
+// Good:
+/*
+	func main() {
+		dev, _ := GetDevice(0)
+		ctx, _ := dev.MakeContext()
+		if err := ctx.Lock(); err != nil{
+			// handle error
+		}
+
+		mem, _ := MemAlloc(1024)
+	}
+*/
+// Bad:
+/*
+	func main() {
+		dev, _ := GetDevice(0)
+		ctx, _ := dev.MakeContext()
+		go ctx.Lock() // this will tie the goroutine that calls ctx.Lock to the OS thread, while the main thread does not get the lock
+		mem, _ := MemAlloc(1024)
+	}
+*/
+func (ctx CUContext) Lock() error {
+	runtime.LockOSThread()
+	return SetCurrentContext(ctx)
+}
+
+// Unlock unlocks unbinds the goroutine from the OS thread
+func (ctx CUContext) Unlock() error {
+	if err := Synchronize(); err != nil {
+		return err
+	}
+	runtime.UnlockOSThread()
+	return nil
 }
 
 // DestroyContext destroys the context. It returns an error if it wasn't properly destroyed

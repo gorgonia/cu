@@ -46,7 +46,8 @@ The work to fully represent the CUDA Driver API is a work in progress. At the mo
 
 ## Roadmap ##
 
-* [ ] All texture, surface and graphics related API have an equivalent Go prototype.
+* [ ] Remaining API to be ported over
+* [x] All texture, surface and graphics related API have an equivalent Go prototype.
 * [x] Batching of common operations (see for example `Device.Attributes(...)`
 * [x] Generic queueing/batching of API calls (by some definition of generic)
 

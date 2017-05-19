@@ -224,7 +224,7 @@ func MemFreeHost(p unsafe.Pointer) (err error) {
 	return result(C.cuMemFreeHost(Cp))
 }
 
-func MemAllocManaged(bytesize int64, flags uint) (dptr DevicePtr, err error) {
+func MemAllocManaged(bytesize int64, flags MemAttachFlags) (dptr DevicePtr, err error) {
 	Cbytesize := C.size_t(bytesize)
 	Cflags := C.uint(flags)
 	var Cdptr C.CUdeviceptr

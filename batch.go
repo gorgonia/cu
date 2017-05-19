@@ -195,8 +195,6 @@ func (ctx *BatchedContext) WorkAvailable() <-chan struct{} { return ctx.workAvai
 // DoWork waits for work to come in from the queue. If it's blocking, the entire queue will be processed immediately.
 // Otherwise it will be added to the batch queue.
 func (ctx *BatchedContext) DoWork() {
-	// ctx.Lock()
-	// defer ctx.Unlock()
 	for {
 		select {
 		case w := <-ctx.work:
@@ -225,9 +223,7 @@ func (ctx *BatchedContext) DoWork() {
 		}
 
 		// debug and instrumentation related stuff
-		logf("GOING TO PROCESS")
-		pc, _, _, _ := runtime.Caller(1)
-		logf("Called by %v", runtime.FuncForPC(pc).Name())
+		logCaller("DoWork()")
 		logf(ctx.introspect())
 		addQueueLength(len(ctx.queue))
 		addBlockingCallers()
@@ -265,6 +261,29 @@ func (ctx *BatchedContext) DoWork() {
 		ctx.queue = ctx.queue[:0]
 		ctx.fns = ctx.fns[:0]
 	}
+}
+
+// Run manages the running of the BatchedContext. Because it's expected to run in a goroutine, an error channel is to be passed in
+func (ctx *BatchedContext) Run(errChan chan error) error {
+	runtime.LockOSThread()
+	for {
+		select {
+		case <-ctx.workAvailable:
+			ctx.DoWork()
+			if err := ctx.Errors(); err != nil {
+				if errChan == nil {
+					runtime.UnlockOSThread()
+					return err
+				}
+				errChan <- err
+
+			}
+		case w := <-ctx.Work():
+			ctx.ErrChan() <- w()
+		}
+	}
+	runtime.UnlockOSThread()
+	return nil
 }
 
 // Cleanup is the cleanup function. It cleans up all the ancilliary allocations that has happened for all the batched calls.
@@ -323,9 +342,6 @@ func (ctx *BatchedContext) MemAllocManaged(bytesize int64, flags MemAttachFlags)
 }
 
 func (ctx *BatchedContext) Memcpy(dst, src DevicePtr, byteCount int64) {
-	// pc, _, _, _ := runtime.Caller(1)
-	// logf("Memcpy %v %v| called by %v", dst, src, runtime.FuncForPC(pc).Name())
-
 	fn := &fnargs{
 		fn:      C.fn_memcpy,
 		devptr0: C.CUdeviceptr(dst),
@@ -337,8 +353,6 @@ func (ctx *BatchedContext) Memcpy(dst, src DevicePtr, byteCount int64) {
 }
 
 func (ctx *BatchedContext) MemcpyHtoD(dst DevicePtr, src unsafe.Pointer, byteCount int64) {
-	// logf("Memcpy H2D: 0x%v, %v", dst, src)
-	// log.Printf("Memcpy H2D: 0x%v, %v", dst, src)
 	fn := &fnargs{
 		fn:      C.fn_memcpyHtoD,
 		devptr0: C.CUdeviceptr(dst),
@@ -350,9 +364,6 @@ func (ctx *BatchedContext) MemcpyHtoD(dst DevicePtr, src unsafe.Pointer, byteCou
 }
 
 func (ctx *BatchedContext) MemcpyDtoH(dst unsafe.Pointer, src DevicePtr, byteCount int64) {
-	// pc, _, _, _ := runtime.Caller(2)
-	// log.Printf("MemcpyD2H %v %v| called by %v", dst, src, runtime.FuncForPC(pc).Name())
-	// logf("Memcpy D2H: %v 0x%v", dst, src)
 	fn := &fnargs{
 		fn:      C.fn_memcpyDtoH,
 		devptr0: C.CUdeviceptr(src),
@@ -364,8 +375,6 @@ func (ctx *BatchedContext) MemcpyDtoH(dst unsafe.Pointer, src DevicePtr, byteCou
 }
 
 func (ctx *BatchedContext) MemFree(mem DevicePtr) {
-	// pc, _, _, _ := runtime.Caller(1)
-	// logf("MEMFREE  %v CALLED BY %v", mem, runtime.FuncForPC(pc).Name())
 	fn := &fnargs{
 		fn:      C.fn_memfreeD,
 		devptr0: C.CUdeviceptr(mem),

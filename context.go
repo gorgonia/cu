@@ -2,13 +2,12 @@ package cu
 
 // #include <cuda.h>
 import "C"
-import (
-	"sync"
-	"unsafe"
-)
+import "unsafe"
 
-var contextLock = new(sync.Mutex)
-var pkgContext CUContext
+var (
+	_ Context = &Ctx{}
+	_ Context = &BatchedContext{}
+)
 
 // Context interface. Typically you'd just embed *Ctx. Rarely do you need to use CUContext
 type Context interface {
@@ -17,7 +16,8 @@ type Context interface {
 	Error() error
 	Run(chan error) error
 	Do(fn func() error) error
-	Work() chan func() error
+	Work() <-chan func() error
+	ErrChan() chan<- error
 
 	// actual methods
 	Address(hTexRef TexRef) (pdptr DevicePtr, err error)
@@ -25,7 +25,6 @@ type Context interface {
 	Array(hTexRef TexRef) (phArray Array, err error)
 	AttachMemAsync(hStream Stream, dptr DevicePtr, length int64, flags uint)
 	BorderColor(hTexRef TexRef) (pBorderColor [3]float32, err error)
-	CanAccessPeer(dev Device, peerDev Device) (canAccessPeer int, err error)
 	CurrentCacheConfig() (pconfig FuncCacheConfig, err error)
 	CurrentDevice() (device Device, err error)
 	CurrentFlags() (flags ContextFlags, err error)
@@ -49,7 +48,7 @@ type Context interface {
 	MakeStreamWithPriority(priority int, flags StreamFlags) (stream Stream, err error)
 	MaxAnisotropy(hTexRef TexRef) (pmaxAniso int, err error)
 	MemAlloc(bytesize int64) (dptr DevicePtr, err error)
-	MemAllocManaged(bytesize int64, flags uint) (dptr DevicePtr, err error)
+	MemAllocManaged(bytesize int64, flags MemAttachFlags) (dptr DevicePtr, err error)
 	MemAllocPitch(WidthInBytes int64, Height int64, ElementSizeBytes uint) (dptr DevicePtr, pPitch int64, err error)
 	MemFree(dptr DevicePtr)
 	MemFreeHost(p unsafe.Pointer)
@@ -92,7 +91,6 @@ type Context interface {
 	MemsetD8Async(dstDevice DevicePtr, uc byte, N int64, hStream Stream)
 	ModuleFunction(m Module, name string) (function Function, err error)
 	ModuleGlobal(m Module, name string) (dptr DevicePtr, size int64, err error)
-	P2PAttribute(srcDevice Device, attrib P2PAttribute, dstDevice Device) (value int, err error)
 	Priority(hStream Stream) (priority int, err error)
 	QueryEvent(hEvent Event)
 	QueryStream(hStream Stream)

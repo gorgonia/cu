@@ -169,7 +169,7 @@ func (ctx *Ctx) MemFreeHost(p unsafe.Pointer) {
 	ctx.err = ctx.Do(f)
 }
 
-func (ctx *Ctx) MemAllocManaged(bytesize int64, flags uint) (dptr DevicePtr, err error) {
+func (ctx *Ctx) MemAllocManaged(bytesize int64, flags MemAttachFlags) (dptr DevicePtr, err error) {
 	Cbytesize := C.size_t(bytesize)
 	Cflags := C.uint(flags)
 	var Cdptr C.CUdeviceptr
@@ -1019,21 +1019,6 @@ func (ctx *Ctx) CanAccessPeer(dev Device, peerDev Device) (canAccessPeer int, er
 		err = errors.Wrap(err, "CanAccessPeer")
 	}
 	canAccessPeer = int(CcanAccessPeer)
-	return
-}
-
-func (ctx *Ctx) P2PAttribute(srcDevice Device, attrib P2PAttribute, dstDevice Device) (value int, err error) {
-	CsrcDevice := C.CUdevice(srcDevice)
-	Cattrib := C.CUdevice_P2PAttribute(attrib)
-	CdstDevice := C.CUdevice(dstDevice)
-	var Cvalue C.int
-	f := func() error {
-		return result(C.cuDeviceGetP2PAttribute(&Cvalue, Cattrib, CsrcDevice, CdstDevice))
-	}
-	if err = ctx.Do(f); err != nil {
-		err = errors.Wrap(err, "P2PAttribute")
-	}
-	value = int(Cvalue)
 	return
 }
 

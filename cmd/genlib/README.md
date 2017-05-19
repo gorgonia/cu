@@ -50,5 +50,8 @@ The first line preprocesses all the macros, leaving a singular header file. The 
 * `CurrentContext` - deleted
 * `CurrentDevice` 
 * `CurrentFlags`
+* `CanAccessPeer` - deleted
+* `P2PAttribute` - deleted
+* `MemAllocManaged`
 
 ## Ctx related methods - manually written ##

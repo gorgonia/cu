@@ -1,8 +1,12 @@
 package cu
 
-import "testing"
+import (
+	"runtime"
+	"testing"
+	"unsafe"
+)
 
-func TestCudaContext(t *testing.T) {
+func TestCUContext(t *testing.T) {
 	devices, _ := NumDevices()
 	if devices == 0 {
 		return
@@ -113,4 +117,121 @@ func TestCudaContext(t *testing.T) {
 	if ctx != 0 {
 		t.Error("expected ctx to be set to 0")
 	}
+}
+
+func TestMultipleContextSingleHostThread(t *testing.T) {
+	var err error
+	var dev Device
+	var ctx0, ctx1 CUContext
+	var mod0, mod1 Module
+	var fn0, fn1 Function
+	var mem0, mem1 DevicePtr
+
+	// prepare data
+	data := make([]float32, 1000)
+	result := make([]float32, 1000)
+	for i := range data {
+		data[i] = float32(i)
+	}
+	size := int64(len(data) * 4)
+
+	// tests start
+	if dev, err = GetDevice(0); err != nil {
+		t.Fatal(err)
+	}
+
+	if ctx0, err = dev.MakeContext(SchedAuto); err != nil {
+		t.Fatal(err)
+	}
+	if ctx1, err = dev.MakeContext(SchedAuto); err != nil {
+		t.Fatal(err)
+	}
+
+	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
+
+	// set current context to ctx0
+	if err = SetCurrentContext(ctx0); err != nil {
+		t.Fatal(err)
+	}
+
+	if mod0, err = LoadData(add32PTX); err != nil {
+		t.Fatalf("Cannot load module for ctx0: %v", err)
+	}
+
+	if fn0, err = mod0.Function("add32"); err != nil {
+		t.Fatalf("Cannot get add32(): %v", err)
+	}
+
+	if mem0, err = AllocAndCopy(unsafe.Pointer(&data[0]), size); err != nil {
+		t.Fatalf("Cannot alloc and copy %v", err)
+	}
+
+	args := []unsafe.Pointer{
+		unsafe.Pointer(&mem0),
+		unsafe.Pointer(&mem0),
+		unsafe.Pointer(&size),
+	}
+
+	if err = fn0.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream(0), args); err != nil {
+		t.Errorf("Failed to launcj add32: %v", err)
+	}
+
+	if err = MemcpyDtoH(unsafe.Pointer(&result[0]), mem0, size); err != nil {
+		t.Errorf("Memcpy failed %v", err)
+	}
+
+	// repeat the same for ctx1
+	if err = SetCurrentContext(ctx1); err != nil {
+		t.Fatal(err)
+	}
+
+	if mod1, err = LoadData(add32PTX); err != nil {
+		t.Fatalf("Cannot load module for ctx0: %v", err)
+	}
+
+	if fn1, err = mod1.Function("add32"); err != nil {
+		t.Fatalf("Cannot get add32(): %v", err)
+	}
+
+	if mem1, err = AllocAndCopy(unsafe.Pointer(&data[0]), size); err != nil {
+		t.Fatalf("Cannot alloc and copy %v", err)
+	}
+
+	args = []unsafe.Pointer{
+		unsafe.Pointer(&mem1),
+		unsafe.Pointer(&mem1),
+		unsafe.Pointer(&size),
+	}
+
+	if err = fn1.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream(0), args); err != nil {
+		t.Errorf("Failed to launcj add32: %v", err)
+	}
+
+	if err = MemcpyDtoH(unsafe.Pointer(&result[0]), mem0, size); err != nil {
+		t.Errorf("Memcpy failed %v", err)
+	}
+
+	// TIME TO MIX IT UP:
+
+	// calling fn0 when the current context is ctx1
+	args = []unsafe.Pointer{
+		unsafe.Pointer(&mem1),
+		unsafe.Pointer(&mem1),
+		unsafe.Pointer(&size),
+	}
+
+	if err = fn0.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream(0), args); err == nil {
+		t.Errorf("Expected error when launching a kernel defined in a different context")
+	}
+	t.Log(err)
+
+	// switch back to the first context
+	if err = SetCurrentContext(ctx0); err != nil {
+		t.Errorf("Failed to swtch to ctx0 %v", err)
+	}
+	if err = fn0.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream(0), args); err != nil {
+		t.Errorf("fn0 errored while using memory declared in ctx1: %v", err)
+	}
+	t.Log(err)
 }

@@ -5,7 +5,6 @@ package cu
 // #include <cuda.h>
 import "C"
 import (
-	"log"
 	"runtime"
 	"unsafe"
 )
@@ -41,9 +40,6 @@ func newContext(c CUContext) *Ctx {
 		work:      make(chan func() error),
 		errChan:   make(chan error),
 	}
-	pc, _, _, _ := runtime.Caller(2)
-
-	log.Printf("Created %p by %v", ctx, runtime.FuncForPC(pc).Name())
 	runtime.SetFinalizer(ctx, finalizeCtx)
 	return ctx
 
@@ -61,7 +57,10 @@ func (ctx *Ctx) CUDAContext() CUContext { return ctx.CUContext }
 func (ctx *Ctx) Error() error { return ctx.err }
 
 // Work returns the channel where work will be passed in. In most cases you don't need this. Use Run instead.
-func (ctx *Ctx) Work() chan func() error { return ctx.work }
+func (ctx *Ctx) Work() <-chan func() error { return ctx.work }
+
+// ErrChan returns the internal error channel used
+func (ctx *Ctx) ErrChan() chan<- error { return ctx.errChan }
 
 // Run locks the goroutine to the OS thread and ties the CUDA context to the OS thread. For most cases, this would suffice
 //
@@ -115,7 +114,6 @@ func (ctx *Ctx) Run(errChan chan error) error {
 }
 
 func finalizeCtx(ctx *Ctx) {
-	log.Printf("Finalizing %p", ctx)
 	if ctx.CUContext == 0 {
 		close(ctx.errChan)
 		close(ctx.work)
