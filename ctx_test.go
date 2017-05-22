@@ -4,12 +4,6 @@ import "testing"
 
 func TestContext(t *testing.T) {
 	ctx := NewContext(Device(0), SchedAuto)
-	errChan := make(chan error)
-	go ctx.Run(errChan)
-	if err := <-errChan; err != nil {
-		t.Fatal(err)
-	}
-
 	mem, err := ctx.MemAlloc(24)
 	if err != nil {
 		t.Fatal(err)
@@ -19,8 +13,8 @@ func TestContext(t *testing.T) {
 
 func TestMultipleContext(t *testing.T) {
 	d := Device(0)
-	ctx0 := NewContext(d, SchedAuto)
-	ctx1 := NewContext(d, SchedAuto)
+	ctx0 := NewManuallyManagedContext(d, SchedAuto)
+	ctx1 := NewManuallyManagedContext(d, SchedAuto)
 
 	errChan0 := make(chan error)
 	errChan1 := make(chan error)

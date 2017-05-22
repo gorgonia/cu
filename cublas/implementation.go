@@ -1,5 +1,6 @@
 package cublas
 
+// #include <cublas_v2.h>
 import "C"
 import (
 	"runtime"
@@ -9,33 +10,46 @@ import (
 )
 
 var (
-	_ blas.Float32    = &Standalone{}
-	_ blas.Float64    = &Standalone{}
-	_ blas.Complex64  = &Standalone{}
-	_ blas.Complex128 = &Standalone{}
+	_ blas.Float32    = &Standard{}
+	_ blas.Float64    = &Standard{}
+	_ blas.Complex64  = &Standard{}
+	_ blas.Complex128 = &Standard{}
 )
 
-type Standalone struct {
+// BLAS is the interface for all cuBLAS implementaions
+type BLAS interface {
 	cu.Context
-	h C.cublasHandle_t
+	blas.Float32
+	blas.Float64
+	blas.Complex64
+	blas.Complex128
+}
 
+type Standard struct {
+	h C.cublasHandle_t
 	o Order
 	m PointerMode
 	e error
+
+	cu.Context
+	dataOnDev bool
 }
 
-func NewImplementation(opts ...ConsOpt) *Standalone {
+func NewStandardImplementation(ctx cu.Context) *Standard {
 	var handle C.cublasHandle_t
-	C.cublasCreate(&handle)
-	impl := &Standalone{
-		h: handle,
+	if err := status(C.cublasCreate(&handle)); err != nil {
+		panic(err)
+	}
+	impl := &Standard{
+		h:       handle,
+		Context: ctx,
 	}
 	runtime.SetFinalizer(impl, finalizeImpl)
 	return impl
 }
 
-func (impl *Standalone) Err() error { return impl.e }
+func (impl *Standard) Err() error { return impl.e }
 
-func finalizeImpl(impl *Standalone) {
-	C.cublasDestroy(&impl.h)
+func finalizeImpl(impl *Standard) {
+	C.cublasDestroy(impl.h)
 }

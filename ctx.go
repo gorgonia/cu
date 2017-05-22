@@ -31,6 +31,27 @@ func NewContext(d Device, flags ContextFlags) *Ctx {
 	ctx := newContext(makeContext(cctx))
 	ctx.device = d
 	ctx.flags = flags
+
+	errChan := make(chan error)
+	go ctx.Run(errChan)
+	if err := <-errChan; err != nil {
+		panic(err)
+	}
+
+	return ctx
+}
+
+// NewManuallyManagedContext creates a new context, but the Run() method which locks a goroutine to an OS thread, has to be manually run
+func NewManuallyManagedContext(d Device, flags ContextFlags) *Ctx {
+	var cctx C.CUcontext
+	err := result(C.cuCtxCreate(&cctx, C.uint(flags), C.CUdevice(d)))
+	if err != nil {
+		panic(err)
+	}
+	ctx := newContext(makeContext(cctx))
+	ctx.device = d
+	ctx.flags = flags
+
 	return ctx
 }
 
