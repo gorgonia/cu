@@ -55,7 +55,7 @@ func (ctx *Ctx) Do(fn func() error) error {
 func (ctx *Ctx) CUDAContext() CUContext { return ctx.CUContext }
 
 // Error returns the errors that may have occured during the calls.
-func (ctx *Ctx) Error() error { return ctx.err }
+func (ctx *Ctx) Err() error { return ctx.err }
 
 // Work returns the channel where work will be passed in. In most cases you don't need this. Use Run instead.
 func (ctx *Ctx) Work() chan func() error { return ctx.work }
