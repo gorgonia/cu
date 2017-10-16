@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"runtime"
 	"strings"
 	"sync/atomic"
 )
@@ -53,6 +54,11 @@ func logf(format string, others ...interface{}) {
 }
 
 /* Debugging Utility Methods */
+
+func logCaller(inspect string) {
+	pc, _, _, _ := runtime.Caller(2)
+	logf("%q Called by %v", inspect, runtime.FuncForPC(pc).Name())
+}
 
 // introspect is useful for finding out what calls are going to be made in the batched call
 

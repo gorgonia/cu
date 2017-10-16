@@ -2,237 +2,126 @@ package cu
 
 // #include <cuda.h>
 import "C"
-import (
-	"fmt"
-	"unsafe"
+import "unsafe"
 
-	"github.com/pkg/errors"
+var (
+	_ Context = &Ctx{}
+	_ Context = &BatchedContext{}
 )
 
-// Context is a CUDA context
-type Context uintptr
+// Context interface. Typically you'd just embed *Ctx. Rarely do you need to use CUContext
+type Context interface {
+	// Operational stuff
+	CUDAContext() CUContext
+	Err() error
+	Run(chan error) error
+	Do(fn func() error) error
+	Work() <-chan func() error
+	ErrChan() chan<- error
 
-func (ctx Context) String() string { return fmt.Sprintf("0x%x", uintptr(ctx)) }
-
-// DestroyContext destroys the context. It returns an error if it wasn't properly destroyed
-//
-// Wrapper over cuCtxDestroy: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1g27a365aebb0eb548166309f58a1e8b8e
-func DestroyContext(ctx *Context) error {
-	if err := result(C.cuCtxDestroy(C.CUcontext(unsafe.Pointer(uintptr(*ctx))))); err != nil {
-		return err
-	}
-	*ctx = 0
-	return nil
-}
-
-// MakeContext creates a new context on the device
-//
-// Wrapper over cuCtxCreate: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1g65dc0012348bc84810e2103a40d8e2cf
-func (d Device) MakeContext(flags ContextFlags) (Context, error) {
-	var ctx C.CUcontext
-	if err := result(C.cuCtxCreate(&ctx, C.uint(flags), C.CUdevice(d))); err != nil {
-		return 0, err
-	}
-	return Context(uintptr(unsafe.Pointer(ctx))), nil
-}
-
-// APIVersion returns the API version used to create this context.
-//
-// Wrapper over cuCtxGetApiVersion: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1g088a90490dafca5893ef6fbebc8de8fb
-func (ctx Context) APIVersion() (int, error) {
-	var v C.uint
-	if err := result(C.cuCtxGetApiVersion(C.CUcontext(unsafe.Pointer(uintptr(ctx))), &v)); err != nil {
-		return -1, err
-	}
-	return int(v), nil
-}
-
-// CurrentCacheConfig returns the preferred cache configuration for the current context.
-//
-// Wrapper over cuCtxGetCacheConfig: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1g40b6b141698f76744dea6e39b9a25360
-func CurrentCacheConfig() (FuncCacheConfig, error) {
-	var fcc C.CUfunc_cache
-	if err := result(C.cuCtxGetCacheConfig(&fcc)); err != nil {
-		return 0, err
-	}
-	return FuncCacheConfig(fcc), nil
-}
-
-// CurrentContext returns the CUDA context bound to the calling CPU thread.
-//
-// Wrapper over cuCtxGetCurrent: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1g8f13165846b73750693640fb3e8380d0
-func CurrentContext() (Context, error) {
-	var ctx C.CUcontext
-	if err := result(C.cuCtxGetCurrent(&ctx)); err != nil {
-		return 0, err
-	}
-	if uintptr(unsafe.Pointer(ctx)) == 0 {
-		return 0, errors.Errorf("WTF")
-	}
-	return Context(uintptr(unsafe.Pointer(ctx))), nil
-}
-
-// CurrentDevice returns the device ID for the current context.
-//
-// Wrapper over cuCtxGetDevice: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1g4e84b109eba36cdaaade167f34ae881e
-func CurrentDevice() (Device, error) {
-	var dev C.CUdevice
-	if err := result(C.cuCtxGetDevice(&dev)); err != nil {
-		return 0, err
-	}
-	return Device(dev), nil
-}
-
-// CurrentFlags returns the flags for the current context.
-//
-// Wrapper over cuCtxGetFlags: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1gf81eef983c1e3b2ef4f166d7a930c86d
-func CurrentFlags() (ContextFlags, error) {
-	var f C.uint
-	if err := result(C.cuCtxGetFlags(&f)); err != nil {
-		return 0, err
-	}
-	return ContextFlags(f), nil
-}
-
-// Limits returns resource limits. This allows for querying for information regarding the current context
-//
-// Wrapper over cuCtxGetLimit: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1g9f2d47d1745752aa16da7ed0d111b6a8
-func Limits(l Limit) (int64, error) {
-	var size C.size_t
-	if err := result(C.cuCtxGetLimit(&size, C.CUlimit(l))); err != nil {
-		return 0, err
-	}
-	return int64(size), nil
-}
-
-// SharedMemConfig returns the current shared memory configuration for the current context.
-//
-// Wrapper over cuCtxGetSharedMemConfig: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1g17153a1b8b8c756f7ab8505686a4ad74
-func SharedMemConfig() (SharedConfig, error) {
-	var c C.CUsharedconfig
-	if err := result(C.cuCtxGetSharedMemConfig(&c)); err != nil {
-		return 0, err
-	}
-	return SharedConfig(c), nil
-}
-
-// // StreamPriorityRange numerical values that correspond to the least and greatest stream priorities.
-// //
-// // Wrapper over cuCtxGetStreamPriorityRange: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1g137920ab61a71be6ce67605b9f294091
-// func StreamPriorityRange() (leastPriority, greatestPriority int, err error) {
-
-// }
-
-// PopCurrentCtx pops the current CUDA context from the current CPU thread.
-//
-// Wrapper over cuCtxPopCurrent: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1g2fac188026a062d92e91a8687d0a7902
-func PopCurrentCtx() (Context, error) {
-	var ctx C.CUcontext
-	if err := result(C.cuCtxPopCurrent(&ctx)); err != nil {
-		return 0, err
-	}
-	return Context(uintptr(unsafe.Pointer(ctx))), nil
-}
-
-// PushCurrentCtx pushes a context on the current CPU thread.
-//
-// Wrapper over cuCtxPushCurrent: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1gb02d4c850eb16f861fe5a29682cc90ba
-func PushCurrentCtx(ctx Context) error {
-	cctx := C.CUcontext(unsafe.Pointer(uintptr(ctx)))
-	return result(C.cuCtxPushCurrent(cctx))
-}
-
-// SetCurrentCacheConfig sets the preferred cache configuration for the current context.
-//
-// Wrapper over cuCtxSetCacheConfig: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1g54699acf7e2ef27279d013ca2095f4a3
-func SetCurrentCacheConfig(c FuncCacheConfig) error {
-	fcc := C.CUfunc_cache(c)
-	return result(C.cuCtxSetCacheConfig(fcc))
-}
-
-// SetCurrent binds the specified CUDA context to the calling CPU thread.
-//
-// Wrapper over cuCtxSetCurrent: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1gbe562ee6258b4fcc272ca6478ca2a2f7
-func SetCurrent(ctx Context) error {
-	cctx := C.CUcontext(unsafe.Pointer(uintptr(ctx)))
-	return result(C.cuCtxSetCurrent(cctx))
-}
-
-// SetLimit set resoucer limits.
-//
-// Wrapper over cuCtxSetLimit: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1g0651954dfb9788173e60a9af7201e65a
-func SetLimit(l Limit, size int64) error {
-	cSize := C.size_t(size)
-	cLimit := C.CUlimit(l)
-	return result(C.cuCtxSetLimit(cLimit, cSize))
-}
-
-// SetShharedMemConfig sets the shared memory configuration for the current context.
-func SetSharedMemConfig(c SharedConfig) error {
-	conf := C.CUsharedconfig(c)
-	return result(C.cuCtxSetSharedMemConfig(conf))
-}
-
-// Synchronize blocks for a context's tasks to complete.
-func Synchronize() error {
-	return result(C.cuCtxSynchronize())
-}
-
-/* Primary Context Management */
-
-// PrimaryCtxState gets the state of the primary context
-func (d Device) PrimaryCtxState() (flags ContextFlags, active bool, err error) {
-	var f C.uint
-	var a C.int
-	if err = result(C.cuDevicePrimaryCtxGetState(C.CUdevice(d), &f, &a)); err != nil {
-		return
-	}
-	flags = ContextFlags(f)
-	act := int(a)
-	if act == 1 {
-		active = true
-	}
-	return
-}
-
-// ReleasePrimaryCtx releases the primary context on the GPU.
-//
-// Releases the primary context interop on the device by decreasing the usage count by 1.
-// If the usage drops to 0 the primary context of device dev will be destroyed regardless of how many threads it is current to.
-// Please note that unlike cuCtxDestroy() this method does not pop the context from stack in any circumstances.
-func (d Device) ReleasePrimaryCtx() error {
-	return result(C.cuDevicePrimaryCtxRelease(C.CUdevice(d)))
-}
-
-// ResetPrimaryCtx destroys all allocations and reset all state on the primary context.
-// Explicitly destroys and cleans up all resources associated with the current device in the current process.
-//
-// Note that it is responsibility of the calling function to ensure that no other module in the process is using the device any more.
-// For that reason it is recommended to use d.ReleasePrimaryCtx() in most cases.
-// However it is safe for other modules to call d.ReleasePrimaryCtx() even after resetting the device.
-func (d Device) ResetPrimaryCtx() error {
-	return result(C.cuDevicePrimaryCtxReset(C.CUdevice(d)))
-}
-
-// RetainPrimaryCtx retains the primary context on the GPU, creating it if necessary, increasing its usage count.
-//
-// The caller must call d.ReleasePrimaryCtx() when done using the context.
-// Unlike MakeContext() the newly created context is not pushed onto the stack.
-//
-// Context creation will fail with error `UnknownError` if the compute mode of the device is CU_COMPUTEMODE_PROHIBITED.
-// The function cuDeviceGetAttribute() can be used with CU_DEVICE_ATTRIBUTE_COMPUTE_MODE to determine the compute mode of the device.
-// The nvidia-smi tool can be used to set the compute mode for devices. Documentation for nvidia-smi can be obtained by passing a -h option to it.
-// Please note that the primary context always supports pinned allocations. Other flags can be specified by cuDevicePrimaryCtxSetFlags().
-func (d Device) RetainPrimaryCtx() (primaryContext Context, err error) {
-	var ctx C.CUcontext
-	if err = result(C.cuDevicePrimaryCtxRetain(&ctx, C.CUdevice(d))); err != nil {
-		return
-	}
-	return Context(uintptr(unsafe.Pointer(ctx))), nil
-}
-
-// SetPrimaryCtxFlags Sets the flags for the primary context on the device overwriting perviously set ones.
-// If the primary context is already created, error `PrimaryContextActive` will be returned.
-func (d Device) SetPrimaryCtxFlags(flags ContextFlags) error {
-	return result(C.cuDevicePrimaryCtxSetFlags(C.CUdevice(d), C.uint(flags)))
+	// actual methods
+	Address(hTexRef TexRef) (pdptr DevicePtr, err error)
+	AddressMode(hTexRef TexRef, dim int) (pam AddressMode, err error)
+	Array(hTexRef TexRef) (phArray Array, err error)
+	AttachMemAsync(hStream Stream, dptr DevicePtr, length int64, flags uint)
+	BorderColor(hTexRef TexRef) (pBorderColor [3]float32, err error)
+	CurrentCacheConfig() (pconfig FuncCacheConfig, err error)
+	CurrentDevice() (device Device, err error)
+	CurrentFlags() (flags ContextFlags, err error)
+	Descriptor(hArray Array) (pArrayDescriptor ArrayDesc, err error)
+	Descriptor3(hArray Array) (pArrayDescriptor Array3Desc, err error)
+	DestroyArray(hArray Array)
+	DestroyEvent(event *Event)
+	DestroyStream(hStream *Stream)
+	DisablePeerAccess(peerContext CUContext)
+	Elapsed(hStart Event, hEnd Event) (pMilliseconds float64, err error)
+	EnablePeerAccess(peerContext CUContext, Flags uint)
+	FilterMode(hTexRef TexRef) (pfm FilterMode, err error)
+	Format(hTexRef TexRef) (pFormat Format, pNumChannels int, err error)
+	FunctionAttribute(fn Function, attrib FunctionAttribute) (pi int, err error)
+	GetArray(hSurfRef SurfRef) (phArray Array, err error)
+	LaunchKernel(fn Function, gridDimX, gridDimY, gridDimZ int, blockDimX, blockDimY, blockDimZ int, sharedMemBytes int, stream Stream, kernelParams []unsafe.Pointer)
+	Limits(limit Limit) (pvalue int64, err error)
+	Load(name string) (m Module, err error)
+	MakeEvent(flags EventFlags) (event Event, err error)
+	MakeStream(flags StreamFlags) (stream Stream, err error)
+	MakeStreamWithPriority(priority int, flags StreamFlags) (stream Stream, err error)
+	MaxAnisotropy(hTexRef TexRef) (pmaxAniso int, err error)
+	MemAlloc(bytesize int64) (dptr DevicePtr, err error)
+	MemAllocManaged(bytesize int64, flags MemAttachFlags) (dptr DevicePtr, err error)
+	MemAllocPitch(WidthInBytes int64, Height int64, ElementSizeBytes uint) (dptr DevicePtr, pPitch int64, err error)
+	MemFree(dptr DevicePtr)
+	MemFreeHost(p unsafe.Pointer)
+	MemInfo() (free int64, total int64, err error)
+	Memcpy(dst DevicePtr, src DevicePtr, ByteCount int64)
+	Memcpy2D(pCopy Memcpy2dParam)
+	Memcpy2DAsync(pCopy Memcpy2dParam, hStream Stream)
+	Memcpy2DUnaligned(pCopy Memcpy2dParam)
+	Memcpy3D(pCopy Memcpy3dParam)
+	Memcpy3DAsync(pCopy Memcpy3dParam, hStream Stream)
+	Memcpy3DPeer(pCopy Memcpy3dPeerParam)
+	Memcpy3DPeerAsync(pCopy Memcpy3dPeerParam, hStream Stream)
+	MemcpyAsync(dst DevicePtr, src DevicePtr, ByteCount int64, hStream Stream)
+	MemcpyAtoA(dstArray Array, dstOffset int64, srcArray Array, srcOffset int64, ByteCount int64)
+	MemcpyAtoD(dstDevice DevicePtr, srcArray Array, srcOffset int64, ByteCount int64)
+	MemcpyAtoH(dstHost unsafe.Pointer, srcArray Array, srcOffset int64, ByteCount int64)
+	MemcpyAtoHAsync(dstHost unsafe.Pointer, srcArray Array, srcOffset int64, ByteCount int64, hStream Stream)
+	MemcpyDtoA(dstArray Array, dstOffset int64, srcDevice DevicePtr, ByteCount int64)
+	MemcpyDtoD(dstDevice DevicePtr, srcDevice DevicePtr, ByteCount int64)
+	MemcpyDtoDAsync(dstDevice DevicePtr, srcDevice DevicePtr, ByteCount int64, hStream Stream)
+	MemcpyDtoH(dstHost unsafe.Pointer, srcDevice DevicePtr, ByteCount int64)
+	MemcpyDtoHAsync(dstHost unsafe.Pointer, srcDevice DevicePtr, ByteCount int64, hStream Stream)
+	MemcpyHtoA(dstArray Array, dstOffset int64, srcHost unsafe.Pointer, ByteCount int64)
+	MemcpyHtoAAsync(dstArray Array, dstOffset int64, srcHost unsafe.Pointer, ByteCount int64, hStream Stream)
+	MemcpyHtoD(dstDevice DevicePtr, srcHost unsafe.Pointer, ByteCount int64)
+	MemcpyHtoDAsync(dstDevice DevicePtr, srcHost unsafe.Pointer, ByteCount int64, hStream Stream)
+	MemcpyPeer(dstDevice DevicePtr, dstContext CUContext, srcDevice DevicePtr, srcContext CUContext, ByteCount int64)
+	MemcpyPeerAsync(dstDevice DevicePtr, dstContext CUContext, srcDevice DevicePtr, srcContext CUContext, ByteCount int64, hStream Stream)
+	MemsetD16(dstDevice DevicePtr, us uint16, N int64)
+	MemsetD16Async(dstDevice DevicePtr, us uint16, N int64, hStream Stream)
+	MemsetD2D16(dstDevice DevicePtr, dstPitch int64, us uint16, Width int64, Height int64)
+	MemsetD2D16Async(dstDevice DevicePtr, dstPitch int64, us uint16, Width int64, Height int64, hStream Stream)
+	MemsetD2D32(dstDevice DevicePtr, dstPitch int64, ui uint, Width int64, Height int64)
+	MemsetD2D32Async(dstDevice DevicePtr, dstPitch int64, ui uint, Width int64, Height int64, hStream Stream)
+	MemsetD2D8(dstDevice DevicePtr, dstPitch int64, uc byte, Width int64, Height int64)
+	MemsetD2D8Async(dstDevice DevicePtr, dstPitch int64, uc byte, Width int64, Height int64, hStream Stream)
+	MemsetD32(dstDevice DevicePtr, ui uint, N int64)
+	MemsetD32Async(dstDevice DevicePtr, ui uint, N int64, hStream Stream)
+	MemsetD8(dstDevice DevicePtr, uc byte, N int64)
+	MemsetD8Async(dstDevice DevicePtr, uc byte, N int64, hStream Stream)
+	ModuleFunction(m Module, name string) (function Function, err error)
+	ModuleGlobal(m Module, name string) (dptr DevicePtr, size int64, err error)
+	Priority(hStream Stream) (priority int, err error)
+	QueryEvent(hEvent Event)
+	QueryStream(hStream Stream)
+	Record(hEvent Event, hStream Stream)
+	SetAddress(hTexRef TexRef, dptr DevicePtr, bytes int64) (ByteOffset int64, err error)
+	SetAddress2D(hTexRef TexRef, desc ArrayDesc, dptr DevicePtr, Pitch int64)
+	SetAddressMode(hTexRef TexRef, dim int, am AddressMode)
+	SetBorderColor(hTexRef TexRef, pBorderColor [3]float32)
+	SetCacheConfig(fn Function, config FuncCacheConfig)
+	SetCurrentCacheConfig(config FuncCacheConfig)
+	SetFilterMode(hTexRef TexRef, fm FilterMode)
+	SetFormat(hTexRef TexRef, fmt Format, NumPackedComponents int)
+	SetFunctionSharedMemConfig(fn Function, config SharedConfig)
+	SetLimit(limit Limit, value int64)
+	SetMaxAnisotropy(hTexRef TexRef, maxAniso uint)
+	SetMipmapFilterMode(hTexRef TexRef, fm FilterMode)
+	SetMipmapLevelBias(hTexRef TexRef, bias float64)
+	SetMipmapLevelClamp(hTexRef TexRef, minMipmapLevelClamp float64, maxMipmapLevelClamp float64)
+	SetSharedMemConfig(config SharedConfig)
+	SetTexRefFlags(hTexRef TexRef, Flags TexRefFlags)
+	SharedMemConfig() (pConfig SharedConfig, err error)
+	StreamFlags(hStream Stream) (flags uint, err error)
+	StreamPriorityRange() (leastPriority int, greatestPriority int, err error)
+	SurfRefSetArray(hSurfRef SurfRef, hArray Array, Flags uint)
+	Synchronize()
+	SynchronizeEvent(hEvent Event)
+	SynchronizeStream(hStream Stream)
+	TexRefFlags(hTexRef TexRef) (pFlags uint, err error)
+	TexRefSetArray(hTexRef TexRef, hArray Array, Flags uint)
+	Unload(hmod Module)
+	Wait(hStream Stream, hEvent Event, Flags uint)
+	WaitOnValue32(stream Stream, addr DevicePtr, value uint32, flags uint)
+	WriteValue32(stream Stream, addr DevicePtr, value uint32, flags uint)
 }

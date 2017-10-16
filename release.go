@@ -18,6 +18,7 @@ func logf(format string, others ...interface{}) {}
 /* Debugging Utility Methods */
 
 // instrumentation related functions
+func logCaller(inspect string) {}
 
 func addQueueLength(l int) {}
 

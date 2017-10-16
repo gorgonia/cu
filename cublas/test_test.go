@@ -1,0 +1,18 @@
+package cublas
+
+import (
+	"github.com/chewxy/cu"
+	"github.com/pkg/errors"
+)
+
+func testSetup() (dev cu.Device, err error) {
+	devices, _ := cu.NumDevices()
+
+	if devices == 0 {
+		err = errors.Errorf("NoDevice")
+		return
+	}
+
+	dev = cu.Device(0)
+	return
+}

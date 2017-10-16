@@ -2,30 +2,54 @@ package cublas
 
 // #include <cublas_v2.h>
 import "C"
-import "github.com/gonum/blas"
+import (
+	"runtime"
 
-// Type check assertions:
-var (
-	_ blas.Float32    = &Implementation{}
-	_ blas.Float64    = &Implementation{}
-	_ blas.Complex64  = &Implementation{}
-	_ blas.Complex128 = &Implementation{}
+	"github.com/chewxy/cu"
+	"github.com/gonum/blas"
 )
 
-// Implementation is a BLAS implementation that fulfils the gonum/blas interface
-type Implementation struct {
+var (
+	_ blas.Float32    = &Standard{}
+	_ blas.Float64    = &Standard{}
+	_ blas.Complex64  = &Standard{}
+	_ blas.Complex128 = &Standard{}
+)
+
+// BLAS is the interface for all cuBLAS implementaions
+type BLAS interface {
+	cu.Context
+	blas.Float32
+	blas.Float64
+	blas.Complex64
+	blas.Complex128
+}
+
+type Standard struct {
 	h C.cublasHandle_t
+	o Order
+	m PointerMode
 	e error
+
+	cu.Context
+	dataOnDev bool
 }
 
-// NewImplementation creates a new implementation.
-func NewImplementation() *Implementation {
+func NewStandardImplementation(ctx cu.Context) *Standard {
 	var handle C.cublasHandle_t
-	C.cublasCreate(&handle)
-	return &Implementation{
-		h: handle,
+	if err := status(C.cublasCreate(&handle)); err != nil {
+		panic(err)
 	}
+	impl := &Standard{
+		h:       handle,
+		Context: ctx,
+	}
+	runtime.SetFinalizer(impl, finalizeImpl)
+	return impl
 }
 
-// Err returns the error if there is any
-func (impl *Implementation) Err() error { return impl.e }
+func (impl *Standard) Err() error { return impl.e }
+
+func finalizeImpl(impl *Standard) {
+	C.cublasDestroy(impl.h)
+}

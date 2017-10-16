@@ -21,6 +21,11 @@ func enterLoggingContext()                      {}
 func leaveLoggingContext()                      {}
 func logf(format string, others ...interface{}) {}
 
+func logCaller(inspect string) {
+	pc, _, _, _ := runtime.Caller(2)
+	logf("%q Called by %v", inspect, runtime.FuncForPC(pc).Name())
+}
+
 /* Operational statistics related debugging */
 
 var ql = new(sync.Mutex)

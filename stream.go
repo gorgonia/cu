@@ -2,10 +2,17 @@ package cu
 
 // #include <cuda.h>
 import "C"
-import "unsafe"
+import (
+	"unsafe"
+
+	"github.com/pkg/errors"
+)
 
 // Stream represents a CUDA stream.
 type Stream uintptr
+
+func makeStream(s C.CUstream) Stream { return Stream(uintptr(unsafe.Pointer(s))) }
+func (s Stream) c() C.CUstream       { return C.CUstream(unsafe.Pointer(uintptr(s))) }
 
 // MakeStream creates a stream. The flags determines the behaviors of the stream.
 func MakeStream(flags StreamFlags) (Stream, error) {
@@ -13,7 +20,7 @@ func MakeStream(flags StreamFlags) (Stream, error) {
 	if err := result(C.cuStreamCreate(&s, C.uint(flags))); err != nil {
 		return 0, err
 	}
-	return Stream(uintptr(unsafe.Pointer(s))), nil
+	return makeStream(s), nil
 }
 
 // MakeStreamWithPriority creates a stream with the given priority. The flags determines the behaviors of the stream.
@@ -29,7 +36,7 @@ func MakeStreamWithPriority(priority int, flags StreamFlags) (Stream, error) {
 	if err := result(C.cuStreamCreateWithPriority(&s, C.uint(flags), C.int(priority))); err != nil {
 		return 0, err
 	}
-	return Stream(uintptr(unsafe.Pointer(s))), nil
+	return makeStream(s), nil
 }
 
 // DestroyStream destroys the stream specified by hStream.
@@ -38,49 +45,39 @@ func MakeStreamWithPriority(priority int, flags StreamFlags) (Stream, error) {
 // the function will return immediately and the resources associated with hStream will be released automatically once the device has completed all work in hStream.
 func DestroyStream(hStream *Stream) error {
 	stream := *hStream
-	s := C.CUstream(unsafe.Pointer(uintptr(stream)))
+	s := stream.c()
 	*hStream = 0
 	return result(C.cuStreamDestroy(s))
 }
 
-//Flags queries the flags of a given stream.
-func (s Stream) Flags() (StreamFlags, error) {
-	var f C.uint
-	cs := C.CUstream(unsafe.Pointer(uintptr(s)))
-	if err := result(C.cuStreamGetFlags(cs, &f)); err != nil {
-		return 0, err
+func (ctx *Ctx) MakeStream(flags StreamFlags) (stream Stream, err error) {
+	var s C.CUstream
+
+	f := func() error { return result(C.cuStreamCreate(&s, C.uint(flags))) }
+	if err = ctx.Do(f); err != nil {
+		err = errors.Wrap(err, "MakeStream")
+		return
 	}
-	return StreamFlags(f), nil
+	stream = makeStream(s)
+	return
 }
 
-// Priority returns the priority of a stream created.
-//
-// Note that if the stream was created with a priority outside the numerical range returned by `StreamPriorityRange`,
-// this function returns the clamped priority.
-func (s Stream) Priority() (int, error) {
-	var p C.int
-	cs := C.CUstream(unsafe.Pointer(uintptr(s)))
-	if err := result(C.cuStreamGetPriority(cs, &p)); err != nil {
-		return -1, err
+func (ctx *Ctx) MakeStreamWithPriority(priority int, flags StreamFlags) (stream Stream, err error) {
+	var s C.CUstream
+
+	f := func() error { return result(C.cuStreamCreateWithPriority(&s, C.uint(flags), C.int(priority))) }
+	if err = ctx.Do(f); err != nil {
+		err = errors.Wrap(err, "MakeStream With Priority")
+		return
 	}
-	return int(p), nil
+	stream = makeStream(s)
+	return
 }
 
-// Query checks the status of a compute stream. It returns nil if all operations have completed, error NotReady otherwise
-func (s Stream) Query() error {
-	cs := C.CUstream(unsafe.Pointer(uintptr(s)))
-	return result(C.cuStreamQuery(cs))
+func (ctx *Ctx) DestroyStream(hStream *Stream) {
+	stream := *hStream
+	s := stream.c()
+
+	f := func() error { return result(C.cuStreamDestroy(s)) }
+	ctx.err = ctx.Do(f)
 }
-
-// Synchronize waits until the device has completed all operations in the stream.
-// If the context was created with the SchedBlockingSync flag, the CPU thread will block until the stream is finished with all of its tasks.
-func (s Stream) Synchronize() error {
-	cs := C.CUstream(unsafe.Pointer(uintptr(s)))
-	return result(C.cuStreamSynchronize(cs))
-}
-
-/* TODO */
-
-// func (s Stream) AddCallback()
-// func (s Stream) AttachMemAsync()
-// func (s Stream) WaitEvent()

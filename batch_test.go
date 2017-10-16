@@ -1,19 +1,21 @@
 package cu
 
 import (
+	"log"
 	"runtime"
 	"testing"
 	"unsafe"
 )
 
 func TestBatchContext(t *testing.T) {
+	log.Print("BatchContext")
 	var err error
 	var dev Device
-	var ctx Context
+	var cuctx CUContext
 	var mod Module
 	var fn Function
 
-	if dev, ctx, err = testSetup(); err != nil {
+	if dev, cuctx, err = testSetup(); err != nil {
 		if err.Error() == "NoDevice" {
 			return
 		}
@@ -27,7 +29,7 @@ func TestBatchContext(t *testing.T) {
 	if fn, err = mod.Function("add32"); err != nil {
 		t.Fatalf("Cannot get add32(): %v", err)
 	}
-
+	ctx := newContext(cuctx)
 	bctx := NewBatchedContext(ctx, dev)
 
 	runtime.LockOSThread()
@@ -79,8 +81,10 @@ loop:
 			bctx.DoWork()
 		case <-doneChan:
 			break loop
-		default:
 		}
+	}
+	if err = Synchronize(); err != nil {
+		t.Errorf("Failed to Sync %v", err)
 	}
 
 	for _, v := range a {
@@ -91,17 +95,18 @@ loop:
 	}
 
 	Unload(mod)
-	DestroyContext(&ctx)
+	DestroyContext(&cuctx)
 }
 
 func TestLargeBatch(t *testing.T) {
+	log.Printf("Large batch")
 	var err error
 	var dev Device
-	var ctx Context
+	var cuctx CUContext
 	var mod Module
 	var fn Function
 
-	if dev, ctx, err = testSetup(); err != nil {
+	if dev, cuctx, err = testSetup(); err != nil {
 		if err.Error() == "NoDevice" {
 			return
 		}
@@ -119,6 +124,7 @@ func TestLargeBatch(t *testing.T) {
 	dev.TotalMem()
 
 	beforeFree, _, _ := MemInfo()
+	ctx := newContext(cuctx)
 	bctx := NewBatchedContext(ctx, dev)
 
 	runtime.LockOSThread()
@@ -134,9 +140,9 @@ func TestLargeBatch(t *testing.T) {
 	}
 	size := int64(len(a) * 4)
 
-	var frees []DevicePtr
 	go func() {
 		var memA, memB DevicePtr
+		var frees []DevicePtr
 
 		for i := 0; i < 104729; i++ {
 			if memA, err = bctx.AllocAndCopy(unsafe.Pointer(&a[0]), size); err != nil {
@@ -169,6 +175,7 @@ func TestLargeBatch(t *testing.T) {
 
 		bctx.MemcpyDtoH(unsafe.Pointer(&a[0]), memA, size)
 		bctx.MemcpyDtoH(unsafe.Pointer(&b[0]), memB, size)
+		log.Printf("Number of frees %v", len(frees))
 		for _, free := range frees {
 			bctx.MemFree(free)
 		}
@@ -187,6 +194,11 @@ loop:
 		}
 	}
 
+	bctx.DoWork()
+	if err = Synchronize(); err != nil {
+		t.Errorf("Failed to Sync %v", err)
+	}
+
 	for _, v := range a {
 		if v != float32(2) {
 			t.Errorf("Expected all values to be 2. %v", a)
@@ -197,12 +209,10 @@ loop:
 	afterFree, _, _ := MemInfo()
 
 	if afterFree != beforeFree {
-		t.Errorf("Before: Freemem: %v. After %v", beforeFree, afterFree)
+		t.Errorf("Before: Freemem: %v. After %v | Diff %v", beforeFree, afterFree, (beforeFree-afterFree)/1024)
 	}
-
 	Unload(mod)
-	DestroyContext(&ctx)
-
+	DestroyContext(&cuctx)
 }
 
 func BenchmarkNoBatching(bench *testing.B) {
@@ -210,7 +220,7 @@ func BenchmarkNoBatching(bench *testing.B) {
 	defer runtime.UnlockOSThread()
 
 	var err error
-	var ctx Context
+	var ctx CUContext
 	var mod Module
 	var fn Function
 
@@ -289,11 +299,11 @@ func BenchmarkBatching(bench *testing.B) {
 
 	var err error
 	var dev Device
-	var ctx Context
+	var cuctx CUContext
 	var mod Module
 	var fn Function
 
-	if dev, ctx, err = testSetup(); err != nil {
+	if dev, cuctx, err = testSetup(); err != nil {
 		if err.Error() == "NoDevice" {
 			return
 		}
@@ -325,6 +335,7 @@ func BenchmarkBatching(bench *testing.B) {
 		bench.Fatalf("Failed to allocate for b: %v", err)
 	}
 
+	ctx := newContext(cuctx)
 	bctx := NewBatchedContext(ctx, dev)
 
 	args := []unsafe.Pointer{
@@ -354,6 +365,6 @@ func BenchmarkBatching(bench *testing.B) {
 	MemFree(memA)
 	MemFree(memB)
 	Unload(mod)
-	DestroyContext(&ctx)
+	DestroyContext(&cuctx)
 
 }

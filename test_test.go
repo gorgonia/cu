@@ -68,7 +68,7 @@ BB0_2:
 
 `
 
-func testSetup() (dev Device, ctx Context, err error) {
+func testSetup() (dev Device, ctx CUContext, err error) {
 	devices, _ := NumDevices()
 
 	if devices == 0 {
@@ -83,7 +83,7 @@ func testSetup() (dev Device, ctx Context, err error) {
 	return
 }
 
-func testTeardown(ctx Context, mod Module) {
+func testTeardown(ctx CUContext, mod Module) {
 	if mod != 0 {
 		Unload(mod)
 	}
