@@ -5,8 +5,8 @@ import "C"
 import (
 	"runtime"
 
-	"github.com/chewxy/cu"
 	"github.com/gonum/blas"
+	"gorgonia.org/cu"
 )
 
 var (
