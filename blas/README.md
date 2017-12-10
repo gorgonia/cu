@@ -4,7 +4,7 @@ Package `cublas` implements a Go API for CUDA's cuBLAS. It matches the [gonum/bl
 
 # How To Use # 
 
-To install: `go get -u github.com/chewxy/cu`
+To install: `go get -u gorgonia.org/cu`
 
 The [CUDA Toolkit 8.0](https://developer.nvidia.com/cuda-toolkit) is required. LDFlags and CFlags may not be quite accurate. File an issue if you find one, thank you.
 

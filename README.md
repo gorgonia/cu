@@ -1,4 +1,4 @@
-# cu [![GoDoc](https://godoc.org/github.com/chewxy/cu?status.svg)](https://godoc.org/github.com/chewxy/cu)
+# cu [![GoDoc](https://godoc.org/gorgonia.org/cu?status.svg)](https://godoc.org/gorgonia.org/cu)
 
 Package `cu` is a package that interfaces with the [CUDA Driver API](http://docs.nvidia.com/cuda/cuda-driver-api/). This package was directly inspired by Arne Vansteenkiste's [`cu` package](https://github.com/barnex/cuda5).
 
@@ -11,7 +11,7 @@ Lastly, this package uses the latest [CUDA toolkit](https://developer.nvidia.com
 
 # Installation #
 
-This package is go-gettable: `go get -u github.com/chewxy/cu`
+This package is go-gettable: `go get -u gorgonia.org/cu`
 
 This package mostly depends on built-in packages. There are two external dependencies:
 
@@ -24,7 +24,7 @@ However, package `cu` DOES depend on one major external dependency: CUDA. Specif
 To verify that this library works, install and run the `cudatest` program, which accompanies this package:
 
 ```
-go install github.com/chewxy/cu/cmd/cudatest
+go install gorgonia.org/cu/cmd/cudatest
 cudatest
 ```
 
@@ -59,7 +59,7 @@ This author loves pull requests from everyone. Here's how to contribute to this 
     `git clone git@github.com:YOUR_USERNAME/cu.git`
 2. Work on your edits.
 3. Commit with a good commit message.
-4. Push to your fork then [submit a pull request](https://github.com/chewxy/cu/compare/).
+4. Push to your fork then [submit a pull request](https://gorgonia.org/cu/compare/).
 
 We understand that this package is an interfacing package with a third party API. As such, tests may not always be viable. However, please do try to include as much tests as possible.
 

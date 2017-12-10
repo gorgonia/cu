@@ -1,8 +1,8 @@
 package cublas
 
 import (
-	"github.com/chewxy/cu"
 	"github.com/pkg/errors"
+	"gorgonia.org/cu"
 )
 
 func testSetup() (dev cu.Device, err error) {

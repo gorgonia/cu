@@ -1,5 +1,5 @@
 // Package cu provides an idiomatic interface to the CUDA Driver API.
-package cu
+package cu // import "gorgonia.org/cu"
 
 // This file implements CUDA driver context management
 

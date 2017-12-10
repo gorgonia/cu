@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/chewxy/cu"
+	"gorgonia.org/cu"
 )
 
 func main() {
