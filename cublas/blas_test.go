@@ -16,7 +16,7 @@ func TestMultihreadedCalls(t *testing.T) {
 		t.Fatal(err)
 	}
 	ctx := cu.NewContext(dev, cu.SchedAuto)
-	impl := NewStandardImplementation(ctx)
+	impl := NewStandardImplementation(WithContext(ctx))
 
 	// (20, 20) matrix of float32
 	mem0, err := ctx.MemAlloc(400 * 4)
@@ -51,15 +51,18 @@ func TestMultihreadedCalls(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err = ctx.MemFree(mem0); err != nil {
+	ctx.MemFree(mem0)
+	if err = ctx.Error(); err != nil {
 		t.Error(err)
 	}
 
-	if err = ctx.MemFree(mem1); err != nil {
+	ctx.MemFree(mem1)
+	if err = ctx.Error(); err != nil {
 		t.Error(err)
 	}
 
-	if err = ctx.MemFree(mem2); err != nil {
+	ctx.MemFree(mem2)
+	if err = ctx.Error(); err != nil {
 		t.Error(err)
 	}
 }
