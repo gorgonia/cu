@@ -55,6 +55,21 @@ func NewManuallyManagedContext(d Device, flags ContextFlags) *Ctx {
 	return ctx
 }
 
+// CtxFromCUContext is another way of buildinga *Ctx.
+//
+// Typical example:
+//	cuctx, err := dev.MakeContext(SchedAuto)
+// 	if err != nil {
+//		..error handling..
+//	}
+// 	ctx := CtxFroMCUContext(d, cuctx)
+func CtxFromCUContext(d Device, cuctx CUContext, flags ContextFlags) *Ctx {
+	ctx := newContext(cuctx)
+	ctx.device = d
+	ctx.flags = flags
+	return ctx
+}
+
 func newContext(c CUContext) *Ctx {
 	ctx := &Ctx{
 		CUContext: c,
