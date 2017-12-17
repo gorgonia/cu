@@ -13,7 +13,7 @@ var (
 type Context interface {
 	// Operational stuff
 	CUDAContext() CUContext
-	Err() error
+	Error() error
 	Run(chan error) error
 	Do(fn func() error) error
 	Work() <-chan func() error

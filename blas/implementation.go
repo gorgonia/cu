@@ -25,6 +25,12 @@ type BLAS interface {
 	blas.Complex128
 }
 
+// Standard is the standard cuBLAS handler.
+// By default it assumes that the data is in  RowMajor, DESPITE the fact that cuBLAS
+// takes ColMajor only. This is done for the ease of use of developers writing in Go.
+//
+// Use NewStandardImplementation to create a new BLAS handler.
+// Use the various ConsOpts to set the options
 type Standard struct {
 	h C.cublasHandle_t
 	o Order
@@ -35,15 +41,20 @@ type Standard struct {
 	dataOnDev bool
 }
 
-func NewStandardImplementation(ctx cu.Context) *Standard {
+func NewStandardImplementation(opts ...ConsOpt) *Standard {
 	var handle C.cublasHandle_t
 	if err := status(C.cublasCreate(&handle)); err != nil {
 		panic(err)
 	}
+
 	impl := &Standard{
-		h:       handle,
-		Context: ctx,
+		h: handle,
 	}
+
+	for _, opt := range opts {
+		opt(impl)
+	}
+
 	runtime.SetFinalizer(impl, finalizeImpl)
 	return impl
 }
