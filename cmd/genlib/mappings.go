@@ -358,6 +358,10 @@ var ctypes2GoTypes = map[string]string{
 	"C.float":  "float64",
 	"C.void":   "unsafe.Pointer",
 	"C.void*":  "*unsafe.Pointer",
+
+	"C.unsigned":       "uint",
+	"C.unsigned char":  "byte",
+	"C.unsigned short": "uint16",
 }
 
 var gotypesConversion = map[string]string{
@@ -378,6 +382,7 @@ var gotypesConversion = map[string]string{
 	"Memcpy3dParam":     "%s.c()",
 	"Memcpy3dPeerParam": "%s.c()",
 	"ArrayDesc":         "%s.c()",
+	"Array3Desc":        "%s.c()",
 
 	// flags, which are mostly uint in the C signature
 	"Format":          "C.CUarray_format(%s)",

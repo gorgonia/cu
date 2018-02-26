@@ -124,6 +124,7 @@ func (sig *CSignature) GoSig() *GoSignature {
 			var ok bool
 			gp.Name = p.Name
 			if gp.Type, ok = goTypeFromCtype(p.Type); !ok {
+				log.Printf("p.Name %q %v", p.Name, p.Type)
 				panic(fmt.Sprintf("ctype %q has no Go equivalent. Signature: %v", p.Type, sig))
 			}
 		}
