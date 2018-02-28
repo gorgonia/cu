@@ -19,7 +19,7 @@ func Parse() (retVal []*CSignature) {
 	}
 
 	for _, d := range decls {
-		retVal = append(retVal, decl2csig(d))
+		retVal = append(retVal, decl2csig(d.(*bindgen.CSignature)))
 	}
 	return
 }
@@ -41,7 +41,7 @@ func functions(t *cc.TranslationUnit) ([]bindgen.Declaration, error) {
 	return bindgen.Get(t, filter)
 }
 
-func decl2csig(d bindgen.Declaration) *CSignature {
+func decl2csig(d *bindgen.CSignature) *CSignature {
 	retVal := new(CSignature)
 	retVal.Name = d.Name
 	var params []*Param
