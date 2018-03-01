@@ -84,32 +84,32 @@ var cToGoType = map[string]string{
 	"double": "float64",
 }
 
-var blasEnums = map[string]*template.Template{
-	"CUBLAS_ORDER":     template.Must(template.New("order").Parse("order")),
-	"CUBLAS_DIAG":      template.Must(template.New("diag").Parse("blas.Diag")),
-	"CUBLAS_TRANSPOSE": template.Must(template.New("trans").Parse("blas.Transpose")),
-	"CUBLAS_UPLO":      template.Must(template.New("uplo").Parse("blas.Uplo")),
-	"CUBLAS_SIDE":      template.Must(template.New("side").Parse("blas.Side")),
+var blasEnums = map[string]bg.Template{
+	"CUBLAS_ORDER":     bg.Pure(template.Must(template.New("order").Parse("order"))),
+	"CUBLAS_DIAG":      bg.Pure(template.Must(template.New("diag").Parse("blas.Diag"))),
+	"CUBLAS_TRANSPOSE": bg.Pure(template.Must(template.New("trans").Parse("blas.Transpose"))),
+	"CUBLAS_UPLO":      bg.Pure(template.Must(template.New("uplo").Parse("blas.Uplo"))),
+	"CUBLAS_SIDE":      bg.Pure(template.Must(template.New("side").Parse("blas.Side"))),
 }
 
-var cgoEnums = map[string]*template.Template{
-	"CUBLAS_ORDER":     template.Must(template.New("order").Parse("C.enum_CBLAS_ORDER(rowMajor)")),
-	"CUBLAS_DIAG":      template.Must(template.New("diag").Parse("diag2cublasDiag({{.}})")),
-	"CUBLAS_TRANSPOSE": template.Must(template.New("trans").Parse("trans2cublasTrans({{.}})")),
-	"CUBLAS_UPLO":      template.Must(template.New("uplo").Parse("uplo2cublasUplo({{.}})")),
-	"CUBLAS_SIDE":      template.Must(template.New("side").Parse("side2cublasSide({{.}})")),
+var cgoEnums = map[string]bg.Template{
+	"CUBLAS_ORDER":     bg.Pure(template.Must(template.New("order").Parse("C.enum_CBLAS_ORDER(rowMajor)"))),
+	"CUBLAS_DIAG":      bg.Pure(template.Must(template.New("diag").Parse("diag2cublasDiag({{.}})"))),
+	"CUBLAS_TRANSPOSE": bg.Pure(template.Must(template.New("trans").Parse("trans2cublasTrans({{.}})"))),
+	"CUBLAS_UPLO":      bg.Pure(template.Must(template.New("uplo").Parse("uplo2cublasUplo({{.}})"))),
+	"CUBLAS_SIDE":      bg.Pure(template.Must(template.New("side").Parse("side2cublasSide({{.}})"))),
 }
 
 var (
-	complex64Type = map[bg.TypeKey]*template.Template{
-		{Kind: cc.FloatComplex, IsPointer: true}: template.Must(template.New("void*").Parse(
+	complex64Type = map[bg.TypeKey]bg.Template{
+		{Kind: cc.FloatComplex, IsPointer: true}: bg.Pure(template.Must(template.New("void*").Parse(
 			`{{if eq . "alpha" "beta"}}complex64{{else}}[]complex64{{end}}`,
-		))}
+		)))}
 
-	complex128Type = map[bg.TypeKey]*template.Template{
-		{Kind: cc.DoubleComplex, IsPointer: true}: template.Must(template.New("void*").Parse(
+	complex128Type = map[bg.TypeKey]bg.Template{
+		{Kind: cc.DoubleComplex, IsPointer: true}: bg.Pure(template.Must(template.New("void*").Parse(
 			`{{if eq . "alpha" "beta"}}complex128{{else}}[]complex128{{end}}`,
-		))}
+		)))}
 )
 
 var names = map[string]string{
@@ -225,7 +225,7 @@ func goSignature(buf *bytes.Buffer, d *bg.CSignature, docs map[string][]*ast.Com
 
 	parameters := d.Parameters()
 
-	var voidPtrType map[bg.TypeKey]*template.Template
+	var voidPtrType map[bg.TypeKey]bg.Template
 	for _, p := range parameters {
 		if p.Kind() == cc.Ptr && p.Elem().Kind() == cc.FloatComplex {
 			switch {

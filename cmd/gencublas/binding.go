@@ -51,7 +51,7 @@ var goTypes = map[bg.TypeKey]bg.Template{
 //  {Kind: cc.Bool}:                    "bool",
 //  {Kind: cc.FloatComplex}:            "complex64",
 //  {Kind: cc.DoubleComplex}:           "complex128",
-func GoTypeFor(typ cc.Type, name string, types ...map[bg.TypeKey]*template.Template) string {
+func GoTypeFor(typ cc.Type, name string, types ...map[bg.TypeKey]bg.Template) string {
 	if typ == nil {
 		return "<nil>"
 	}
@@ -85,7 +85,7 @@ func GoTypeFor(typ cc.Type, name string, types ...map[bg.TypeKey]*template.Templ
 // GoTypeForEnum returns a string representation of the given enum type using a mapping
 // in types. GoTypeForEnum will panic if no type mapping is found after searching the
 // user-provided types mappings or the type is not an enum.
-func GoTypeForEnum(typ cc.Type, name string, types ...map[string]*template.Template) string {
+func GoTypeForEnum(typ cc.Type, name string, types ...map[string]bg.Template) string {
 	if typ == nil {
 		return "<nil>"
 	}
@@ -110,37 +110,37 @@ func GoTypeForEnum(typ cc.Type, name string, types ...map[string]*template.Templ
 	panic(fmt.Sprintf("unknown type: %+v", typ))
 }
 
-var cgoTypes = map[bg.TypeKey]*template.Template{
-	{Kind: cc.Void, IsPointer: true}: template.Must(template.New("void*").Parse("unsafe.Pointer(&{{.}}[0])")),
+var cgoTypes = map[bg.TypeKey]bg.Template{
+	{Kind: cc.Void, IsPointer: true}: bg.Pure(template.Must(template.New("void*").Parse("unsafe.Pointer(&{{.}}[0])"))),
 
-	{Kind: cc.Int}: template.Must(template.New("int").Parse("C.int({{.}})")),
+	{Kind: cc.Int}: bg.Pure(template.Must(template.New("int").Parse("C.int({{.}})"))),
 
-	{Kind: cc.Float}:  template.Must(template.New("float").Parse("C.float({{.}})")),
-	{Kind: cc.Double}: template.Must(template.New("double").Parse("C.double({{.}})")),
+	{Kind: cc.Float}:  bg.Pure(template.Must((template.New("float").Parse("C.float({{.}})")))),
+	{Kind: cc.Double}: bg.Pure(template.Must((template.New("double").Parse("C.double({{.}})")))),
 
-	{Kind: cc.Float, IsPointer: true}: template.Must(template.New("float*").Parse(
-		`(*C.float)(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}})`)),
-	{Kind: cc.Double, IsPointer: true}: template.Must(template.New("double*").Parse(
-		`(*C.double)(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}})`)),
+	{Kind: cc.Float, IsPointer: true}: bg.Pure(template.Must(template.New("float*").Parse(
+		`(*C.float)(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}})`))),
+	{Kind: cc.Double, IsPointer: true}: bg.Pure(template.Must(template.New("double*").Parse(
+		`(*C.double)(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}})`))),
 
-	{Kind: cc.Bool}: template.Must(template.New("bool").Parse("C.bool({{.}})")),
+	{Kind: cc.Bool}: bg.Pure(template.Must((template.New("bool").Parse("C.bool({{.}})")))),
 
-	{Kind: cc.FloatComplex}: template.Must(template.New("floatcomplex").Parse(
-		`*(*C.cuComplex)(unsafe.Pointer({{.}}))`)),
-	{Kind: cc.DoubleComplex}: template.Must(template.New("doublecomplex").Parse(
-		`*(*C.cuDoubleComplex)(unsafe.Pointer({{.}}))`)),
+	{Kind: cc.FloatComplex}: bg.Pure(template.Must(template.New("floatcomplex").Parse(
+		`*(*C.cuComplex)(unsafe.Pointer({{.}}))`))),
+	{Kind: cc.DoubleComplex}: bg.Pure(template.Must(template.New("doublecomplex").Parse(
+		`*(*C.cuDoubleComplex)(unsafe.Pointer({{.}}))`))),
 
-	{Kind: cc.FloatComplex, IsPointer: true}: template.Must(template.New("floatcomplex*").Parse(
-		`(*C.cuComplex)(unsafe.Pointer(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}}))`)),
-	{Kind: cc.DoubleComplex, IsPointer: true}: template.Must(template.New("doublecomplex*").Parse(
-		`(*C.cuDoubleComplex)(unsafe.Pointer(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}}))`)),
+	{Kind: cc.FloatComplex, IsPointer: true}: bg.Pure(template.Must(template.New("floatcomplex*").Parse(
+		`(*C.cuComplex)(unsafe.Pointer(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}}))`))),
+	{Kind: cc.DoubleComplex, IsPointer: true}: bg.Pure(template.Must(template.New("doublecomplex*").Parse(
+		`(*C.cuDoubleComplex)(unsafe.Pointer(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}}))`))),
 
 	// from main.go
-	{Kind: cc.Void, IsPointer: true}: template.Must(template.New("void*").Parse(
+	{Kind: cc.Void, IsPointer: true}: bg.Pure(template.Must(template.New("void*").Parse(
 		`unsafe.Pointer(&{{.}}{{if eq . "alpha" "beta"}}{{else}}[0]{{end}})`,
-	)),
-	{Kind: cc.Int, IsPointer: true}: template.Must(template.New("int*").Parse(
-		`(*C.int)(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}})`)),
+	))),
+	{Kind: cc.Int, IsPointer: true}: bg.Pure(template.Must(template.New("int*").Parse(
+		`(*C.int)(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}})`))),
 }
 
 // CgoConversionFor returns a string representation of the given type using a mapping in
@@ -157,7 +157,7 @@ var cgoTypes = map[bg.TypeKey]*template.Template{
 //  {Kind: cc.DoubleComplex}:                  "unsafe.Pointer(&{{.}})",
 //  {Kind: cc.FloatComplex, IsPointer: true}:  "unsafe.Pointer(&{{.}}[0])",
 //  {Kind: cc.DoubleComplex, IsPointer: true}: "unsafe.Pointer(&{{.}}[0])",
-func CgoConversionFor(name string, typ cc.Type, types ...map[bg.TypeKey]*template.Template) string {
+func CgoConversionFor(name string, typ cc.Type, types ...map[bg.TypeKey]bg.Template) string {
 	if typ == nil {
 		return "<nil>"
 	}
@@ -191,7 +191,7 @@ func CgoConversionFor(name string, typ cc.Type, types ...map[bg.TypeKey]*templat
 // CgoConversionForEnum returns a string representation of the given enum type using a mapping
 // in types. GoTypeForEnum will panic if no type mapping is found after searching the
 // user-provided types mappings or the type is not an enum.
-func CgoConversionForEnum(name string, typ cc.Type, types ...map[string]*template.Template) string {
+func CgoConversionForEnum(name string, typ cc.Type, types ...map[string]bg.Template) string {
 	if typ == nil {
 		return "<nil>"
 	}
