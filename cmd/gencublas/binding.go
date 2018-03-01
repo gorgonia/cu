@@ -16,12 +16,6 @@ import (
 	bg "github.com/gorgonia/bindgen"
 )
 
-// TypeKey is a terse C type description.
-type TypeKey struct {
-	IsPointer bool
-	Kind      cc.Kind
-}
-
 var goTypes = map[bg.TypeKey]bg.Template{
 	{Kind: cc.Undefined}: bg.Pure("<undefined>"),
 	{Kind: cc.Int}:       bg.Pure("int"),
@@ -57,7 +51,7 @@ var goTypes = map[bg.TypeKey]bg.Template{
 //  {Kind: cc.Bool}:                    "bool",
 //  {Kind: cc.FloatComplex}:            "complex64",
 //  {Kind: cc.DoubleComplex}:           "complex128",
-func GoTypeFor(typ cc.Type, name string, types ...map[TypeKey]*template.Template) string {
+func GoTypeFor(typ cc.Type, name string, types ...map[bg.TypeKey]*template.Template) string {
 	if typ == nil {
 		return "<nil>"
 	}
@@ -68,7 +62,7 @@ func GoTypeFor(typ cc.Type, name string, types ...map[TypeKey]*template.Template
 	}
 	var buf bytes.Buffer
 	for _, t := range types {
-		if s, ok := t[TypeKey{Kind: k, IsPointer: isPtr}]; ok {
+		if s, ok := t[bg.TypeKey{Kind: k, IsPointer: isPtr}]; ok {
 			err := s.Execute(&buf, name)
 			if err != nil {
 				panic(err)
@@ -85,7 +79,7 @@ func GoTypeFor(typ cc.Type, name string, types ...map[TypeKey]*template.Template
 		return buf.String()
 	}
 	log.Printf("%v", typ.Tag())
-	panic(fmt.Sprintf("unknown type key: %v %+v", typ, TypeKey{Kind: k, IsPointer: isPtr}))
+	panic(fmt.Sprintf("unknown type key: %v %+v", typ, bg.TypeKey{Kind: k, IsPointer: isPtr}))
 }
 
 // GoTypeForEnum returns a string representation of the given enum type using a mapping
@@ -116,7 +110,7 @@ func GoTypeForEnum(typ cc.Type, name string, types ...map[string]*template.Templ
 	panic(fmt.Sprintf("unknown type: %+v", typ))
 }
 
-var cgoTypes = map[TypeKey]*template.Template{
+var cgoTypes = map[bg.TypeKey]*template.Template{
 	{Kind: cc.Void, IsPointer: true}: template.Must(template.New("void*").Parse("unsafe.Pointer(&{{.}}[0])")),
 
 	{Kind: cc.Int}: template.Must(template.New("int").Parse("C.int({{.}})")),
@@ -163,7 +157,7 @@ var cgoTypes = map[TypeKey]*template.Template{
 //  {Kind: cc.DoubleComplex}:                  "unsafe.Pointer(&{{.}})",
 //  {Kind: cc.FloatComplex, IsPointer: true}:  "unsafe.Pointer(&{{.}}[0])",
 //  {Kind: cc.DoubleComplex, IsPointer: true}: "unsafe.Pointer(&{{.}}[0])",
-func CgoConversionFor(name string, typ cc.Type, types ...map[TypeKey]*template.Template) string {
+func CgoConversionFor(name string, typ cc.Type, types ...map[bg.TypeKey]*template.Template) string {
 	if typ == nil {
 		return "<nil>"
 	}
@@ -173,7 +167,7 @@ func CgoConversionFor(name string, typ cc.Type, types ...map[TypeKey]*template.T
 		k = typ.Element().Kind()
 	}
 	for _, t := range types {
-		if s, ok := t[TypeKey{Kind: k, IsPointer: isPtr}]; ok {
+		if s, ok := t[bg.TypeKey{Kind: k, IsPointer: isPtr}]; ok {
 			var buf bytes.Buffer
 			err := s.Execute(&buf, name)
 			if err != nil {
@@ -182,7 +176,7 @@ func CgoConversionFor(name string, typ cc.Type, types ...map[TypeKey]*template.T
 			return buf.String()
 		}
 	}
-	s, ok := cgoTypes[TypeKey{Kind: k, IsPointer: isPtr}]
+	s, ok := cgoTypes[bg.TypeKey{Kind: k, IsPointer: isPtr}]
 	if ok {
 		var buf bytes.Buffer
 		err := s.Execute(&buf, name)
@@ -191,7 +185,7 @@ func CgoConversionFor(name string, typ cc.Type, types ...map[TypeKey]*template.T
 		}
 		return buf.String()
 	}
-	panic(fmt.Sprintf("unknown type key: %+v", TypeKey{Kind: k, IsPointer: isPtr}))
+	panic(fmt.Sprintf("unknown type key: %+v", bg.TypeKey{Kind: k, IsPointer: isPtr}))
 }
 
 // CgoConversionForEnum returns a string representation of the given enum type using a mapping

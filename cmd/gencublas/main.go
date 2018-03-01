@@ -101,12 +101,12 @@ var cgoEnums = map[string]*template.Template{
 }
 
 var (
-	complex64Type = map[TypeKey]*template.Template{
+	complex64Type = map[bg.TypeKey]*template.Template{
 		{Kind: cc.FloatComplex, IsPointer: true}: template.Must(template.New("void*").Parse(
 			`{{if eq . "alpha" "beta"}}complex64{{else}}[]complex64{{end}}`,
 		))}
 
-	complex128Type = map[TypeKey]*template.Template{
+	complex128Type = map[bg.TypeKey]*template.Template{
 		{Kind: cc.DoubleComplex, IsPointer: true}: template.Must(template.New("void*").Parse(
 			`{{if eq . "alpha" "beta"}}complex128{{else}}[]complex128{{end}}`,
 		))}
@@ -225,7 +225,7 @@ func goSignature(buf *bytes.Buffer, d *bg.CSignature, docs map[string][]*ast.Com
 
 	parameters := d.Parameters()
 
-	var voidPtrType map[TypeKey]*template.Template
+	var voidPtrType map[bg.TypeKey]*template.Template
 	for _, p := range parameters {
 		if p.Kind() == cc.Ptr && p.Elem().Kind() == cc.FloatComplex {
 			switch {
