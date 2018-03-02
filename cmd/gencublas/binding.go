@@ -9,6 +9,7 @@ import (
 	"go/parser"
 	"go/token"
 	"log"
+	"strings"
 	"text/template"
 
 	"github.com/cznic/cc"
@@ -280,4 +281,17 @@ func functions(t *cc.TranslationUnit) ([]bg.Declaration, error) {
 		return true
 	}
 	return bg.Get(t, filter)
+}
+
+func shorten(n string) string {
+	s, ok := names[n]
+	if ok {
+		return s
+	}
+	return n
+}
+
+func cblasTocublas(name string) string {
+	retVal := strings.TrimPrefix(name, prefix)
+	return fmt.Sprintf("cublas%s", strings.Title(retVal))
 }
