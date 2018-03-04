@@ -22,3 +22,6 @@ func (d DevicePtr) AddressRange() (size int64, base DevicePtr, err error) {
 	}
 	return int64(s), DevicePtr(b), nil
 }
+
+func (d DevicePtr) Uintptr() uintptr   { return uintptr(DevicePtr) }
+func (d DevicePtr) IsCUDAMemory() bool { return true }
