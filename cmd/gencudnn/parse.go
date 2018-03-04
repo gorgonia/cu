@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/cznic/cc"
@@ -172,4 +173,34 @@ func goNameOf(a cc.Type) string {
 		return retVal
 	}
 	return ""
+}
+
+func toC(name, typ string) string {
+	for _, v := range enumMappings {
+		if v == typ {
+			return name + ".c()"
+		}
+	}
+
+	for _, v := range ctypes2GoTypes {
+		if v == typ {
+			return name + ".internal"
+		}
+	}
+
+	for k, v := range go2cBuiltins {
+		if k == typ {
+			return fmt.Sprintf("C.%v(%v)", v, name)
+		}
+	}
+	panic("Unreachable")
+}
+
+func reqPtr(gotyp string) string {
+	for _, v := range ctypes2GoTypes {
+		if v == gotyp {
+			return "*" + gotyp
+		}
+	}
+	return gotyp
 }

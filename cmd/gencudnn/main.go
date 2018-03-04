@@ -130,8 +130,6 @@ func generateStubs() {
 
 		// fmt.Fprintln(buf, pkghdr)
 
-		fmt.Fprintf(buf, "type %v struct {\n internal C.%v\n\n", gotype, k)
-
 		// get the creation function to "guess" what should be in the struct
 		filter := func(decl *cc.Declarator) bool {
 			if decl.Type.Kind() != cc.Function {
@@ -161,21 +159,23 @@ func generateStubs() {
 				continue
 			}
 			typName := goNameOf(p.Type())
-			if typName == "" {
-				log.Printf("%q: parameter %d | %v", cs.Name, i, p.Type())
+			if typName == gotype || typName == "" {
+				log.Printf("%q: Parameter %d Skipped %q of %v", cs.Name, i, p.Name(), typName)
+				continue
 			}
-			fmt.Fprintf(buf, "%v %v\n", unexport(p.Name()), typName)
-			sig.Params = append(sig.Params, Param{Name: p.Name(), Type: typName})
+
+			sig.Params = append(sig.Params, Param{Name: p.Name(), Type: reqPtr(typName)})
 			body.Params = append(body.Params, p.Name())
+			body.ParamType = append(body.ParamType, typName)
 		}
 		sig.Name = fmt.Sprintf("New%v", gotype)
 		sig.RetVals = []Param{
 			{Type: "*" + gotype},
 			{Type: "error"},
 		}
+		constructStructTemplate.Execute(buf, body)
 
-		log.Printf("%v\n", sig)
-		fmt.Fprintf(buf, "}\n%v{ \n", sig)
+		fmt.Fprintf(buf, "\n%v{ \n", sig)
 		constructionTemplate.Execute(buf, body)
 		fmt.Fprintf(buf, "}\n")
 

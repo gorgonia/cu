@@ -62,3 +62,12 @@ var builtins = map[string]string{
 	"unsigned long":      "uint32",
 	"unsigned long long": "uint64",
 }
+
+var go2cBuiltins = map[string]string{
+	"float32": "float",
+	"float64": "double",
+	"int":     "int",
+	"uint":    "uint",
+	"uint32":  "uint32",
+	"uint64":  "uint64",
+}

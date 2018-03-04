@@ -5,11 +5,32 @@ package cudnn
 // #include <cudnn_v7.h>
 import "C"
 
+type PersistentRNNPlan struct {
+	internal C.cudnnPersistentRNNPlan_t
+
+	rnnDesc RNN
+}
+
+func NewPersistentRNNPlan(rnnDesc *RNN) (*PersistentRNNPlan, error) {
+	var internal C.cudnnPersistentRNNPlan_t
+	if err := result(C.cudnnCreatePersistentRNNPlan(&internal)); err != nil {
+		return nil, err
+	}
+
+	if err := result(C.cudnnSetPersistentRNNPlan(internal, rnnDesc.internal)); err != nil {
+		return nil, err
+	}
+
+	return &PersistentRNNPlan{
+		internal: internal,
+		rnnDesc:  rnnDesc,
+	}, nil
+}
+
 type RNN struct {
 	internal C.cudnnRNNDescriptor_t
 
 	handle      Context
-	rnnDesc     RNN
 	hiddenSize  int
 	numLayers   int
 	dropoutDesc Dropout
@@ -20,20 +41,19 @@ type RNN struct {
 	dataType    DataType
 }
 
-func NewRNN(handle Context, rnnDesc RNN, hiddenSize int, numLayers int, dropoutDesc Dropout, inputMode RNNInputMode, direction DirectionMode, mode RNNMode, algo RNNAlgo, dataType DataType) (*RNN, error) {
+func NewRNN(handle *Context, hiddenSize int, numLayers int, dropoutDesc *Dropout, inputMode RNNInputMode, direction DirectionMode, mode RNNMode, algo RNNAlgo, dataType DataType) (*RNN, error) {
 	var internal C.cudnnRNNDescriptor_t
 	if err := result(C.cudnnCreateRNNDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetRNNDescriptor)(internal, handle.c(), rnnDesc.c(), hiddenSize.c(), numLayers.c(), dropoutDesc.c(), inputMode.c(), direction.c(), mode.c(), algo.c(), dataType.c()); err != nil {
+	if err := result(C.cudnnSetRNNDescriptor(internal, handle.internal, C.int(hiddenSize), C.int(numLayers), dropoutDesc.internal, inputMode.c(), direction.c(), mode.c(), algo.c(), dataType.c())); err != nil {
 		return nil, err
 	}
 
 	return &RNN{
 		internal:    internal,
 		handle:      handle,
-		rnnDesc:     rnnDesc,
 		hiddenSize:  hiddenSize,
 		numLayers:   numLayers,
 		dropoutDesc: dropoutDesc,
@@ -45,140 +65,104 @@ func NewRNN(handle Context, rnnDesc RNN, hiddenSize int, numLayers int, dropoutD
 	}, nil
 }
 
-type PersistentRNNPlan struct {
-	internal C.cudnnPersistentRNNPlan_t
-
-	rnnDesc RNN
-	plan    PersistentRNNPlan
-}
-
-func NewPersistentRNNPlan(rnnDesc RNN, plan PersistentRNNPlan) (*PersistentRNNPlan, error) {
-	var internal C.cudnnPersistentRNNPlan_t
-	if err := result(C.cudnnCreatePersistentRNNPlan(&internal)); err != nil {
-		return nil, err
-	}
-
-	if err := result(C.cudnnSetPersistentRNNPlan)(internal, rnnDesc.c(), plan.c()); err != nil {
-		return nil, err
-	}
-
-	return &PersistentRNNPlan{
-		internal: internal,
-		rnnDesc:  rnnDesc,
-		plan:     plan,
-	}, nil
-}
-
 type CTCLoss struct {
 	internal C.cudnnCTCLossDescriptor_t
 
-	ctcLossDesc CTCLoss
-	compType    DataType
+	compType DataType
 }
 
-func NewCTCLoss(ctcLossDesc CTCLoss, compType DataType) (*CTCLoss, error) {
+func NewCTCLoss(compType DataType) (*CTCLoss, error) {
 	var internal C.cudnnCTCLossDescriptor_t
 	if err := result(C.cudnnCreateCTCLossDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetCTCLossDescriptor)(internal, ctcLossDesc.c(), compType.c()); err != nil {
+	if err := result(C.cudnnSetCTCLossDescriptor(internal, compType.c())); err != nil {
 		return nil, err
 	}
 
 	return &CTCLoss{
-		internal:    internal,
-		ctcLossDesc: ctcLossDesc,
-		compType:    compType,
-	}, nil
-}
-
-type Dropout struct {
-	internal C.cudnnDropoutDescriptor_t
-
-	dropoutDesc Dropout
-	handle      Context
-	dropout     float32
-	states
-	stateSizeInBytes
-	seed uint64
-}
-
-func NewDropout(dropoutDesc Dropout, handle Context, dropout float32, states, stateSizeInBytes, seed uint64) (*Dropout, error) {
-	var internal C.cudnnDropoutDescriptor_t
-	if err := result(C.cudnnCreateDropoutDescriptor(&internal)); err != nil {
-		return nil, err
-	}
-
-	if err := result(C.cudnnSetDropoutDescriptor)(internal, dropoutDesc.c(), handle.c(), dropout.c(), states.c(), stateSizeInBytes.c(), seed.c()); err != nil {
-		return nil, err
-	}
-
-	return &Dropout{
-		internal:         internal,
-		dropoutDesc:      dropoutDesc,
-		handle:           handle,
-		dropout:          dropout,
-		states:           states,
-		stateSizeInBytes: stateSizeInBytes,
-		seed:             seed,
+		internal: internal,
+		compType: compType,
 	}, nil
 }
 
 type Activation struct {
 	internal C.cudnnActivationDescriptor_t
 
-	activationDesc Activation
-	mode           ActivationMode
-	reluNanOpt     NanPropagation
-	coef           float64
+	mode       ActivationMode
+	reluNanOpt NanPropagation
+	coef       float64
 }
 
-func NewActivation(activationDesc Activation, mode ActivationMode, reluNanOpt NanPropagation, coef float64) (*Activation, error) {
+func NewActivation(mode ActivationMode, reluNanOpt NanPropagation, coef float64) (*Activation, error) {
 	var internal C.cudnnActivationDescriptor_t
 	if err := result(C.cudnnCreateActivationDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetActivationDescriptor)(internal, activationDesc.c(), mode.c(), reluNanOpt.c(), coef.c()); err != nil {
+	if err := result(C.cudnnSetActivationDescriptor(internal, mode.c(), reluNanOpt.c(), C.double(coef))); err != nil {
 		return nil, err
 	}
 
 	return &Activation{
-		internal:       internal,
-		activationDesc: activationDesc,
-		mode:           mode,
-		reluNanOpt:     reluNanOpt,
-		coef:           coef,
+		internal:   internal,
+		mode:       mode,
+		reluNanOpt: reluNanOpt,
+		coef:       coef,
 	}, nil
 }
 
 type LRN struct {
 	internal C.cudnnLRNDescriptor_t
 
-	normDesc LRN
 	lrnN     uint
 	lrnAlpha float64
 	lrnBeta  float64
 	lrnK     float64
 }
 
-func NewLRN(normDesc LRN, lrnN uint, lrnAlpha float64, lrnBeta float64, lrnK float64) (*LRN, error) {
+func NewLRN(lrnN uint, lrnAlpha float64, lrnBeta float64, lrnK float64) (*LRN, error) {
 	var internal C.cudnnLRNDescriptor_t
 	if err := result(C.cudnnCreateLRNDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetLRNDescriptor)(internal, normDesc.c(), lrnN.c(), lrnAlpha.c(), lrnBeta.c(), lrnK.c()); err != nil {
+	if err := result(C.cudnnSetLRNDescriptor(internal, C.uint(lrnN), C.double(lrnAlpha), C.double(lrnBeta), C.double(lrnK))); err != nil {
 		return nil, err
 	}
 
 	return &LRN{
 		internal: internal,
-		normDesc: normDesc,
 		lrnN:     lrnN,
 		lrnAlpha: lrnAlpha,
 		lrnBeta:  lrnBeta,
 		lrnK:     lrnK,
+	}, nil
+}
+
+type Dropout struct {
+	internal C.cudnnDropoutDescriptor_t
+
+	handle  Context
+	dropout float32
+	seed    uint64
+}
+
+func NewDropout(handle *Context, dropout float32, seed uint64) (*Dropout, error) {
+	var internal C.cudnnDropoutDescriptor_t
+	if err := result(C.cudnnCreateDropoutDescriptor(&internal)); err != nil {
+		return nil, err
+	}
+
+	if err := result(C.cudnnSetDropoutDescriptor(internal, handle.internal, C.float(dropout), C.uint64(seed))); err != nil {
+		return nil, err
+	}
+
+	return &Dropout{
+		internal: internal,
+		handle:   handle,
+		dropout:  dropout,
+		seed:     seed,
 	}, nil
 }
