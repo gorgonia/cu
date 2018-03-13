@@ -4,28 +4,127 @@ package cudnn
 
 // #include <cudnn_v7.h>
 import "C"
+import "runtime"
 
-type PersistentRNNPlan struct {
-	internal C.cudnnPersistentRNNPlan_t
+type Reduction struct {
+	internal C.cudnnReduceTensorDescriptor_t
 
-	rnnDesc RNN
+	reduceTensorOp          ReduceTensorOp
+	reduceTensorCompType    DataType
+	reduceTensorNanOpt      NanPropagation
+	reduceTensorIndices     ReduceTensorIndices
+	reduceTensorIndicesType IndicesType
 }
 
-func NewPersistentRNNPlan(rnnDesc *RNN) (*PersistentRNNPlan, error) {
-	var internal C.cudnnPersistentRNNPlan_t
-	if err := result(C.cudnnCreatePersistentRNNPlan(&internal)); err != nil {
+func NewReduction(reduceTensorOp ReduceTensorOp, reduceTensorCompType DataType, reduceTensorNanOpt NanPropagation, reduceTensorIndices ReduceTensorIndices, reduceTensorIndicesType IndicesType) (*Reduction, error) {
+	var internal C.cudnnReduceTensorDescriptor_t
+	if err := result(C.cudnnCreateReduceTensorDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetPersistentRNNPlan(internal, rnnDesc.internal)); err != nil {
+	if err := result(C.cudnnSetReduceTensorDescriptor(internal, reduceTensorOp.c(), reduceTensorCompType.c(), reduceTensorNanOpt.c(), reduceTensorIndices.c(), reduceTensorIndicesType.c())); err != nil {
 		return nil, err
 	}
 
-	return &PersistentRNNPlan{
+	retVal := &Reduction{
+		internal:                internal,
+		reduceTensorOp:          reduceTensorOp,
+		reduceTensorCompType:    reduceTensorCompType,
+		reduceTensorNanOpt:      reduceTensorNanOpt,
+		reduceTensorIndices:     reduceTensorIndices,
+		reduceTensorIndicesType: reduceTensorIndicesType,
+	}
+	runtime.SetFinalizer(retVal, destroyReduction)
+	return retVal, nil
+}
+
+func (R *Reduction) ReduceTensorOp() ReduceTensorOp { return R.reduceTensorOp }
+
+func (R *Reduction) ReduceTensorCompType() DataType { return R.reduceTensorCompType }
+
+func (R *Reduction) ReduceTensorNanOpt() NanPropagation { return R.reduceTensorNanOpt }
+
+func (R *Reduction) ReduceTensorIndices() ReduceTensorIndices { return R.reduceTensorIndices }
+
+func (R *Reduction) ReduceTensorIndicesType() IndicesType { return R.reduceTensorIndicesType }
+
+func destoryReduction(obj Reduction) { C.cudnnDestroyReduceTensorDescriptor(obj.internal) }
+
+type LRN struct {
+	internal C.cudnnLRNDescriptor_t
+
+	lrnN     uint
+	lrnAlpha float64
+	lrnBeta  float64
+	lrnK     float64
+}
+
+func NewLRN(lrnN uint, lrnAlpha float64, lrnBeta float64, lrnK float64) (*LRN, error) {
+	var internal C.cudnnLRNDescriptor_t
+	if err := result(C.cudnnCreateLRNDescriptor(&internal)); err != nil {
+		return nil, err
+	}
+
+	if err := result(C.cudnnSetLRNDescriptor(internal, C.uint(lrnN), C.double(lrnAlpha), C.double(lrnBeta), C.double(lrnK))); err != nil {
+		return nil, err
+	}
+
+	retVal := &LRN{
 		internal: internal,
-		rnnDesc:  rnnDesc,
-	}, nil
+		lrnN:     lrnN,
+		lrnAlpha: lrnAlpha,
+		lrnBeta:  lrnBeta,
+		lrnK:     lrnK,
+	}
+	runtime.SetFinalizer(retVal, destroyLRN)
+	return retVal, nil
 }
+
+func (L *LRN) LrnN() uint { return L.lrnN }
+
+func (L *LRN) LrnAlpha() float64 { return L.lrnAlpha }
+
+func (L *LRN) LrnBeta() float64 { return L.lrnBeta }
+
+func (L *LRN) LrnK() float64 { return L.lrnK }
+
+func destoryLRN(obj LRN) { C.cudnnDestroyLRNDescriptor(obj.internal) }
+
+type Dropout struct {
+	internal C.cudnnDropoutDescriptor_t
+
+	handle  Context
+	dropout float32
+	seed    uint64
+}
+
+func NewDropout(handle *Context, dropout float32, seed uint64) (*Dropout, error) {
+	var internal C.cudnnDropoutDescriptor_t
+	if err := result(C.cudnnCreateDropoutDescriptor(&internal)); err != nil {
+		return nil, err
+	}
+
+	if err := result(C.cudnnSetDropoutDescriptor(internal, handle.internal, C.float(dropout), C.uint64(seed))); err != nil {
+		return nil, err
+	}
+
+	retVal := &Dropout{
+		internal: internal,
+		handle:   handle,
+		dropout:  dropout,
+		seed:     seed,
+	}
+	runtime.SetFinalizer(retVal, destroyDropout)
+	return retVal, nil
+}
+
+func (D *Dropout) Handle() Context { return D.handle }
+
+func (D *Dropout) Dropout() float32 { return D.dropout }
+
+func (D *Dropout) Seed() uint64 { return D.seed }
+
+func destoryDropout(obj Dropout) { C.cudnnDestroyDropoutDescriptor(obj.internal) }
 
 type RNN struct {
 	internal C.cudnnRNNDescriptor_t
@@ -51,7 +150,7 @@ func NewRNN(handle *Context, hiddenSize int, numLayers int, dropoutDesc *Dropout
 		return nil, err
 	}
 
-	return &RNN{
+	retVal := &RNN{
 		internal:    internal,
 		handle:      handle,
 		hiddenSize:  hiddenSize,
@@ -62,29 +161,95 @@ func NewRNN(handle *Context, hiddenSize int, numLayers int, dropoutDesc *Dropout
 		mode:        mode,
 		algo:        algo,
 		dataType:    dataType,
-	}, nil
+	}
+	runtime.SetFinalizer(retVal, destroyRNN)
+	return retVal, nil
 }
 
-type CTCLoss struct {
-	internal C.cudnnCTCLossDescriptor_t
+func (R *RNN) Handle() Context { return R.handle }
 
-	compType DataType
+func (R *RNN) HiddenSize() int { return R.hiddenSize }
+
+func (R *RNN) NumLayers() int { return R.numLayers }
+
+func (R *RNN) DropoutDesc() Dropout { return R.dropoutDesc }
+
+func (R *RNN) InputMode() RNNInputMode { return R.inputMode }
+
+func (R *RNN) Direction() DirectionMode { return R.direction }
+
+func (R *RNN) Mode() RNNMode { return R.mode }
+
+func (R *RNN) Algo() RNNAlgo { return R.algo }
+
+func (R *RNN) DataType() DataType { return R.dataType }
+
+func destoryRNN(obj RNN) { C.cudnnDestroyRNNDescriptor(obj.internal) }
+
+type PersistentRNNPlan struct {
+	internal C.cudnnPersistentRNNPlan_t
+
+	rnnDesc RNN
 }
 
-func NewCTCLoss(compType DataType) (*CTCLoss, error) {
-	var internal C.cudnnCTCLossDescriptor_t
-	if err := result(C.cudnnCreateCTCLossDescriptor(&internal)); err != nil {
+func NewPersistentRNNPlan(rnnDesc *RNN) (*PersistentRNNPlan, error) {
+	var internal C.cudnnPersistentRNNPlan_t
+	if err := result(C.cudnnCreatePersistentRNNPlan(&internal)); err != nil {
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetCTCLossDescriptor(internal, compType.c())); err != nil {
+	if err := result(C.cudnnSetPersistentRNNPlan(internal, rnnDesc.internal)); err != nil {
 		return nil, err
 	}
 
-	return &CTCLoss{
+	retVal := &PersistentRNNPlan{
 		internal: internal,
-		compType: compType,
-	}, nil
+		rnnDesc:  rnnDesc,
+	}
+	runtime.SetFinalizer(retVal, destroyPersistentRNNPlan)
+	return retVal, nil
+}
+
+func (P *PersistentRNNPlan) RnnDesc() RNN { return P.rnnDesc }
+
+func destoryPersistentRNNPlan(obj PersistentRNNPlan) { C.cudnnDestroyPersistentRNNPlan(obj.internal) }
+
+type SpatialTransformer struct {
+	internal C.cudnnSpatialTransformerDescriptor_t
+
+	samplerType SamplerType
+	dataType    DataType
+	nbDims      int
+}
+
+func NewSpatialTransformer(samplerType SamplerType, dataType DataType, nbDims int) (*SpatialTransformer, error) {
+	var internal C.cudnnSpatialTransformerDescriptor_t
+	if err := result(C.cudnnCreateSpatialTransformerNdDescriptor(&internal)); err != nil {
+		return nil, err
+	}
+
+	if err := result(C.cudnnSetSpatialTransformerNdDescriptor(internal, samplerType.c(), dataType.c(), C.int(nbDims))); err != nil {
+		return nil, err
+	}
+
+	retVal := &SpatialTransformer{
+		internal:    internal,
+		samplerType: samplerType,
+		dataType:    dataType,
+		nbDims:      nbDims,
+	}
+	runtime.SetFinalizer(retVal, destroySpatialTransformer)
+	return retVal, nil
+}
+
+func (S *SpatialTransformer) SamplerType() SamplerType { return S.samplerType }
+
+func (S *SpatialTransformer) DataType() DataType { return S.dataType }
+
+func (S *SpatialTransformer) NbDims() int { return S.nbDims }
+
+func destorySpatialTransformer(obj SpatialTransformer) {
+	C.cudnnDestroySpatialTransformerNdDescriptor(obj.internal)
 }
 
 type Activation struct {
@@ -105,64 +270,48 @@ func NewActivation(mode ActivationMode, reluNanOpt NanPropagation, coef float64)
 		return nil, err
 	}
 
-	return &Activation{
+	retVal := &Activation{
 		internal:   internal,
 		mode:       mode,
 		reluNanOpt: reluNanOpt,
 		coef:       coef,
-	}, nil
+	}
+	runtime.SetFinalizer(retVal, destroyActivation)
+	return retVal, nil
 }
 
-type LRN struct {
-	internal C.cudnnLRNDescriptor_t
+func (A *Activation) Mode() ActivationMode { return A.mode }
 
-	lrnN     uint
-	lrnAlpha float64
-	lrnBeta  float64
-	lrnK     float64
+func (A *Activation) ReluNanOpt() NanPropagation { return A.reluNanOpt }
+
+func (A *Activation) Coef() float64 { return A.coef }
+
+func destoryActivation(obj Activation) { C.cudnnDestroyActivationDescriptor(obj.internal) }
+
+type CTCLoss struct {
+	internal C.cudnnCTCLossDescriptor_t
+
+	compType DataType
 }
 
-func NewLRN(lrnN uint, lrnAlpha float64, lrnBeta float64, lrnK float64) (*LRN, error) {
-	var internal C.cudnnLRNDescriptor_t
-	if err := result(C.cudnnCreateLRNDescriptor(&internal)); err != nil {
+func NewCTCLoss(compType DataType) (*CTCLoss, error) {
+	var internal C.cudnnCTCLossDescriptor_t
+	if err := result(C.cudnnCreateCTCLossDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetLRNDescriptor(internal, C.uint(lrnN), C.double(lrnAlpha), C.double(lrnBeta), C.double(lrnK))); err != nil {
+	if err := result(C.cudnnSetCTCLossDescriptor(internal, compType.c())); err != nil {
 		return nil, err
 	}
 
-	return &LRN{
+	retVal := &CTCLoss{
 		internal: internal,
-		lrnN:     lrnN,
-		lrnAlpha: lrnAlpha,
-		lrnBeta:  lrnBeta,
-		lrnK:     lrnK,
-	}, nil
-}
-
-type Dropout struct {
-	internal C.cudnnDropoutDescriptor_t
-
-	handle  Context
-	dropout float32
-	seed    uint64
-}
-
-func NewDropout(handle *Context, dropout float32, seed uint64) (*Dropout, error) {
-	var internal C.cudnnDropoutDescriptor_t
-	if err := result(C.cudnnCreateDropoutDescriptor(&internal)); err != nil {
-		return nil, err
+		compType: compType,
 	}
-
-	if err := result(C.cudnnSetDropoutDescriptor(internal, handle.internal, C.float(dropout), C.uint64(seed))); err != nil {
-		return nil, err
-	}
-
-	return &Dropout{
-		internal: internal,
-		handle:   handle,
-		dropout:  dropout,
-		seed:     seed,
-	}, nil
+	runtime.SetFinalizer(retVal, destroyCTCLoss)
+	return retVal, nil
 }
+
+func (C *CTCLoss) CompType() DataType { return C.compType }
+
+func destoryCTCLoss(obj CTCLoss) { C.cudnnDestroyCTCLossDescriptor(obj.internal) }

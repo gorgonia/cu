@@ -3,6 +3,7 @@ package cudnn
 // #include <cudnn_v7.h>
 import "C"
 import (
+	"runtime"
 	"unsafe"
 
 	"github.com/pkg/errors"
@@ -10,7 +11,7 @@ import (
 
 // Op is a tuple describing the operation that needs to be done
 type Op struct {
-	desc C.cudnnOpTensorDescriptor_t
+	internal C.cudnnOpTensorDescriptor_t
 
 	op             OpTensorOp     // The Operation that needs to be done
 	dataType       DataType       // The Data type
@@ -19,20 +20,22 @@ type Op struct {
 
 // NewOp creates a new Op with the provided settings
 func NewOp(op OpTensorOp, dt DataType, prop NanPropagation) (*Op, error) {
-	var desc C.cudnnOpTensorDescriptor_t
-	if err := result(C.cudnnCreateOpTensorDescriptor(&desc)); err != nil {
+	var internal C.cudnnOpTensorDescriptor_t
+	if err := result(C.cudnnCreateOpTensorDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetOpTensorDescriptor(desc, op.c(), dt.c(), prop.c())); err != nil {
+	if err := result(C.cudnnSetOpTensorDescriptor(internal, op.c(), dt.c(), prop.c())); err != nil {
 		return nil, err
 	}
-	return &Op{
-		desc:           desc,
+	retVal := &Op{
+		internal:       internal,
 		op:             op,
 		dataType:       dt,
 		nanPropagation: prop,
-	}, nil
+	}
+	runtime.SetFinalizer(retVal, destroyOp)
+	return retVal, nil
 }
 
 func (op *Op) Op() OpTensorOp                 { return op.op }
@@ -91,15 +94,17 @@ func (ctx *Context) DoOp(op *Op,
 		betaC = unsafe.Pointer(&b)
 	}
 
-	res := C.cudnnOpTensor(ctx.h, op.desc,
-		alpha1C, aDesc.desc, aData.Pointer(),
-		alpha2C, bDesc.desc, bData.Pointer(),
-		betaC, cDesc.desc, cData.Pointer(),
+	res := C.cudnnOpTensor(ctx.h, op.internal,
+		alpha1C, aDesc.internal, aData.Pointer(),
+		alpha2C, bDesc.internal, bData.Pointer(),
+		betaC, cDesc.internal, cData.Pointer(),
 	)
 	return result(res)
 }
 
 func (ctx *Context) AddTensor(alpha float64, aDesc *TensorDescriptor, aData Memory,
 	beta float64, cDesc *TensorDescriptor, cData Memory) error {
-
+	return nil // TODO
 }
+
+func destroyOp(obj *Op) { C.cudnnDestroyOpTensorDescriptor(obj.internal) }

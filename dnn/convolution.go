@@ -2,6 +2,11 @@ package cudnn
 
 // #include <cudnn_v7.h>
 import "C"
+import (
+	"runtime"
+
+	"github.com/pkg/errors"
+)
 
 type ConvolutionType byte
 
@@ -105,3 +110,81 @@ const (
 	ConvolutionBwdDataAlgoWinogradNonfused ConvolutionBwdDataAlgo = C.CUDNN_CONVOLUTION_BWD_DATA_ALGO_WINOGRAD_NONFUSED
 	ConvolutionBwdDataAlgoCount            ConvolutionBwdDataAlgo = C.CUDNN_CONVOLUTION_BWD_DATA_ALGO_COUNT
 )
+
+type Convolution struct {
+	internal C.cudnnFilterDescriptor_t
+
+	mathType     MathType
+	groupCount   int
+	padding      []int
+	filterStride []int
+	dilation     []int
+}
+
+func NewConvolution(mathType MathType, groupCount int, padding, filterStride, dilation []int, convolutionMode ConvolutionMode, datatype DataType) (*Convolution, error) {
+	var internal C.cudnnFilterDescriptor_t
+	if err := result(C.cudnnCreateConvolutionDescriptor); err != nil {
+		return nil, err
+	}
+	if err := result(C.cudnnSetConvolutionMathType(internal, mathType)); err != nil {
+		return nil, err
+	}
+	if err := result(C.cudnnSetConvolutionGroupCount(internal, groupCount)); err != nil {
+		return nil, err
+	}
+	switch len(padding) {
+	case 0:
+		fallthrough
+	case 1:
+		return nil, errors.Errorf("Only 2+ dims are allowed")
+	case 2:
+		padH, padW := padding[0], padding[1]
+		u, v := filterStride[0], filterStride[1]
+		dilationH, dilationW := dilation[0], dilation[1]
+		if err := result(C.cudnnSetConvolution2dDescriptor(internal, C.int(padH), C.int(padW), C.int(u), C.int(w), C.int(dilationH), C.int(dilationW), convolutionMode.c(), datatype.c())); err != nil {
+			return nil, err
+		}
+	default:
+		if err := result(C.cudnnGetConvolutionNdDescriptor(internal, C.int(len(padding)), &padding[0], &filterStride[0], &dilation[0], convolutionMode.c(), datatype.c())); err != nil {
+			return nil, err
+		}
+	}
+	retVal := &Convolution{
+		internal: internal,
+
+		mathType:     mathType,
+		groupCount:   groupCount,
+		padding:      padding,
+		filterStride: filterStride,
+		dilation:     dilation,
+	}
+	runtime.SetFinalizer(retVal, destroyConvolution)
+	return retVal
+}
+
+func (c *Convolution) MathType() MathType { return c.mathType }
+func (c *Convolution) GroupCount() int    { return c.groupCount }
+func (c *Convolution) Padding() []int {
+	retVal := make([]int, len(c.padding))
+	copy(retVal, c.padding)
+	return retVal
+}
+
+func (c *Convolution) FilterStride() []int {
+	retVal := make([]int, len(c.filterStride))
+	copy(retVal, c.filterStride)
+	return retVal
+}
+
+func (c *Convolution) Dilation() []int {
+	retVal := make([]int, len(c.dilation))
+	copy(retVal, c.dilation)
+	return retVal
+}
+
+func (c *Convolution) ForwardOutputShape(t *TensorDescriptor, filter *Filter) ([]int, error) {
+	return nil, nil
+	//TODO
+}
+
+func destroyConvolution(obj *Convolution) { cudnnDestroyConvolutionDescriptor(obj.internal) }

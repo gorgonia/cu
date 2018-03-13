@@ -29,11 +29,12 @@ type Con struct {
 	GoType    string
 	Create    string
 	Set       string
+	Destroy   string
 	Params    []string
 	ParamType []string
 }
 
-var constructStrucRaw = `type {{.GoType}} struct {
+var constructStructRaw = `type {{.GoType}} struct {
 	internal C.{{.Ctype}}
 
 	{{$pt := .ParamType}}
@@ -53,18 +54,24 @@ var constructionRaw = `var internal C.{{.Ctype}}
 		return nil, err
 	}
 
-	return &{{.GoType}} {
+
+	retVal :=  &{{.GoType}} {
 		internal: internal,
 		{{range .Params -}}
 		{{.}}: {{.}},
 		{{end -}}
-	}, nil
+	}
+	runtime.SetFinalizer(retVal, destroy{{.GoType}})
+	return retVal, nil
 `
+
+var destructRaw = `C.{{.Destroy}}(obj.internal)`
 
 var (
 	alphaTemplate           *template.Template
 	constructionTemplate    *template.Template
 	constructStructTemplate *template.Template
+	destructTemplate        *template.Template
 )
 
 var funcs = template.FuncMap{
@@ -76,5 +83,6 @@ var funcs = template.FuncMap{
 func init() {
 	alphaTemplate = template.Must(template.New("alpha").Parse(alphaTemplateRaw))
 	constructionTemplate = template.Must(template.New("cons").Funcs(funcs).Parse(constructionRaw))
-	constructStructTemplate = template.Must(template.New("cons2").Funcs(funcs).Parse(constructStrucRaw))
+	constructStructTemplate = template.Must(template.New("cons2").Funcs(funcs).Parse(constructStructRaw))
+	destructTemplate = template.Must(template.New("Destroy").Funcs(funcs).Parse(destructRaw))
 }

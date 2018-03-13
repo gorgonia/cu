@@ -115,6 +115,7 @@ func generateStubs() {
 	fmt.Fprintln(buf, pkghdr)
 	for k, v := range creations {
 		if isIgnored(v) || v == "" {
+			log.Printf("Skipped generating for %q", k)
 			continue
 		}
 		gotype, ok := ctypes2GoTypes[k]
@@ -146,10 +147,11 @@ func generateStubs() {
 		cs := decls[0].(*bindgen.CSignature)
 		sig := GoSignature{}
 		body := Con{
-			Ctype:  k,
-			GoType: gotype,
-			Create: strings.Replace(v, "Set", "Create", -1),
-			Set:    v,
+			Ctype:   k,
+			GoType:  gotype,
+			Create:  strings.Replace(v, "Set", "Create", -1),
+			Destroy: strings.Replace(v, "Set", "Destroy", -1),
+			Set:     v,
 		}
 
 		params := cs.Parameters()
@@ -177,6 +179,34 @@ func generateStubs() {
 
 		fmt.Fprintf(buf, "\n%v{ \n", sig)
 		constructionTemplate.Execute(buf, body)
+		fmt.Fprintf(buf, "}\n")
+
+		// getters
+		for i, p := range params {
+			if _, ok := retValPos[i]; ok {
+				continue
+			}
+			getterSig := GoSignature{}
+			typName := goNameOf(p.Type())
+			if typName == gotype || typName == "" {
+				log.Printf("%q: Parameter %d Skipped %q of %v", cs.Name, i, p.Name(), typName)
+				continue
+			}
+			getterSig.Receiver.Name = string(gotype[0])
+			getterSig.Receiver.Type = "*" + gotype
+			getterSig.Name = strings.Title(p.Name())
+			getterSig.RetVals = []Param{{Type: typName}}
+			fmt.Fprintf(buf, "\n%v{ return %v.%v }\n", getterSig, getterSig.Receiver.Name, p.Name())
+		}
+
+		// destructor
+		destructor := GoSignature{}
+		destructor.Name = "destory" + gotype
+		destructor.Params = []Param{
+			{Name: "obj", Type: gotype, IsPtr: true},
+		}
+		fmt.Fprintf(buf, "\n%v{", destructor)
+		destructTemplate.Execute(buf, body)
 		fmt.Fprintf(buf, "}\n")
 
 	}

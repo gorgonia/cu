@@ -2,10 +2,14 @@ package cudnn
 
 // #include <cudnn_v7.h>
 import "C"
-import "github.com/pkg/errors"
+import (
+	"runtime"
+
+	"github.com/pkg/errors"
+)
 
 type TensorDescriptor struct {
-	desc C.cudnnTensorDescriptor_t // ptr to struct
+	internal C.cudnnTensorDescriptor_t // ptr to struct
 
 	// internal data for fast
 	format   TensorFormat
@@ -15,50 +19,74 @@ type TensorDescriptor struct {
 }
 
 func NewTensorDescriptor(format TensorFormat, dt DataType, shape, strides []int) (*TensorDescriptor, error) {
-	var t C.cudnnTensorDescriptor_t
-	if err := result(C.cudnnCreateTensorDescriptor(&t)); err != nil {
+	var internal C.cudnnTensorDescriptor_t
+	if err := result(C.cudnnCreateTensorDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
-	desc := &TensorDescriptor{
-		desc:     t,
+	retVal := &TensorDescriptor{
+		internal: internal,
 		format:   format,
 		dataType: dt,
 		shape:    shape,
 		strides:  strides,
 	}
 
-	err := desc.set(t)
-	return desc, err
+	runtime.SetFinalizer(retVal, destroyTensor)
+	if err := retVal.set(internal); err != nil {
+		return nil, err
+	}
+	return retVal, nil
 }
 
-func (desc TensorDescriptor) set(t C.cudnnTensorDescriptor_t) error {
-	switch len(desc.shape) {
+func (t *TensorDescriptor) set(internal C.cudnnTensorDescriptor_t) error {
+	switch len(t.shape) {
 	case 4:
-		if len(desc.strides) == 4 {
+		N, C, H, W := t.shape[0], t.shape[1], t.shape[2], t.shape[3]
+		if len(t.strides) == 4 {
 			// use explicit
-			res := C.cudnnSetTensor4dDescriptorEx(t, desc.dataType.c(),
-				C.int(desc.shape[0]),   // N
-				C.int(desc.shape[1]),   // C
-				C.int(desc.shape[2]),   // H
-				C.int(desc.shape[3]),   // W
-				C.int(desc.strides[0]), // NStrides
-				C.int(desc.strides[1]), // Cstrides
-				C.int(desc.strides[2]), // HStrides
-				C.int(desc.strides[3]), // WStrides
+			NStrides, CStrides, HStrides, WStrides := t.strides[0], t.strides[1], t.strides[2], t.strides[3]
+			res := C.cudnnSetTensor4dDescriptorEx(internal, t.dataType.c(),
+				C.int(N), C.int(C), C.int(H), C.int(W),
+				C.int(NStrides), C.int(CStrides), C.int(HStrides), C.int(WStrides),
 			)
 			return result(res)
 		}
 
-		res := C.cudnnSetTensor4dDescriptor(t, desc.format.c(), desc.dataType.c(),
-			C.int(desc.shape[0]), // N
-			C.int(desc.shape[1]), // C
-			C.int(desc.shape[2]), // H
-			C.int(desc.shape[3]), // W
+		// otherwise the strides will be calculated by cudnn
+		res := C.cudnnSetTensor4dDescriptor(internal, t.format.c(), t.dataType.c(),
+			C.int(N), C.int(C), C.int(H), C.int(W),
 		)
 		return result(res)
-
+	default:
+		if len(t.strides) > 0 {
+			// NO, there is no confusion here. Ex is used to set tensor without strides. Silly nVidia.
+			res := C.cudnnSetTensorNdDescriptor(internal, t.format.c(), d.dataType.c(),
+				C.int(len(t.shape)), &t.shape[0], &t.strides[0])
+			return result(res)
+		}
+		res := C.cudnnSetTensorNdDescriptorEx(internal, t.format.c(), d.dataType.c(),
+			C.int(len(t.shape)), &t.shape[0])
+		return result(res)
 	}
-	return errors.Errorf(nyi, "set for len == ", len(desc.shape))
 
+	return errors.Errorf(nyi, "set for len == ", len(t.shape))
 }
+
+func (t *TensorDescriptor) Format() TensorFormat { return t.format }
+
+func (t *TensorDescriptor) DataType() DataType { return t.dataType }
+
+func (t *TensorDescriptor) Shape() []int {
+	retVal := make([]int, len(t.shape))
+	copy(retVal, t.shape)
+	return retVal
+}
+
+func (t *TensorDescriptor) Strides() []int {
+	retVal := make([]int, len(t.strides))
+	copy(retVal, t.strides)
+	return retVal
+}
+
+func destroyTensor(obj *TensorDescriptor) { C.cudnnCreateTensorDescriptor(obj.internal) }

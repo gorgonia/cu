@@ -26,8 +26,8 @@ var ignored = map[string]struct{}{
 	"cudnnGetOpTensorDescriptor":     {},
 	"cudnnDestroyOpTensorDescriptor": {},
 	// "cudnnOpTensor":                                      {},
-	"cudnnCreateReduceTensorDescriptor": {},
-	"cudnnSetReduceTensorDescriptor":    {},
+	// "cudnnCreateReduceTensorDescriptor": {},
+	// "cudnnSetReduceTensorDescriptor":    {},
 	// "cudnnGetReduceTensorDescriptor":                     {},
 	// "cudnnDestroyReduceTensorDescriptor":                 {},
 	// "cudnnGetReductionIndicesSize":                       {},
@@ -438,16 +438,16 @@ func init() {
 	}
 
 	creations = map[string]string{
-		"cudnnHandle_t":                       "",
-		"cudnnTensorDescriptor_t":             "",
+		"cudnnHandle_t":                       "", // done
+		"cudnnTensorDescriptor_t":             "", // done.  1 TODO
 		"cudnnOpTensorDescriptor_t":           "cudnnSetOpTensorDescriptor",
 		"cudnnReduceTensorDescriptor_t":       "cudnnSetReduceTensorDescriptor",
-		"cudnnFilterDescriptor_t":             "",
-		"cudnnConvolutionDescriptor_t":        "",
+		"cudnnFilterDescriptor_t":             "", // done
+		"cudnnConvolutionDescriptor_t":        "", // done. 1 TODO
 		"cudnnPoolingDescriptor_t":            "",
 		"cudnnActivationDescriptor_t":         "cudnnSetActivationDescriptor",
 		"cudnnLRNDescriptor_t":                "cudnnSetLRNDescriptor",
-		"cudnnSpatialTransformerDescriptor_t": "",
+		"cudnnSpatialTransformerDescriptor_t": "cudnnSetSpatialTransformerNdDescriptor",
 		"cudnnDropoutDescriptor_t":            "cudnnSetDropoutDescriptor",
 		"cudnnRNNDescriptor_t":                "cudnnSetRNNDescriptor",
 		"cudnnPersistentRNNPlan_t":            "cudnnSetPersistentRNNPlan",

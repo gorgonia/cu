@@ -1,6 +1,9 @@
 package main
 
-// import "github.com/gorgonia/bindgen"
+import (
+	"github.com/cznic/cc"
+	bg "github.com/gorgonia/bindgen"
+)
 
 var fnNameMap map[string]string
 var enumMappings map[string]string
@@ -19,3 +22,7 @@ var alphaBetas map[string]map[int]string
 
 // memories is a list of functions that require memory in the parameters
 var memories map[string]map[int]string
+
+var paramMap = map[bg.ParamKey]struct{ Name, Type string }{
+	bg.ParamKey{Name: "handle", Type: bg.TypeKey{Name: "cudnnHandle_t", Kind: cc.Ptr}}: {"handle", "*Context"},
+}
