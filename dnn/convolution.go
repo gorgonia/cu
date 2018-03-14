@@ -119,6 +119,9 @@ type Convolution struct {
 	padding      []int
 	filterStride []int
 	dilation     []int
+
+	// cache of outputShape
+	outputShape []int
 }
 
 func NewConvolution(mathType MathType, groupCount int, padding, filterStride, dilation []int, convolutionMode ConvolutionMode, datatype DataType) (*Convolution, error) {
@@ -183,6 +186,9 @@ func (c *Convolution) Dilation() []int {
 }
 
 func (c *Convolution) ForwardOutputShape(t *TensorDescriptor, filter *Filter) ([]int, error) {
+	if c.outputShape != nil {
+		return c.outputShape, nil
+	}
 	return nil, nil
 	//TODO
 }

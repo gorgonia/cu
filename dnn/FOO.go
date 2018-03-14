@@ -6,6 +6,72 @@ package cudnn
 import "C"
 import "runtime"
 
+type SpatialTransformer struct {
+	internal C.cudnnSpatialTransformerDescriptor_t
+
+	samplerType SamplerType
+	dataType    DataType
+	nbDims      int
+}
+
+func NewSpatialTransformer(samplerType SamplerType, dataType DataType, nbDims int) (*SpatialTransformer, error) {
+	var internal C.cudnnSpatialTransformerDescriptor_t
+	if err := result(C.cudnnCreateSpatialTransformerNdDescriptor(&internal)); err != nil {
+		return nil, err
+	}
+
+	if err := result(C.cudnnSetSpatialTransformerNdDescriptor(internal, samplerType.c(), dataType.c(), C.int(nbDims))); err != nil {
+		return nil, err
+	}
+
+	retVal := &SpatialTransformer{
+		internal:    internal,
+		samplerType: samplerType,
+		dataType:    dataType,
+		nbDims:      nbDims,
+	}
+	runtime.SetFinalizer(retVal, destroySpatialTransformer)
+	return retVal, nil
+}
+
+func (S *SpatialTransformer) SamplerType() SamplerType { return S.samplerType }
+
+func (S *SpatialTransformer) DataType() DataType { return S.dataType }
+
+func (S *SpatialTransformer) NbDims() int { return S.nbDims }
+
+func destorySpatialTransformer(obj *SpatialTransformer) {
+	C.cudnnDestroySpatialTransformerNdDescriptor(obj.internal)
+}
+
+type CTCLoss struct {
+	internal C.cudnnCTCLossDescriptor_t
+
+	compType DataType
+}
+
+func NewCTCLoss(compType DataType) (*CTCLoss, error) {
+	var internal C.cudnnCTCLossDescriptor_t
+	if err := result(C.cudnnCreateCTCLossDescriptor(&internal)); err != nil {
+		return nil, err
+	}
+
+	if err := result(C.cudnnSetCTCLossDescriptor(internal, compType.c())); err != nil {
+		return nil, err
+	}
+
+	retVal := &CTCLoss{
+		internal: internal,
+		compType: compType,
+	}
+	runtime.SetFinalizer(retVal, destroyCTCLoss)
+	return retVal, nil
+}
+
+func (C *CTCLoss) CompType() DataType { return C.compType }
+
+func destoryCTCLoss(obj *CTCLoss) { C.cudnnDestroyCTCLossDescriptor(obj.internal) }
+
 type Reduction struct {
 	internal C.cudnnReduceTensorDescriptor_t
 
@@ -48,7 +114,71 @@ func (R *Reduction) ReduceTensorIndices() ReduceTensorIndices { return R.reduceT
 
 func (R *Reduction) ReduceTensorIndicesType() IndicesType { return R.reduceTensorIndicesType }
 
-func destoryReduction(obj Reduction) { C.cudnnDestroyReduceTensorDescriptor(obj.internal) }
+func destoryReduction(obj *Reduction) { C.cudnnDestroyReduceTensorDescriptor(obj.internal) }
+
+type Activation struct {
+	internal C.cudnnActivationDescriptor_t
+
+	mode       ActivationMode
+	reluNanOpt NanPropagation
+	coef       float64
+}
+
+func NewActivation(mode ActivationMode, reluNanOpt NanPropagation, coef float64) (*Activation, error) {
+	var internal C.cudnnActivationDescriptor_t
+	if err := result(C.cudnnCreateActivationDescriptor(&internal)); err != nil {
+		return nil, err
+	}
+
+	if err := result(C.cudnnSetActivationDescriptor(internal, mode.c(), reluNanOpt.c(), C.double(coef))); err != nil {
+		return nil, err
+	}
+
+	retVal := &Activation{
+		internal:   internal,
+		mode:       mode,
+		reluNanOpt: reluNanOpt,
+		coef:       coef,
+	}
+	runtime.SetFinalizer(retVal, destroyActivation)
+	return retVal, nil
+}
+
+func (A *Activation) Mode() ActivationMode { return A.mode }
+
+func (A *Activation) ReluNanOpt() NanPropagation { return A.reluNanOpt }
+
+func (A *Activation) Coef() float64 { return A.coef }
+
+func destoryActivation(obj *Activation) { C.cudnnDestroyActivationDescriptor(obj.internal) }
+
+type PersistentRNNPlan struct {
+	internal C.cudnnPersistentRNNPlan_t
+
+	rnnDesc RNN
+}
+
+func NewPersistentRNNPlan(rnnDesc *RNN) (*PersistentRNNPlan, error) {
+	var internal C.cudnnPersistentRNNPlan_t
+	if err := result(C.cudnnCreatePersistentRNNPlan(&internal)); err != nil {
+		return nil, err
+	}
+
+	if err := result(C.cudnnSetPersistentRNNPlan(internal, rnnDesc.internal)); err != nil {
+		return nil, err
+	}
+
+	retVal := &PersistentRNNPlan{
+		internal: internal,
+		rnnDesc:  rnnDesc,
+	}
+	runtime.SetFinalizer(retVal, destroyPersistentRNNPlan)
+	return retVal, nil
+}
+
+func (P *PersistentRNNPlan) RnnDesc() RNN { return P.rnnDesc }
+
+func destoryPersistentRNNPlan(obj *PersistentRNNPlan) { C.cudnnDestroyPersistentRNNPlan(obj.internal) }
 
 type LRN struct {
 	internal C.cudnnLRNDescriptor_t
@@ -88,7 +218,7 @@ func (L *LRN) LrnBeta() float64 { return L.lrnBeta }
 
 func (L *LRN) LrnK() float64 { return L.lrnK }
 
-func destoryLRN(obj LRN) { C.cudnnDestroyLRNDescriptor(obj.internal) }
+func destoryLRN(obj *LRN) { C.cudnnDestroyLRNDescriptor(obj.internal) }
 
 type Dropout struct {
 	internal C.cudnnDropoutDescriptor_t
@@ -124,7 +254,7 @@ func (D *Dropout) Dropout() float32 { return D.dropout }
 
 func (D *Dropout) Seed() uint64 { return D.seed }
 
-func destoryDropout(obj Dropout) { C.cudnnDestroyDropoutDescriptor(obj.internal) }
+func destoryDropout(obj *Dropout) { C.cudnnDestroyDropoutDescriptor(obj.internal) }
 
 type RNN struct {
 	internal C.cudnnRNNDescriptor_t
@@ -184,134 +314,4 @@ func (R *RNN) Algo() RNNAlgo { return R.algo }
 
 func (R *RNN) DataType() DataType { return R.dataType }
 
-func destoryRNN(obj RNN) { C.cudnnDestroyRNNDescriptor(obj.internal) }
-
-type PersistentRNNPlan struct {
-	internal C.cudnnPersistentRNNPlan_t
-
-	rnnDesc RNN
-}
-
-func NewPersistentRNNPlan(rnnDesc *RNN) (*PersistentRNNPlan, error) {
-	var internal C.cudnnPersistentRNNPlan_t
-	if err := result(C.cudnnCreatePersistentRNNPlan(&internal)); err != nil {
-		return nil, err
-	}
-
-	if err := result(C.cudnnSetPersistentRNNPlan(internal, rnnDesc.internal)); err != nil {
-		return nil, err
-	}
-
-	retVal := &PersistentRNNPlan{
-		internal: internal,
-		rnnDesc:  rnnDesc,
-	}
-	runtime.SetFinalizer(retVal, destroyPersistentRNNPlan)
-	return retVal, nil
-}
-
-func (P *PersistentRNNPlan) RnnDesc() RNN { return P.rnnDesc }
-
-func destoryPersistentRNNPlan(obj PersistentRNNPlan) { C.cudnnDestroyPersistentRNNPlan(obj.internal) }
-
-type SpatialTransformer struct {
-	internal C.cudnnSpatialTransformerDescriptor_t
-
-	samplerType SamplerType
-	dataType    DataType
-	nbDims      int
-}
-
-func NewSpatialTransformer(samplerType SamplerType, dataType DataType, nbDims int) (*SpatialTransformer, error) {
-	var internal C.cudnnSpatialTransformerDescriptor_t
-	if err := result(C.cudnnCreateSpatialTransformerNdDescriptor(&internal)); err != nil {
-		return nil, err
-	}
-
-	if err := result(C.cudnnSetSpatialTransformerNdDescriptor(internal, samplerType.c(), dataType.c(), C.int(nbDims))); err != nil {
-		return nil, err
-	}
-
-	retVal := &SpatialTransformer{
-		internal:    internal,
-		samplerType: samplerType,
-		dataType:    dataType,
-		nbDims:      nbDims,
-	}
-	runtime.SetFinalizer(retVal, destroySpatialTransformer)
-	return retVal, nil
-}
-
-func (S *SpatialTransformer) SamplerType() SamplerType { return S.samplerType }
-
-func (S *SpatialTransformer) DataType() DataType { return S.dataType }
-
-func (S *SpatialTransformer) NbDims() int { return S.nbDims }
-
-func destorySpatialTransformer(obj SpatialTransformer) {
-	C.cudnnDestroySpatialTransformerNdDescriptor(obj.internal)
-}
-
-type Activation struct {
-	internal C.cudnnActivationDescriptor_t
-
-	mode       ActivationMode
-	reluNanOpt NanPropagation
-	coef       float64
-}
-
-func NewActivation(mode ActivationMode, reluNanOpt NanPropagation, coef float64) (*Activation, error) {
-	var internal C.cudnnActivationDescriptor_t
-	if err := result(C.cudnnCreateActivationDescriptor(&internal)); err != nil {
-		return nil, err
-	}
-
-	if err := result(C.cudnnSetActivationDescriptor(internal, mode.c(), reluNanOpt.c(), C.double(coef))); err != nil {
-		return nil, err
-	}
-
-	retVal := &Activation{
-		internal:   internal,
-		mode:       mode,
-		reluNanOpt: reluNanOpt,
-		coef:       coef,
-	}
-	runtime.SetFinalizer(retVal, destroyActivation)
-	return retVal, nil
-}
-
-func (A *Activation) Mode() ActivationMode { return A.mode }
-
-func (A *Activation) ReluNanOpt() NanPropagation { return A.reluNanOpt }
-
-func (A *Activation) Coef() float64 { return A.coef }
-
-func destoryActivation(obj Activation) { C.cudnnDestroyActivationDescriptor(obj.internal) }
-
-type CTCLoss struct {
-	internal C.cudnnCTCLossDescriptor_t
-
-	compType DataType
-}
-
-func NewCTCLoss(compType DataType) (*CTCLoss, error) {
-	var internal C.cudnnCTCLossDescriptor_t
-	if err := result(C.cudnnCreateCTCLossDescriptor(&internal)); err != nil {
-		return nil, err
-	}
-
-	if err := result(C.cudnnSetCTCLossDescriptor(internal, compType.c())); err != nil {
-		return nil, err
-	}
-
-	retVal := &CTCLoss{
-		internal: internal,
-		compType: compType,
-	}
-	runtime.SetFinalizer(retVal, destroyCTCLoss)
-	return retVal, nil
-}
-
-func (C *CTCLoss) CompType() DataType { return C.compType }
-
-func destoryCTCLoss(obj CTCLoss) { C.cudnnDestroyCTCLossDescriptor(obj.internal) }
+func destoryRNN(obj *RNN) { C.cudnnDestroyRNNDescriptor(obj.internal) }

@@ -111,7 +111,7 @@ func generateStubs() {
 	handleErr(err)
 	filename := "FOO.go"
 	fullpath := path.Join(pkgloc, filename)
-	buf, err := os.OpenFile(fullpath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	buf, err := os.OpenFile(fullpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	fmt.Fprintln(buf, pkghdr)
 	for k, v := range creations {
 		if isIgnored(v) || v == "" {

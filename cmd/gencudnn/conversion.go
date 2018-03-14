@@ -23,6 +23,13 @@ func MakeParam(name, typ string, isPtr bool) Param {
 	}
 }
 
+func (p Param) String() string {
+	if p.IsPtr {
+		return fmt.Sprintf("%v *%v", p.Name, p.Type)
+	}
+	return fmt.Sprintf("%v %v", p.Name, p.Type)
+}
+
 // GoSignature represents a function signature in Go
 type GoSignature struct {
 	Name     string
@@ -35,17 +42,17 @@ type GoSignature struct {
 func (s GoSignature) Format(f fmt.State, c rune) {
 	fmt.Fprint(f, "func ")
 	if s.Receiver.Name != "" {
-		fmt.Fprintf(f, "(%v %v) ", s.Receiver.Name, s.Receiver.Type)
+		fmt.Fprintf(f, "(%v) ", s.Receiver)
 	}
 	fmt.Fprintf(f, "%v(", s.Name)
 	for _, p := range s.Params {
-		fmt.Fprintf(f, "%v %v, ", p.Name, p.Type)
+		fmt.Fprintf(f, "%v, ", p)
 	}
 	fmt.Fprint(f, ") ")
 	if len(s.RetVals) > 0 {
 		fmt.Fprint(f, "(")
 		for _, r := range s.RetVals {
-			fmt.Fprintf(f, "%v %v, ", r.Name, r.Type)
+			fmt.Fprintf(f, "%v, ", r)
 		}
 		fmt.Fprint(f, ")")
 	}
