@@ -106,6 +106,7 @@ func generateEnums() {
 	}
 }
 
+// generateStubs creates most of the stubs
 func generateStubs() {
 	t, err := bindgen.Parse(model, hdrfile)
 	handleErr(err)
@@ -123,10 +124,6 @@ func generateStubs() {
 			log.Printf("Cnanot generate for %q", k)
 			continue
 		}
-		// filename := "generated" + gotype + ".go"
-		// filename = "FOO.go"
-		// fullpath := path.Join(pkgloc, filename)
-		// buf, err := os.OpenFile(fullpath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		handleErr(err)
 
 		// fmt.Fprintln(buf, pkghdr)
@@ -192,7 +189,7 @@ func generateStubs() {
 				log.Printf("%q: Parameter %d Skipped %q of %v", cs.Name, i, p.Name(), typName)
 				continue
 			}
-			getterSig.Receiver.Name = string(gotype[0])
+			getterSig.Receiver.Name = strings.ToLower(string(gotype[0]))
 			getterSig.Receiver.Type = "*" + gotype
 			getterSig.Name = strings.Title(p.Name())
 			getterSig.RetVals = []Param{{Type: typName}}
@@ -201,7 +198,7 @@ func generateStubs() {
 
 		// destructor
 		destructor := GoSignature{}
-		destructor.Name = "destory" + gotype
+		destructor.Name = "destroy" + gotype
 		destructor.Params = []Param{
 			{Name: "obj", Type: gotype, IsPtr: true},
 		}

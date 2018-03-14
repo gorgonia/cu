@@ -68,6 +68,6 @@ var go2cBuiltins = map[string]string{
 	"float64": "double",
 	"int":     "int",
 	"uint":    "uint",
-	"uint32":  "uint32",
-	"uint64":  "uint64",
+	"uint32":  "ulong",
+	"uint64":  "ulonglong",
 }
