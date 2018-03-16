@@ -6,41 +6,73 @@ package cudnn
 import "C"
 import "runtime"
 
-type Activation struct {
-	internal C.cudnnActivationDescriptor_t
+type CTCLoss struct {
+	internal C.cudnnCTCLossDescriptor_t
 
-	mode       ActivationMode
-	reluNanOpt NanPropagation
-	coef       float64
+	compType DataType
 }
 
-func NewActivation(mode ActivationMode, reluNanOpt NanPropagation, coef float64) (*Activation, error) {
-	var internal C.cudnnActivationDescriptor_t
-	if err := result(C.cudnnCreateActivationDescriptor(&internal)); err != nil {
+func NewCTCLoss(compType DataType) (*CTCLoss, error) {
+	var internal C.cudnnCTCLossDescriptor_t
+	if err := result(C.cudnnCreateCTCLossDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetActivationDescriptor(internal, mode.c(), reluNanOpt.c(), C.double(coef))); err != nil {
+	if err := result(C.cudnnSetCTCLossDescriptor(internal, compType.c())); err != nil {
 		return nil, err
 	}
 
-	retVal := &Activation{
-		internal:   internal,
-		mode:       mode,
-		reluNanOpt: reluNanOpt,
-		coef:       coef,
+	retVal := &CTCLoss{
+		internal: internal,
+		compType: compType,
 	}
-	runtime.SetFinalizer(retVal, destroyActivation)
+	runtime.SetFinalizer(retVal, destroyCTCLoss)
 	return retVal, nil
 }
 
-func (a *Activation) Mode() ActivationMode { return a.mode }
+func (c *CTCLoss) CompType() DataType { return c.compType }
 
-func (a *Activation) ReluNanOpt() NanPropagation { return a.reluNanOpt }
+func destroyCTCLoss(obj *CTCLoss) { C.cudnnDestroyCTCLossDescriptor(obj.internal) }
 
-func (a *Activation) Coef() float64 { return a.coef }
+type LRN struct {
+	internal C.cudnnLRNDescriptor_t
 
-func destroyActivation(obj *Activation) { C.cudnnDestroyActivationDescriptor(obj.internal) }
+	lrnN     uint
+	lrnAlpha float64
+	lrnBeta  float64
+	lrnK     float64
+}
+
+func NewLRN(lrnN uint, lrnAlpha float64, lrnBeta float64, lrnK float64) (*LRN, error) {
+	var internal C.cudnnLRNDescriptor_t
+	if err := result(C.cudnnCreateLRNDescriptor(&internal)); err != nil {
+		return nil, err
+	}
+
+	if err := result(C.cudnnSetLRNDescriptor(internal, C.uint(lrnN), C.double(lrnAlpha), C.double(lrnBeta), C.double(lrnK))); err != nil {
+		return nil, err
+	}
+
+	retVal := &LRN{
+		internal: internal,
+		lrnN:     lrnN,
+		lrnAlpha: lrnAlpha,
+		lrnBeta:  lrnBeta,
+		lrnK:     lrnK,
+	}
+	runtime.SetFinalizer(retVal, destroyLRN)
+	return retVal, nil
+}
+
+func (l *LRN) LrnN() uint { return l.lrnN }
+
+func (l *LRN) LrnAlpha() float64 { return l.lrnAlpha }
+
+func (l *LRN) LrnBeta() float64 { return l.lrnBeta }
+
+func (l *LRN) LrnK() float64 { return l.lrnK }
+
+func destroyLRN(obj *LRN) { C.cudnnDestroyLRNDescriptor(obj.internal) }
 
 type Reduction struct {
 	internal C.cudnnReduceTensorDescriptor_t
@@ -86,6 +118,42 @@ func (r *Reduction) ReduceTensorIndicesType() IndicesType { return r.reduceTenso
 
 func destroyReduction(obj *Reduction) { C.cudnnDestroyReduceTensorDescriptor(obj.internal) }
 
+type Activation struct {
+	internal C.cudnnActivationDescriptor_t
+
+	mode       ActivationMode
+	reluNanOpt NanPropagation
+	coef       float64
+}
+
+func NewActivation(mode ActivationMode, reluNanOpt NanPropagation, coef float64) (*Activation, error) {
+	var internal C.cudnnActivationDescriptor_t
+	if err := result(C.cudnnCreateActivationDescriptor(&internal)); err != nil {
+		return nil, err
+	}
+
+	if err := result(C.cudnnSetActivationDescriptor(internal, mode.c(), reluNanOpt.c(), C.double(coef))); err != nil {
+		return nil, err
+	}
+
+	retVal := &Activation{
+		internal:   internal,
+		mode:       mode,
+		reluNanOpt: reluNanOpt,
+		coef:       coef,
+	}
+	runtime.SetFinalizer(retVal, destroyActivation)
+	return retVal, nil
+}
+
+func (a *Activation) Mode() ActivationMode { return a.mode }
+
+func (a *Activation) ReluNanOpt() NanPropagation { return a.reluNanOpt }
+
+func (a *Activation) Coef() float64 { return a.coef }
+
+func destroyActivation(obj *Activation) { C.cudnnDestroyActivationDescriptor(obj.internal) }
+
 type SpatialTransformer struct {
 	internal C.cudnnSpatialTransformerDescriptor_t
 
@@ -96,7 +164,7 @@ type SpatialTransformer struct {
 
 func NewSpatialTransformer(samplerType SamplerType, dataType DataType, nbDims int) (*SpatialTransformer, error) {
 	var internal C.cudnnSpatialTransformerDescriptor_t
-	if err := result(C.cudnnCreateSpatialTransformerNdDescriptor(&internal)); err != nil {
+	if err := result(C.cudnnCreateSpatialTransformerDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
@@ -121,164 +189,8 @@ func (s *SpatialTransformer) DataType() DataType { return s.dataType }
 func (s *SpatialTransformer) NbDims() int { return s.nbDims }
 
 func destroySpatialTransformer(obj *SpatialTransformer) {
-	C.cudnnDestroySpatialTransformerNdDescriptor(obj.internal)
+	C.cudnnDestroySpatialTransformerDescriptor(obj.internal)
 }
-
-type RNN struct {
-	internal C.cudnnRNNDescriptor_t
-
-	handle      Context
-	hiddenSize  int
-	numLayers   int
-	dropoutDesc Dropout
-	inputMode   RNNInputMode
-	direction   DirectionMode
-	mode        RNNMode
-	algo        RNNAlgo
-	dataType    DataType
-}
-
-func NewRNN(handle *Context, hiddenSize int, numLayers int, dropoutDesc *Dropout, inputMode RNNInputMode, direction DirectionMode, mode RNNMode, algo RNNAlgo, dataType DataType) (*RNN, error) {
-	var internal C.cudnnRNNDescriptor_t
-	if err := result(C.cudnnCreateRNNDescriptor(&internal)); err != nil {
-		return nil, err
-	}
-
-	if err := result(C.cudnnSetRNNDescriptor(internal, handle.internal, C.int(hiddenSize), C.int(numLayers), dropoutDesc.internal, inputMode.c(), direction.c(), mode.c(), algo.c(), dataType.c())); err != nil {
-		return nil, err
-	}
-
-	retVal := &RNN{
-		internal:    internal,
-		handle:      handle,
-		hiddenSize:  hiddenSize,
-		numLayers:   numLayers,
-		dropoutDesc: dropoutDesc,
-		inputMode:   inputMode,
-		direction:   direction,
-		mode:        mode,
-		algo:        algo,
-		dataType:    dataType,
-	}
-	runtime.SetFinalizer(retVal, destroyRNN)
-	return retVal, nil
-}
-
-func (r *RNN) Handle() Context { return r.handle }
-
-func (r *RNN) HiddenSize() int { return r.hiddenSize }
-
-func (r *RNN) NumLayers() int { return r.numLayers }
-
-func (r *RNN) DropoutDesc() Dropout { return r.dropoutDesc }
-
-func (r *RNN) InputMode() RNNInputMode { return r.inputMode }
-
-func (r *RNN) Direction() DirectionMode { return r.direction }
-
-func (r *RNN) Mode() RNNMode { return r.mode }
-
-func (r *RNN) Algo() RNNAlgo { return r.algo }
-
-func (r *RNN) DataType() DataType { return r.dataType }
-
-func destroyRNN(obj *RNN) { C.cudnnDestroyRNNDescriptor(obj.internal) }
-
-type CTCLoss struct {
-	internal C.cudnnCTCLossDescriptor_t
-
-	compType DataType
-}
-
-func NewCTCLoss(compType DataType) (*CTCLoss, error) {
-	var internal C.cudnnCTCLossDescriptor_t
-	if err := result(C.cudnnCreateCTCLossDescriptor(&internal)); err != nil {
-		return nil, err
-	}
-
-	if err := result(C.cudnnSetCTCLossDescriptor(internal, compType.c())); err != nil {
-		return nil, err
-	}
-
-	retVal := &CTCLoss{
-		internal: internal,
-		compType: compType,
-	}
-	runtime.SetFinalizer(retVal, destroyCTCLoss)
-	return retVal, nil
-}
-
-func (c *CTCLoss) CompType() DataType { return c.compType }
-
-func destroyCTCLoss(obj *CTCLoss) { C.cudnnDestroyCTCLossDescriptor(obj.internal) }
-
-type PersistentRNNPlan struct {
-	internal C.cudnnPersistentRNNPlan_t
-
-	rnnDesc RNN
-}
-
-func NewPersistentRNNPlan(rnnDesc *RNN) (*PersistentRNNPlan, error) {
-	var internal C.cudnnPersistentRNNPlan_t
-	if err := result(C.cudnnCreatePersistentRNNPlan(&internal)); err != nil {
-		return nil, err
-	}
-
-	if err := result(C.cudnnSetPersistentRNNPlan(internal, rnnDesc.internal)); err != nil {
-		return nil, err
-	}
-
-	retVal := &PersistentRNNPlan{
-		internal: internal,
-		rnnDesc:  rnnDesc,
-	}
-	runtime.SetFinalizer(retVal, destroyPersistentRNNPlan)
-	return retVal, nil
-}
-
-func (p *PersistentRNNPlan) RnnDesc() RNN { return p.rnnDesc }
-
-func destroyPersistentRNNPlan(obj *PersistentRNNPlan) { C.cudnnDestroyPersistentRNNPlan(obj.internal) }
-
-type LRN struct {
-	internal C.cudnnLRNDescriptor_t
-
-	lrnN     uint
-	lrnAlpha float64
-	lrnBeta  float64
-	lrnK     float64
-}
-
-func NewLRN(lrnN uint, lrnAlpha float64, lrnBeta float64, lrnK float64) (*LRN, error) {
-	var internal C.cudnnLRNDescriptor_t
-	if err := result(C.cudnnCreateLRNDescriptor(&internal)); err != nil {
-		return nil, err
-	}
-
-	if err := result(C.cudnnSetLRNDescriptor(internal, C.uint(lrnN), C.double(lrnAlpha), C.double(lrnBeta), C.double(lrnK))); err != nil {
-		return nil, err
-	}
-
-	retVal := &LRN{
-		internal: internal,
-		lrnN:     lrnN,
-		lrnAlpha: lrnAlpha,
-		lrnBeta:  lrnBeta,
-		lrnK:     lrnK,
-	}
-	runtime.SetFinalizer(retVal, destroyLRN)
-	return retVal, nil
-}
-
-func (l *LRN) LrnN() uint { return l.lrnN }
-
-func (l *LRN) LrnAlpha() float64 { return l.lrnAlpha }
-
-func (l *LRN) LrnBeta() float64 { return l.lrnBeta }
-
-func (l *LRN) LrnK() float64 { return l.lrnK }
-
-func destroyLRN(obj *LRN) { C.cudnnDestroyLRNDescriptor(obj.internal) }
 
 type Dropout struct {
 	internal C.cudnnDropoutDescriptor_t

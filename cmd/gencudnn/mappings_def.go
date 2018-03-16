@@ -15,13 +15,20 @@ var contextual map[string]struct{}
 var retVals map[string]map[int]string
 
 // creations is a list of functions that creates shit. The key is the type
-var creations map[string]string
+var creations map[string][]string
+
+// setFns is a list of functions that sets types. The key is the type
+var setFns map[string][]string
+
+var destructions map[string][]string
 
 // alphaBetas is a list of functions that have alphas, betas, in the parameters
 var alphaBetas map[string]map[int]string
 
 // memories is a list of functions that require memory in the parameters
 var memories map[string]map[int]string
+
+var generated = map[string]struct{}{}
 
 var paramMap = map[bg.ParamKey]struct{ Name, Type string }{
 	bg.ParamKey{Name: "handle", Type: bg.TypeKey{Name: "cudnnHandle_t", Kind: cc.Ptr}}: {"handle", "*Context"},

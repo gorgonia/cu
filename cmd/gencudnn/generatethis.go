@@ -8,6 +8,7 @@ import (
 
 	"github.com/cznic/cc"
 	"github.com/gorgonia/bindgen"
+	"github.com/kr/pretty"
 )
 
 // generate this contains function to generate for THIS package (main)
@@ -40,12 +41,14 @@ func generateMappings(appendCurrent bool) {
 		bindgen.GenNameMap(buf, t, "fnNameMap", processNameBasic, functions, true)
 		bindgen.GenNameMap(buf, t, "enumMappings", processNameBasic, enums, true)
 		generateContextualNameMap(buf, t)
-		generateCreations(buf, t)
 		generateAlphaBeta(buf, t)
 		generateRetvals(buf, t)
+
+		generateCRUD(buf, t, "create")
+		generateCRUD(buf, t, "set")
+		generateCRUD(buf, t, "destroy")
 		fmt.Fprintln(buf, "}\n")
 	}
-
 	fmt.Fprintln(buf, initfn)
 	fmt.Fprintln(buf, "}\n")
 }
@@ -97,34 +100,59 @@ func generateRetvals(buf io.Writer, t *cc.TranslationUnit) {
 	fmt.Fprint(buf, "}\n")
 }
 
-func generateCreations(buf io.Writer, t *cc.TranslationUnit) {
+// generateCRUD creates lists of CRUD functions for the generateStubs function to consume
+func generateCRUD(buf io.Writer, t *cc.TranslationUnit, fnType string) {
 	decls, err := bindgen.Get(t, functions)
 	handleErr(err)
-	fmt.Fprint(buf, "creations = map[string]string {\n")
+
+	var a = make(map[string][]string)
+	switch fnType {
+	case "create":
+		fmt.Fprintf(buf, "creations = ")
+	case "set":
+		fmt.Fprintf(buf, "setFns = ")
+	case "destroy":
+		fmt.Fprintf(buf, "destructions = ")
+	}
+
 	for _, d := range decls {
 		cs := d.(*bindgen.CSignature)
 		params := cs.Parameters()
 
-		if !strings.Contains(strings.ToLower(cs.Name), "create") {
+		if !strings.Contains(strings.ToLower(cs.Name), fnType) {
 			continue
 		}
 
-		for i := len(params) - 1; i >= 0; i-- {
-			p := params[i]
-			if !bindgen.IsConstType(p.Type()) && bindgen.IsPointer(p.Type()) {
-				// fmt.Fprintf(buf, "%q: {%d: %q},\n", cs.Name, i, p.Name())
-				setFn := strings.Replace(cs.Name, "Create", "Set", -1)
-
-				if searchByName(decls, setFn) == nil {
-					setFn = ""
+		switch fnType {
+		case "create":
+			for i := len(params) - 1; i >= 0; i-- {
+				p := params[i]
+				if !bindgen.IsConstType(p.Type()) && bindgen.IsPointer(p.Type()) {
+					typ := nameOfType(p.Type())
+					a[typ] = append(a[typ], cs.Name)
+					// 	fmt.Fprintf(buf, "%q: %q,\n", nameOfType(p.Type()), cs.Name)
+					// 	break
 				}
-				fmt.Fprintf(buf, "%q: %q,\n", nameOfType(p.Type()), setFn)
-
-				break
 			}
+		case "set":
+			p := params[0]
+			typ := nameOfType(p.Type())
+			a[typ] = append(a[typ], cs.Name)
+			// fmt.Fprintf(buf, "%q: %q,\n", nameOfType(p.Type()), cs.Name)
+		case "destroy":
+			p := params[0]
+			typ := nameOfType(p.Type())
+			a[typ] = append(a[typ], cs.Name)
+
 		}
 	}
-	fmt.Fprint(buf, "}\n")
+	switch fnType {
+	case "create", "destroy":
+		fmt.Fprintf(buf, "%# v\n\n", pretty.Formatter(a))
+	case "set":
+		fmt.Fprintf(buf, "%# v\n\n", pretty.Formatter(a))
+	}
+	// fmt.Fprint(buf, "}\n")
 }
 
 func generateAlphaBeta(buf io.Writer, t *cc.TranslationUnit) {

@@ -59,7 +59,12 @@ func main() {
 
 	// Step 3: generate enums, then edit the file in the dnn package.
 	// generateEnums()
-	generateStubs()
+	// generateStubs()
+
+	// Step 4: manual fix for inconsistent names (Spatial Transforms)
+
+	// step 5:
+	generateFunctions()
 
 }
 
@@ -114,11 +119,17 @@ func generateStubs() {
 	fullpath := path.Join(pkgloc, filename)
 	buf, err := os.OpenFile(fullpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	fmt.Fprintln(buf, pkghdr)
-	for k, v := range creations {
+	for k, vs := range setFns {
+		if len(vs) > 1 {
+			log.Printf("Skipped generating for %q - too many sets", k)
+			continue
+		}
+		v := vs[0]
 		if isIgnored(v) || v == "" {
 			log.Printf("Skipped generating for %q", k)
 			continue
 		}
+
 		gotype, ok := ctypes2GoTypes[k]
 		if !ok {
 			log.Printf("Cnanot generate for %q", k)
@@ -143,11 +154,24 @@ func generateStubs() {
 
 		cs := decls[0].(*bindgen.CSignature)
 		sig := GoSignature{}
+		var create, destroy string
+		if creates, ok := creations[k]; ok {
+			create = creates[0]
+		}
+		if destroys, ok := destructions[k]; ok {
+			destroy = destroys[0]
+		}
+
+		if create == "" || destroy == "" {
+			log.Printf("Skipped %v - No Create/Destroy", k)
+			continue
+		}
+
 		body := Con{
 			Ctype:   k,
 			GoType:  gotype,
-			Create:  strings.Replace(v, "Set", "Create", -1),
-			Destroy: strings.Replace(v, "Set", "Destroy", -1),
+			Create:  create,
+			Destroy: destroy,
 			Set:     v,
 		}
 
@@ -211,5 +235,21 @@ func generateStubs() {
 	if err := goimports(fullpath); err != nil {
 		log.Printf("Failed to Goimports %q: %v", fullpath, err)
 	}
+}
 
+func generateFunctions() {
+	t, err := bindgen.Parse(model, hdrfile)
+	handleErr(err)
+	filename := "FOO2.go"
+	fullpath := path.Join(pkgloc, filename)
+	buf, err := os.OpenFile(fullpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	fmt.Fprintln(buf, pkghdr)
+	decls, err := bindgen.Get(t, functions)
+	handleErr(err)
+
+	for _, decl := range decls {
+		sig := GoSignature{}
+		sig.Name = decl.(*bindgen.CSignature).Name
+		fmt.Fprintf(buf, "%v {} \n", sig)
+	}
 }

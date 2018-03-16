@@ -437,22 +437,22 @@ func init() {
 		"cudnnSpatialTfSamplerBackward":           {5: "beta", 2: "alpha"},
 	}
 
-	creations = map[string]string{
-		"cudnnHandle_t":                       "", // done
-		"cudnnTensorDescriptor_t":             "", // done.  1 TODO
-		"cudnnOpTensorDescriptor_t":           "cudnnSetOpTensorDescriptor",
-		"cudnnReduceTensorDescriptor_t":       "cudnnSetReduceTensorDescriptor",
-		"cudnnFilterDescriptor_t":             "", // done
-		"cudnnConvolutionDescriptor_t":        "", // done. 1 TODO
-		"cudnnPoolingDescriptor_t":            "",
-		"cudnnActivationDescriptor_t":         "cudnnSetActivationDescriptor",
-		"cudnnLRNDescriptor_t":                "cudnnSetLRNDescriptor",
-		"cudnnSpatialTransformerDescriptor_t": "cudnnSetSpatialTransformerNdDescriptor",
-		"cudnnDropoutDescriptor_t":            "cudnnSetDropoutDescriptor",
-		"cudnnRNNDescriptor_t":                "cudnnSetRNNDescriptor",
-		"cudnnPersistentRNNPlan_t":            "cudnnSetPersistentRNNPlan",
-		"cudnnCTCLossDescriptor_t":            "cudnnSetCTCLossDescriptor",
-	}
+	// creations = map[string]string{
+	// 	"cudnnHandle_t":                       "", // done
+	// 	"cudnnTensorDescriptor_t":             "", // done.  1 TODO
+	// 	"cudnnOpTensorDescriptor_t":           "cudnnSetOpTensorDescriptor",
+	// 	"cudnnReduceTensorDescriptor_t":       "cudnnSetReduceTensorDescriptor",
+	// 	"cudnnFilterDescriptor_t":             "", // done
+	// 	"cudnnConvolutionDescriptor_t":        "", // done. 1 TODO
+	// 	"cudnnPoolingDescriptor_t":            "",
+	// 	"cudnnActivationDescriptor_t":         "cudnnSetActivationDescriptor",
+	// 	"cudnnLRNDescriptor_t":                "cudnnSetLRNDescriptor",
+	// 	"cudnnSpatialTransformerDescriptor_t": "cudnnSetSpatialTransformerNdDescriptor",
+	// 	"cudnnDropoutDescriptor_t":            "cudnnSetDropoutDescriptor",
+	// 	"cudnnRNNDescriptor_t":                "cudnnSetRNNDescriptor",
+	// 	"cudnnPersistentRNNPlan_t":            "cudnnSetPersistentRNNPlan",
+	// 	"cudnnCTCLossDescriptor_t":            "cudnnSetCTCLossDescriptor",
+	// }
 
 	retVals = map[string]map[int]string{
 		"cudnnGetProperty":                                   {1: "value"},
@@ -514,4 +514,58 @@ func init() {
 		"cudnnGetCTCLossDescriptor":                          {1: "compType"},
 		"cudnnGetCTCLossWorkspaceSize":                       {8: "sizeInBytes"},
 	}
+}
+
+func init() {
+
+	creations = map[string][]string{
+		"cudnnHandle_t":                       {"cudnnCreate"},
+		"cudnnOpTensorDescriptor_t":           {"cudnnCreateOpTensorDescriptor"},
+		"cudnnConvolutionDescriptor_t":        {"cudnnCreateConvolutionDescriptor"},
+		"cudnnTensorDescriptor_t":             {"cudnnCreateTensorDescriptor"},
+		"cudnnFilterDescriptor_t":             {"cudnnCreateFilterDescriptor"},
+		"cudnnLRNDescriptor_t":                {"cudnnCreateLRNDescriptor"},
+		"cudnnReduceTensorDescriptor_t":       {"cudnnCreateReduceTensorDescriptor"},
+		"cudnnPoolingDescriptor_t":            {"cudnnCreatePoolingDescriptor"},
+		"cudnnActivationDescriptor_t":         {"cudnnCreateActivationDescriptor"},
+		"cudnnSpatialTransformerDescriptor_t": {"cudnnCreateSpatialTransformerDescriptor"},
+		"cudnnDropoutDescriptor_t":            {"cudnnCreateDropoutDescriptor"},
+		"cudnnRNNDescriptor_t":                {"cudnnCreateRNNDescriptor"},
+		"cudnnCTCLossDescriptor_t":            {"cudnnCreateCTCLossDescriptor"},
+		"cudnnPersistentRNNPlan_t":            {"cudnnCreatePersistentRNNPlan"},
+	}
+
+	setFns = map[string][]string{
+		"cudnnCTCLossDescriptor_t":            {"cudnnSetCTCLossDescriptor"},
+		"cudnnHandle_t":                       {"cudnnSetStream", "cudnnSetTensor", "cudnnSetRNNDescriptor", "cudnnSetRNNDescriptor_v6"},
+		"cudnnTensorDescriptor_t":             {"cudnnSetTensor4dDescriptor", "cudnnSetTensor4dDescriptorEx", "cudnnSetTensorNdDescriptor", "cudnnSetTensorNdDescriptorEx"},
+		"cudnnFilterDescriptor_t":             {"cudnnSetFilter4dDescriptor", "cudnnSetFilterNdDescriptor"},
+		"cudnnConvolutionDescriptor_t":        {"cudnnSetConvolutionMathType", "cudnnSetConvolutionGroupCount", "cudnnSetConvolution2dDescriptor", "cudnnSetConvolutionNdDescriptor"},
+		"cudnnPoolingDescriptor_t":            {"cudnnSetPooling2dDescriptor", "cudnnSetPoolingNdDescriptor"},
+		"cudnnLRNDescriptor_t":                {"cudnnSetLRNDescriptor"},
+		"cudnnOpTensorDescriptor_t":           {"cudnnSetOpTensorDescriptor"},
+		"cudnnReduceTensorDescriptor_t":       {"cudnnSetReduceTensorDescriptor"},
+		"cudnnActivationDescriptor_t":         {"cudnnSetActivationDescriptor"},
+		"cudnnSpatialTransformerDescriptor_t": {"cudnnSetSpatialTransformerNdDescriptor"},
+		"cudnnDropoutDescriptor_t":            {"cudnnSetDropoutDescriptor"},
+		"cudnnRNNDescriptor_t":                {"cudnnSetPersistentRNNPlan", "cudnnSetRNNMatrixMathType", "cudnnSetRNNDescriptor_v5"},
+	}
+
+	destructions = map[string][]string{
+		"cudnnHandle_t":                       {"cudnnDestroy"},
+		"cudnnFilterDescriptor_t":             {"cudnnDestroyFilterDescriptor"},
+		"cudnnActivationDescriptor_t":         {"cudnnDestroyActivationDescriptor"},
+		"cudnnSpatialTransformerDescriptor_t": {"cudnnDestroySpatialTransformerDescriptor"},
+		"cudnnOpTensorDescriptor_t":           {"cudnnDestroyOpTensorDescriptor"},
+		"cudnnConvolutionDescriptor_t":        {"cudnnDestroyConvolutionDescriptor"},
+		"cudnnLRNDescriptor_t":                {"cudnnDestroyLRNDescriptor"},
+		"cudnnDropoutDescriptor_t":            {"cudnnDestroyDropoutDescriptor"},
+		"cudnnCTCLossDescriptor_t":            {"cudnnDestroyCTCLossDescriptor"},
+		"cudnnTensorDescriptor_t":             {"cudnnDestroyTensorDescriptor"},
+		"cudnnReduceTensorDescriptor_t":       {"cudnnDestroyReduceTensorDescriptor"},
+		"cudnnPoolingDescriptor_t":            {"cudnnDestroyPoolingDescriptor"},
+		"cudnnRNNDescriptor_t":                {"cudnnDestroyRNNDescriptor"},
+		"cudnnPersistentRNNPlan_t":            {"cudnnDestroyPersistentRNNPlan"},
+	}
+
 }
