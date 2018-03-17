@@ -61,6 +61,8 @@ var builtins = map[string]string{
 	"unsigned":           "uint",
 	"unsigned long":      "uint32",
 	"unsigned long long": "uint64",
+
+	"size_t": "uintptr",
 }
 
 var go2cBuiltins = map[string]string{
@@ -70,4 +72,13 @@ var go2cBuiltins = map[string]string{
 	"uint":    "uint",
 	"uint32":  "ulong",
 	"uint64":  "ulonglong",
+
+	"uintptr": "size_t",
+}
+
+// map[string]string so that it can be passed into alreadyDeclaredType()
+var manualChecks = map[string]string{
+	"size_t": "size_t",
+	"void*":  "void*",
+	"int*":   "int*",
 }

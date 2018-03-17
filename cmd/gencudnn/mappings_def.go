@@ -28,6 +28,12 @@ var alphaBetas map[string]map[int]string
 // memories is a list of functions that require memory in the parameters
 var memories map[string]map[int]string
 
+// methods enumerates the methods
+var methods map[string][]string
+
+// orphaned
+var orphaned map[string]struct{}
+
 var generated = map[string]struct{}{}
 
 var paramMap = map[bg.ParamKey]struct{ Name, Type string }{

@@ -50,6 +50,7 @@ func generateMappings(appendCurrent bool) {
 		fmt.Fprintln(buf, "}\n")
 	}
 	fmt.Fprintln(buf, initfn)
+	generateCRUD(buf, t, "methods")
 	fmt.Fprintln(buf, "}\n")
 }
 
@@ -113,13 +114,20 @@ func generateCRUD(buf io.Writer, t *cc.TranslationUnit, fnType string) {
 		fmt.Fprintf(buf, "setFns = ")
 	case "destroy":
 		fmt.Fprintf(buf, "destructions = ")
+	case "methods":
+		fmt.Fprintf(buf, "methods = ")
 	}
+
+	var b map[string]struct{}
 
 	for _, d := range decls {
 		cs := d.(*bindgen.CSignature)
 		params := cs.Parameters()
 
-		if !strings.Contains(strings.ToLower(cs.Name), fnType) {
+		if fnType != "methods" && !strings.Contains(strings.ToLower(cs.Name), fnType) {
+			continue
+		}
+		if fnType == "methods" && len(params) == 0 {
 			continue
 		}
 
@@ -130,29 +138,58 @@ func generateCRUD(buf io.Writer, t *cc.TranslationUnit, fnType string) {
 				if !bindgen.IsConstType(p.Type()) && bindgen.IsPointer(p.Type()) {
 					typ := nameOfType(p.Type())
 					a[typ] = append(a[typ], cs.Name)
-					// 	fmt.Fprintf(buf, "%q: %q,\n", nameOfType(p.Type()), cs.Name)
-					// 	break
 				}
 			}
-		case "set":
-			p := params[0]
-			typ := nameOfType(p.Type())
-			a[typ] = append(a[typ], cs.Name)
-			// fmt.Fprintf(buf, "%q: %q,\n", nameOfType(p.Type()), cs.Name)
-		case "destroy":
-			p := params[0]
-			typ := nameOfType(p.Type())
-			a[typ] = append(a[typ], cs.Name)
 
+		case "set", "destroy":
+			p := params[0]
+			typ := nameOfType(p.Type())
+			a[typ] = append(a[typ], cs.Name)
+		case "methods":
+			if _, ok := ignored[cs.Name]; ok {
+				continue
+			}
+			if alreadyGenIn(cs.Name, creations, setFns, destructions) {
+				continue
+			}
+
+			p := params[0]
+			typ := nameOfType(p.Type())
+			if typ == "cudnnHandle_t" {
+				if len(params) == 1 {
+					continue
+				}
+				p = params[1]
+				typ = nameOfType(p.Type())
+				if alreadyDeclaredType(typ, enumMappings, manualChecks) {
+					if b == nil {
+						b = make(map[string]struct{})
+					}
+					b[cs.Name] = struct{}{}
+					continue
+				}
+			}
+			a[typ] = append(a[typ], cs.Name)
 		}
 	}
+	fmt.Fprintf(buf, "%# v\n\n", pretty.Formatter(a))
+
+	// set the actual thing if not set
+	// lisp users just shake their head in disappointment
 	switch fnType {
-	case "create", "destroy":
-		fmt.Fprintf(buf, "%# v\n\n", pretty.Formatter(a))
+	case "create":
+		creations = a
 	case "set":
-		fmt.Fprintf(buf, "%# v\n\n", pretty.Formatter(a))
+		setFns = a
+	case "destroy":
+		destructions = a
+	case "methods":
+		methods = a
+		if b != nil {
+			fmt.Fprintf(buf, "orphaned = %# v\n\n", pretty.Formatter(b))
+			orphaned = b
+		}
 	}
-	// fmt.Fprint(buf, "}\n")
 }
 
 func generateAlphaBeta(buf io.Writer, t *cc.TranslationUnit) {

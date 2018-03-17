@@ -151,7 +151,6 @@ var ignored = map[string]struct{}{
 }
 
 func init() {
-
 	fnNameMap = map[string]string{
 		"cudnnGetVersion":                                    "GetVersion",
 		"cudnnGetCudartVersion":                              "GetCudartVersion",
@@ -514,9 +513,6 @@ func init() {
 		"cudnnGetCTCLossDescriptor":                          {1: "compType"},
 		"cudnnGetCTCLossWorkspaceSize":                       {8: "sizeInBytes"},
 	}
-}
-
-func init() {
 
 	creations = map[string][]string{
 		"cudnnHandle_t":                       {"cudnnCreate"},
@@ -566,6 +562,41 @@ func init() {
 		"cudnnPoolingDescriptor_t":            {"cudnnDestroyPoolingDescriptor"},
 		"cudnnRNNDescriptor_t":                {"cudnnDestroyRNNDescriptor"},
 		"cudnnPersistentRNNPlan_t":            {"cudnnDestroyPersistentRNNPlan"},
+	}
+
+}
+
+func init() {
+
+	methods = map[string][]string{
+		"cudnnOpTensorDescriptor_t":           {"cudnnOpTensor"},
+		"cudnnTensorDescriptor_t":             {"cudnnScaleTensor", "cudnnFindConvolutionForwardAlgorithm", "cudnnFindConvolutionForwardAlgorithmEx", "cudnnGetConvolutionForwardAlgorithm", "cudnnGetConvolutionForwardAlgorithm_v7", "cudnnGetConvolutionForwardWorkspaceSize", "cudnnFindConvolutionBackwardFilterAlgorithm", "cudnnFindConvolutionBackwardFilterAlgorithmEx", "cudnnGetConvolutionBackwardFilterAlgorithm", "cudnnGetConvolutionBackwardFilterAlgorithm_v7", "cudnnGetConvolutionBackwardFilterWorkspaceSize", "cudnnIm2Col", "cudnnDeriveBNTensorDescriptor", "cudnnDropoutGetReserveSpaceSize", "cudnnCTCLoss", "cudnnGetCTCLossWorkspaceSize"},
+		"cudnnFilterDescriptor_t":             {"cudnnFindConvolutionBackwardDataAlgorithm", "cudnnFindConvolutionBackwardDataAlgorithmEx", "cudnnGetConvolutionBackwardDataAlgorithm", "cudnnGetConvolutionBackwardDataAlgorithm_v7", "cudnnGetConvolutionBackwardDataWorkspaceSize"},
+		"cudnnDropoutDescriptor_t":            {"cudnnRestoreDropoutDescriptor", "cudnnGetDropoutDescriptor", "cudnnDropoutForward", "cudnnDropoutBackward"},
+		"cudnnRNNDescriptor_t":                {"cudnnGetRNNDescriptor", "cudnnGetRNNWorkspaceSize", "cudnnGetRNNTrainingReserveSize", "cudnnGetRNNParamsSize", "cudnnGetRNNLinLayerMatrixParams", "cudnnGetRNNLinLayerBiasParams", "cudnnRNNForwardInference", "cudnnRNNForwardTraining", "cudnnRNNBackwardData", "cudnnRNNBackwardWeights"},
+		"cudnnCTCLossDescriptor_t":            {"cudnnGetCTCLossDescriptor"},
+		"cudnnReduceTensorDescriptor_t":       {"cudnnGetReduceTensorDescriptor", "cudnnGetReductionIndicesSize", "cudnnGetReductionWorkspaceSize", "cudnnReduceTensor"},
+		"cudnnPoolingDescriptor_t":            {"cudnnGetPooling2dDescriptor", "cudnnGetPoolingNdDescriptor", "cudnnGetPoolingNdForwardOutputDim", "cudnnGetPooling2dForwardOutputDim", "cudnnPoolingForward", "cudnnPoolingBackward"},
+		"cudnnActivationDescriptor_t":         {"cudnnGetActivationDescriptor", "cudnnActivationForward", "cudnnActivationBackward"},
+		"cudnnLRNDescriptor_t":                {"cudnnGetLRNDescriptor", "cudnnLRNCrossChannelForward", "cudnnLRNCrossChannelBackward", "cudnnDivisiveNormalizationForward", "cudnnDivisiveNormalizationBackward"},
+		"cudnnSpatialTransformerDescriptor_t": {"cudnnSpatialTfGridGeneratorForward", "cudnnSpatialTfGridGeneratorBackward", "cudnnSpatialTfSamplerForward", "cudnnSpatialTfSamplerBackward"},
+	}
+
+	orphaned = map[string]struct{}{
+		"cudnnGetConvolutionBackwardFilterAlgorithmMaxCount": {},
+		"cudnnConvolutionBackwardData":                       {},
+		"cudnnBatchNormalizationBackward":                    {},
+		"cudnnAddTensor":                                     {},
+		"cudnnConvolutionBiasActivationForward":              {},
+		"cudnnConvolutionBackwardBias":                       {},
+		"cudnnSoftmaxForward":                                {},
+		"cudnnDropoutGetStatesSize":                          {},
+		"cudnnConvolutionForward":                            {},
+		"cudnnSoftmaxBackward":                               {},
+		"cudnnBatchNormalizationForwardTraining":             {},
+		"cudnnBatchNormalizationForwardInference":            {},
+		"cudnnConvolutionBackwardFilter":                     {},
+		"cudnnGetConvolutionBackwardDataAlgorithmMaxCount":   {},
 	}
 
 }

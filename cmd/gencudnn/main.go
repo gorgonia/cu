@@ -52,10 +52,11 @@ func main() {
 	// Step 1: Explore
 	// explore(hdrfile, functions, enums, otherTypes)
 	// explore(hdrfile, otherTypes)
+	// explore(hdrfile, functions)
 	// Step 2: generate mappings for this package, then edit them manually
 	// 	Specifically, the `ignored` map is edited - things that will be manually written are not removed from the list
 	//	Some enum map names may also be changed
-	// generateMappings(true)
+	generateMappings(true)
 
 	// Step 3: generate enums, then edit the file in the dnn package.
 	// generateEnums()
@@ -64,7 +65,7 @@ func main() {
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
 
 	// step 5:
-	generateFunctions()
+	// generateFunctions()
 
 }
 
@@ -182,8 +183,14 @@ func generateStubs() {
 				continue
 			}
 			typName := goNameOf(p.Type())
-			if typName == gotype || typName == "" {
-				log.Printf("%q: Parameter %d Skipped %q of %v", cs.Name, i, p.Name(), typName)
+
+			// receiver - we don;t log - adds to the noise
+			if typName == gotype {
+				continue
+			}
+
+			if typName == "" {
+				log.Printf("%q: Parameter %d Skipped %q of %v - unmapped type", cs.Name, i, p.Name(), p.Type())
 				continue
 			}
 
@@ -209,10 +216,17 @@ func generateStubs() {
 			}
 			getterSig := GoSignature{}
 			typName := goNameOf(p.Type())
-			if typName == gotype || typName == "" {
-				log.Printf("%q: Parameter %d Skipped %q of %v", cs.Name, i, p.Name(), typName)
+
+			// receiver - we don;t log - adds to the noise
+			if typName == gotype {
 				continue
 			}
+
+			if typName == "" {
+				log.Printf("%q Getter: Parameter %d Skipped %q of %q - unmapped type", cs.Name, i, p.Name(), nameOfType(p.Type()))
+				continue
+			}
+
 			getterSig.Receiver.Name = strings.ToLower(string(gotype[0]))
 			getterSig.Receiver.Type = "*" + gotype
 			getterSig.Name = strings.Title(p.Name())

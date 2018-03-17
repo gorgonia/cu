@@ -204,3 +204,25 @@ func reqPtr(gotyp string) string {
 	}
 	return gotyp
 }
+
+func alreadyGenIn(name string, ins ...map[string][]string) bool {
+	for _, in := range ins {
+		for _, vs := range in {
+			for _, v := range vs {
+				if v == name {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+func alreadyDeclaredType(name string, ins ...map[string]string) bool {
+	for _, in := range ins {
+		if _, ok := in[name]; ok {
+			return true
+		}
+	}
+	return false
+}
