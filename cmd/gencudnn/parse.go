@@ -193,7 +193,9 @@ func toC(name, typ string) string {
 			return fmt.Sprintf("C.%v(%v)", v, name)
 		}
 	}
-	panic("Unreachable")
+	// log.Printf("name %q typ %q", name, typ)
+	// panic("Unreachable")
+	return "TODO"
 }
 
 func reqPtr(gotyp string) string {

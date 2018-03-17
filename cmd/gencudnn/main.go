@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os/exec"
 	"strings"
@@ -56,11 +57,11 @@ func main() {
 	// Step 2: generate mappings for this package, then edit them manually
 	// 	Specifically, the `ignored` map is edited - things that will be manually written are not removed from the list
 	//	Some enum map names may also be changed
-	generateMappings(true)
+	// generateMappings(true)
 
 	// Step 3: generate enums, then edit the file in the dnn package.
 	// generateEnums()
-	// generateStubs()
+	generateStubs(true)
 
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
 
@@ -113,40 +114,52 @@ func generateEnums() {
 }
 
 // generateStubs creates most of the stubs
-func generateStubs() {
+func generateStubs(debugMode bool) {
 	t, err := bindgen.Parse(model, hdrfile)
 	handleErr(err)
-	filename := "FOO.go"
-	fullpath := path.Join(pkgloc, filename)
-	buf, err := os.OpenFile(fullpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-	fmt.Fprintln(buf, pkghdr)
+	var buf io.WriteCloser
+	var fullpath string
+	if debugMode {
+		filename := "FOO.go"
+		fullpath = path.Join(pkgloc, filename)
+		buf, err = os.OpenFile(fullpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+		handleErr(err)
+		fmt.Fprintln(buf, pkghdr)
+	}
+outer:
 	for k, vs := range setFns {
-		if len(vs) > 1 {
-			log.Printf("Skipped generating for %q - too many sets", k)
-			continue
-		}
-		v := vs[0]
-		if isIgnored(v) || v == "" {
-			log.Printf("Skipped generating for %q", k)
-			continue
-		}
-
 		gotype, ok := ctypes2GoTypes[k]
 		if !ok {
-			log.Printf("Cnanot generate for %q", k)
+			log.Printf("Cannot generate for %q", k)
 			continue
 		}
-		handleErr(err)
+		// if we're not in debugging mode, then we should write out to different files per type generated
+		// this makes it easier to work on all the TODOs
+		if !debugMode {
+			filename := gotype + "_gen.go"
+			fullpath = path.Join(pkgloc, filename)
+			buf, err = os.OpenFile(fullpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+			handleErr(err)
+			fmt.Fprintln(buf, pkghdr)
+		}
 
-		// fmt.Fprintln(buf, pkghdr)
+		for _, v := range vs {
+			if isIgnored(v) {
+				log.Printf("Skipped generating for %q", k)
+				continue outer
+			}
+		}
 
 		// get the creation function to "guess" what should be in the struct
 		filter := func(decl *cc.Declarator) bool {
 			if decl.Type.Kind() != cc.Function {
 				return false
 			}
-			if bindgen.NameOf(decl) == v {
-				return true
+			n := bindgen.NameOf(decl)
+			for _, v := range vs {
+				if n == v {
+					return true
+				}
 			}
 			return false
 		}
@@ -173,44 +186,38 @@ func generateStubs() {
 			GoType:  gotype,
 			Create:  create,
 			Destroy: destroy,
-			Set:     v,
+			Set:     vs,
+		}
+		sig.Receiver = Param{Type: gotype}
+
+		if _, err = csig2gosig(cs, "*"+gotype, true, &sig); err != nil {
+			body.TODO = err.Error()
+			log.Print(body.TODO)
+		}
+		for _, p := range sig.Params {
+			body.Params = append(body.Params, p.Name)
+			body.ParamType = append(body.ParamType, p.Type)
 		}
 
-		params := cs.Parameters()
-		retValPos := retVals[cs.Name]
-		for i, p := range params {
-			if _, ok := retValPos[i]; ok {
-				continue
-			}
-			typName := goNameOf(p.Type())
-
-			// receiver - we don;t log - adds to the noise
-			if typName == gotype {
-				continue
-			}
-
-			if typName == "" {
-				log.Printf("%q: Parameter %d Skipped %q of %v - unmapped type", cs.Name, i, p.Name(), p.Type())
-				continue
-			}
-
-			sig.Params = append(sig.Params, Param{Name: p.Name(), Type: reqPtr(typName)})
-			body.Params = append(body.Params, p.Name())
-			body.ParamType = append(body.ParamType, typName)
-		}
 		sig.Name = fmt.Sprintf("New%v", gotype)
-		sig.RetVals = []Param{
-			{Type: "*" + gotype},
-			{Type: "error"},
-		}
+		sig.Receiver = Param{} // Param is set to empty
 		constructStructTemplate.Execute(buf, body)
 
 		fmt.Fprintf(buf, "\n%v{ \n", sig)
-		constructionTemplate.Execute(buf, body)
+		if len(vs) > 1 {
+			constructionTODOTemplate.Execute(buf, body)
+		} else {
+			constructionTemplate.Execute(buf, body)
+		}
 		fmt.Fprintf(buf, "}\n")
 
 		// getters
-		for i, p := range params {
+		retValPos := retVals[cs.Name]
+		if len(vs) > 1 {
+			fmt.Fprintf(buf, "// TODO: Getters for %v\n", gotype)
+			goto generateDestructor
+		}
+		for i, p := range cs.Parameters() {
 			if _, ok := retValPos[i]; ok {
 				continue
 			}
@@ -223,7 +230,7 @@ func generateStubs() {
 			}
 
 			if typName == "" {
-				log.Printf("%q Getter: Parameter %d Skipped %q of %q - unmapped type", cs.Name, i, p.Name(), nameOfType(p.Type()))
+				fmt.Fprintf(buf, "//TODO: %q: Parameter %d Skipped %q of %v - unmapped type\n", cs.Name, i, p.Name(), p.Type())
 				continue
 			}
 
@@ -234,6 +241,7 @@ func generateStubs() {
 			fmt.Fprintf(buf, "\n%v{ return %v.%v }\n", getterSig, getterSig.Receiver.Name, p.Name())
 		}
 
+	generateDestructor:
 		// destructor
 		destructor := GoSignature{}
 		destructor.Name = "destroy" + gotype
@@ -244,7 +252,14 @@ func generateStubs() {
 		destructTemplate.Execute(buf, body)
 		fmt.Fprintf(buf, "}\n")
 
+		if !debugMode {
+			buf.Close()
+			if err := goimports(fullpath); err != nil {
+				log.Printf("Failed to Goimports %q: %v", fullpath, err)
+			}
+		}
 	}
+
 	buf.Close()
 	if err := goimports(fullpath); err != nil {
 		log.Printf("Failed to Goimports %q: %v", fullpath, err)

@@ -47,10 +47,11 @@ func generateMappings(appendCurrent bool) {
 		generateCRUD(buf, t, "create")
 		generateCRUD(buf, t, "set")
 		generateCRUD(buf, t, "destroy")
+		generateCRUD(buf, t, "methods")
 		fmt.Fprintln(buf, "}\n")
 	}
 	fmt.Fprintln(buf, initfn)
-	generateCRUD(buf, t, "methods")
+
 	fmt.Fprintln(buf, "}\n")
 }
 
@@ -144,8 +145,15 @@ func generateCRUD(buf io.Writer, t *cc.TranslationUnit, fnType string) {
 		case "set", "destroy":
 			p := params[0]
 			typ := nameOfType(p.Type())
+			if typ == "cudnnHandle_t" && len(params) > 1 {
+				p = params[1]
+				typ = nameOfType(p.Type())
+			}
 			a[typ] = append(a[typ], cs.Name)
 		case "methods":
+			if strings.Contains(strings.ToLower(cs.Name), "get") {
+				continue
+			}
 			if _, ok := ignored[cs.Name]; ok {
 				continue
 			}
@@ -155,20 +163,20 @@ func generateCRUD(buf io.Writer, t *cc.TranslationUnit, fnType string) {
 
 			p := params[0]
 			typ := nameOfType(p.Type())
-			if typ == "cudnnHandle_t" {
-				if len(params) == 1 {
-					continue
-				}
-				p = params[1]
-				typ = nameOfType(p.Type())
-				if alreadyDeclaredType(typ, enumMappings, manualChecks) {
-					if b == nil {
-						b = make(map[string]struct{})
-					}
-					b[cs.Name] = struct{}{}
-					continue
-				}
-			}
+			// if typ == "cudnnHandle_t" {
+			// 	if len(params) == 1 {
+			// 		continue
+			// 	}
+			// 	p = params[1]
+			// 	typ = nameOfType(p.Type())
+			// 	if alreadyDeclaredType(typ, enumMappings, manualChecks) {
+			// 		if b == nil {
+			// 			b = make(map[string]struct{})
+			// 		}
+			// 		b[cs.Name] = struct{}{}
+			// 		continue
+			// 	}
+			// }
 			a[typ] = append(a[typ], cs.Name)
 		}
 	}

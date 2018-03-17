@@ -28,18 +28,23 @@ type Con struct {
 	Ctype     string
 	GoType    string
 	Create    string
-	Set       string
+	Set       []string
 	Destroy   string
 	Params    []string
 	ParamType []string
+	TODO      string // TODO represents a part where human intervention is required
 }
 
 var constructStructRaw = `type {{.GoType}} struct {
 	internal C.{{.Ctype}}
 
+	{{$l := len .Set}}
+	{{if gt $l 1}} //TODO 
+	{{else -}}
 	{{$pt := .ParamType}}
 	{{range $i, $v := .Params -}}
 	{{unexport $v}} {{index $pt $i}}
+	{{end -}}
 	{{end -}}
 }	
 `
@@ -49,8 +54,10 @@ var constructionRaw = `var internal C.{{.Ctype}}
 		return nil, err
 	}
 
+	{{if ne .TODO ""}}// TODO: {{.TODO}}{{end}}
+
 	{{$pt := .ParamType}}
-	if err := result(C.{{.Set}}(internal, {{range $i, $v := .Params -}}{{$t := index $pt $i -}}{{toC $v $t -}},{{end -}})); err != nil {
+	if err := result(C.{{index .Set 0}}(internal, {{range $i, $v := .Params -}}{{$t := index $pt $i -}}{{toC $v $t -}},{{end -}})); err != nil {
 		return nil, err
 	}
 
@@ -65,13 +72,21 @@ var constructionRaw = `var internal C.{{.Ctype}}
 	return retVal, nil
 `
 
+var constructionTODORaw = `// available "Set" methods: 
+{{range .Set -}}
+//	{{.}}
+{{end -}}
+return nil, errors.Errorf("TODO: Manual Intervention required")
+`
+
 var destructRaw = `C.{{.Destroy}}(obj.internal)`
 
 var (
-	alphaTemplate           *template.Template
-	constructionTemplate    *template.Template
-	constructStructTemplate *template.Template
-	destructTemplate        *template.Template
+	alphaTemplate            *template.Template
+	constructionTemplate     *template.Template
+	constructionTODOTemplate *template.Template
+	constructStructTemplate  *template.Template
+	destructTemplate         *template.Template
 )
 
 var funcs = template.FuncMap{
@@ -83,6 +98,7 @@ var funcs = template.FuncMap{
 func init() {
 	alphaTemplate = template.Must(template.New("alpha").Parse(alphaTemplateRaw))
 	constructionTemplate = template.Must(template.New("cons").Funcs(funcs).Parse(constructionRaw))
+	constructionTODOTemplate = template.Must(template.New("cons").Funcs(funcs).Parse(constructionTODORaw))
 	constructStructTemplate = template.Must(template.New("cons2").Funcs(funcs).Parse(constructStructRaw))
 	destructTemplate = template.Must(template.New("Destroy").Funcs(funcs).Parse(destructRaw))
 }

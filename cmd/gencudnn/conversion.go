@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	bg "github.com/gorgonia/bindgen"
+	"github.com/pkg/errors"
 )
 
 // Param represents a parameter in the signature
@@ -58,15 +59,30 @@ func (s GoSignature) Format(f fmt.State, c rune) {
 	}
 }
 
-func csig2gosig(s *bg.CSignature) *GoSignature {
-	retVal := &GoSignature{
-		CSig: s,
+func csig2gosig(cs *bg.CSignature, retType string, returnsErr bool, retVal *GoSignature) (*GoSignature, error) {
+	if retVal == nil {
+		retVal = new(GoSignature)
 	}
-
-	// var receiver Param
-	// var name string
-	if isContextual(s.Name) {
-
+	var err error
+	params := cs.Parameters()
+	retValPos := retVals[cs.Name]
+	for i, p := range params {
+		if _, ok := retValPos[i]; ok {
+			continue
+		}
+		typeName := goNameOf(p.Type())
+		if retVal.Receiver.Type == typeName {
+			continue
+		}
+		if typeName == "" {
+			err = errors.Errorf("%q: Parameter %d Skipped %q of %v - unmapped type", cs.Name, i, p.Name(), p.Type())
+			continue
+		}
+		retVal.Params = append(retVal.Params, Param{Name: p.Name(), Type: reqPtr(typeName)})
 	}
-	return retVal
+	retVal.RetVals = append(retVal.RetVals, Param{Type: retType})
+	if returnsErr {
+		retVal.RetVals = append(retVal.RetVals, Param{Type: "error"})
+	}
+	return retVal, err
 }
