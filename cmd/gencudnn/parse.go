@@ -163,6 +163,11 @@ func unexport(a string) string {
 
 func goNameOf(a cc.Type) string {
 	n := nameOfType(a)
+	return goNameOfStr(n)
+}
+
+// same as above, but given a c name type in string
+func goNameOfStr(n string) string {
 	if retVal, ok := ctypes2GoTypes[n]; ok {
 		return retVal
 	}
@@ -223,6 +228,15 @@ func alreadyGenIn(name string, ins ...map[string][]string) bool {
 func alreadyDeclaredType(name string, ins ...map[string]string) bool {
 	for _, in := range ins {
 		if _, ok := in[name]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+func inList(a string, list []string) bool {
+	for _, v := range list {
+		if a == v {
 			return true
 		}
 	}

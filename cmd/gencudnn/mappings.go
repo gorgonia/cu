@@ -436,23 +436,6 @@ func init() {
 		"cudnnSpatialTfSamplerBackward":           {5: "beta", 2: "alpha"},
 	}
 
-	// creations = map[string]string{
-	// 	"cudnnHandle_t":                       "", // done
-	// 	"cudnnTensorDescriptor_t":             "", // done.  1 TODO
-	// 	"cudnnOpTensorDescriptor_t":           "cudnnSetOpTensorDescriptor",
-	// 	"cudnnReduceTensorDescriptor_t":       "cudnnSetReduceTensorDescriptor",
-	// 	"cudnnFilterDescriptor_t":             "", // done
-	// 	"cudnnConvolutionDescriptor_t":        "", // done. 1 TODO
-	// 	"cudnnPoolingDescriptor_t":            "",
-	// 	"cudnnActivationDescriptor_t":         "cudnnSetActivationDescriptor",
-	// 	"cudnnLRNDescriptor_t":                "cudnnSetLRNDescriptor",
-	// 	"cudnnSpatialTransformerDescriptor_t": "cudnnSetSpatialTransformerNdDescriptor",
-	// 	"cudnnDropoutDescriptor_t":            "cudnnSetDropoutDescriptor",
-	// 	"cudnnRNNDescriptor_t":                "cudnnSetRNNDescriptor",
-	// 	"cudnnPersistentRNNPlan_t":            "cudnnSetPersistentRNNPlan",
-	// 	"cudnnCTCLossDescriptor_t":            "cudnnSetCTCLossDescriptor",
-	// }
-
 	retVals = map[string]map[int]string{
 		"cudnnGetProperty":                                   {1: "value"},
 		"cudnnCreate":                                        {0: "handle"},

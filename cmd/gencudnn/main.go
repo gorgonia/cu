@@ -276,13 +276,25 @@ func generateFunctions() {
 	decls, err := bindgen.Get(t, functions)
 	handleErr(err)
 
-	for _, decl := range decls {
-		name := decl.(*bindgen.CSignature).Name
-		if _, ok := ignored[name]; ok {
-			continue
+	for rec, fns := range methods {
+		log.Printf("Receiver : %v. Functions: %d", rec, len(fns))
+		for _, decl := range decls {
+			csig := decl.(*bindgen.CSignature)
+			name := csig.Name
+			if !inList(name, fns) {
+				continue
+			}
+			if _, ok := ignored[name]; ok {
+				continue
+			}
+			sig := GoSignature{}
+			sig.Receiver.Name = string(rec[0])
+			sig.Receiver.Type = goNameOfStr(rec)
+			sig.Name = fnNameMap[name]
+
+			csig2gosig(csig, "", true, &sig)
+
+			fmt.Fprintf(buf, "%v {} \n", sig)
 		}
-		sig := GoSignature{}
-		sig.Name = fnNameMap[name]
-		fmt.Fprintf(buf, "%v {} \n", sig)
 	}
 }
