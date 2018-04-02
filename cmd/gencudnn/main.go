@@ -61,12 +61,12 @@ func main() {
 
 	// Step 3: generate enums, then edit the file in the dnn package.
 	// generateEnums()
-	generateStubs(true)
+	// generateStubs(true)
 
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
 
 	// step 5:
-	// generateFunctions()
+	generateFunctions()
 
 }
 
@@ -277,8 +277,12 @@ func generateFunctions() {
 	handleErr(err)
 
 	for _, decl := range decls {
+		name := decl.(*bindgen.CSignature).Name
+		if _, ok := ignored[name]; ok {
+			continue
+		}
 		sig := GoSignature{}
-		sig.Name = decl.(*bindgen.CSignature).Name
+		sig.Name = fnNameMap[name]
 		fmt.Fprintf(buf, "%v {} \n", sig)
 	}
 }
