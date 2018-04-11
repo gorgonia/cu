@@ -54,6 +54,7 @@ func main() {
 	// explore(hdrfile, functions, enums, otherTypes)
 	// explore(hdrfile, otherTypes)
 	// explore(hdrfile, functions)
+
 	// Step 2: generate mappings for this package, then edit them manually
 	// 	Specifically, the `ignored` map is edited - things that will be manually written are not removed from the list
 	//	Some enum map names may also be changed
@@ -62,6 +63,8 @@ func main() {
 	// Step 3: generate enums, then edit the file in the dnn package.
 	// generateEnums()
 	// generateStubs(true)
+
+	// Step 3a: run parse.py to get more sanity
 
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
 
@@ -212,7 +215,7 @@ outer:
 		fmt.Fprintf(buf, "}\n")
 
 		// getters
-		retValPos := retVals[cs.Name]
+		retValPos := getRetVal(cs)
 		if len(vs) > 1 {
 			fmt.Fprintf(buf, "// TODO: Getters for %v\n", gotype)
 			goto generateDestructor

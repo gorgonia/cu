@@ -167,14 +167,20 @@ func goNameOf(a cc.Type) string {
 }
 
 // same as above, but given a c name type in string
-func goNameOfStr(n string) string {
-	if retVal, ok := ctypes2GoTypes[n]; ok {
+func goNameOfStr(n string) (retVal string) {
+	var ok bool
+	defer func() {
+		if retVal == "Context" {
+			retVal = "*Context"
+		}
+	}()
+	if retVal, ok = ctypes2GoTypes[n]; ok {
 		return retVal
 	}
-	if retVal, ok := enumMappings[n]; ok {
+	if retVal, ok = enumMappings[n]; ok {
 		return retVal
 	}
-	if retVal, ok := builtins[n]; ok {
+	if retVal, ok = builtins[n]; ok {
 		return retVal
 	}
 	return ""
@@ -203,6 +209,39 @@ func toC(name, typ string) string {
 	return "TODO"
 }
 
+func getRetVal(cs *bindgen.CSignature) map[int]string {
+	name := cs.Name
+	outputs := outputParams[name]
+	ios := ioParams[name]
+	if len(outputs)+len(ios) == 0 {
+		return nil
+	}
+	retVal := make(map[int]string)
+	for i, p := range cs.Parameters() {
+		param := p.Name()
+		if inList(param, outputs) || inList(param, ios) {
+			retVal[i] = param
+		}
+	}
+	return retVal
+}
+
+func getRetValOnly(cs *bindgen.CSignature) map[int]string {
+	name := cs.Name
+	outputs := outputParams[name]
+	if len(outputs) == 0 {
+		return nil
+	}
+	retVal := make(map[int]string)
+	for i, p := range cs.Parameters() {
+		param := p.Name()
+		if inList(param, outputs) {
+			retVal[i] = param
+		}
+	}
+	return retVal
+}
+
 func reqPtr(gotyp string) string {
 	for _, v := range ctypes2GoTypes {
 		if v == gotyp {
@@ -215,10 +254,8 @@ func reqPtr(gotyp string) string {
 func alreadyGenIn(name string, ins ...map[string][]string) bool {
 	for _, in := range ins {
 		for _, vs := range in {
-			for _, v := range vs {
-				if v == name {
-					return true
-				}
+			if inList(name, vs) {
+				return true
 			}
 		}
 	}

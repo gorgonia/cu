@@ -42,7 +42,7 @@ func generateMappings(appendCurrent bool) {
 		bindgen.GenNameMap(buf, t, "enumMappings", processNameBasic, enums, true)
 		generateContextualNameMap(buf, t)
 		generateAlphaBeta(buf, t)
-		generateRetvals(buf, t)
+		// generateRetvals(buf, t) // deprecated for parse.py
 
 		generateCRUD(buf, t, "create")
 		generateCRUD(buf, t, "set")
@@ -163,20 +163,6 @@ func generateCRUD(buf io.Writer, t *cc.TranslationUnit, fnType string) {
 
 			p := params[0]
 			typ := nameOfType(p.Type())
-			// if typ == "cudnnHandle_t" {
-			// 	if len(params) == 1 {
-			// 		continue
-			// 	}
-			// 	p = params[1]
-			// 	typ = nameOfType(p.Type())
-			// 	if alreadyDeclaredType(typ, enumMappings, manualChecks) {
-			// 		if b == nil {
-			// 			b = make(map[string]struct{})
-			// 		}
-			// 		b[cs.Name] = struct{}{}
-			// 		continue
-			// 	}
-			// }
 			a[typ] = append(a[typ], cs.Name)
 		}
 	}

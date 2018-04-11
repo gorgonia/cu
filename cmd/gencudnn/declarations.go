@@ -63,6 +63,7 @@ var builtins = map[string]string{
 	"unsigned long long": "uint64",
 
 	"size_t": "uintptr",
+	"void*":  "Memory",
 }
 
 var go2cBuiltins = map[string]string{
