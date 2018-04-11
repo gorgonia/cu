@@ -80,6 +80,17 @@ var go2cBuiltins = map[string]string{
 // map[string]string so that it can be passed into alreadyDeclaredType()
 var manualChecks = map[string]string{
 	"size_t": "size_t",
-	"void*":  "void*",
-	"int*":   "int*",
+	// "void*":  "void*",
+	// "int*":   "int*",
+}
+
+// special for manual checks. The types are Go types.
+var fnParamTypes = map[string]map[string]string{
+	"cudnnCTCLoss":                                  {"labels": "[]int", "labelLengths": "[]int", "inputLengths": "[]int"},
+	"cudnnFindConvolutionForwardAlgorithm":          {"returnedAlgoCount": "int"},
+	"cudnnFindConvolutionForwardAlgorithmEx":        {"returnedAlgoCount": "int"},
+	"cudnnFindConvolutionBackwardFilterAlgorithm":   {"returnedAlgoCount": "int"},
+	"cudnnFindConvolutionBackwardFilterAlgorithmEx": {"returnedAlgoCount": "int"},
+	"cudnnFindConvolutionBackwardDataAlgorithm":     {"returnedAlgoCount": "int"},
+	"cudnnFindConvolutionBackwardDataAlgorithmEx":   {"returnedAlgoCount": "int"},
 }

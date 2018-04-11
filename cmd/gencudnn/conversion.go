@@ -2,11 +2,9 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	bg "github.com/gorgonia/bindgen"
-	"github.com/pkg/errors"
 )
 
 // Param represents a parameter in the signature
@@ -89,8 +87,9 @@ func csig2gosig(cs *bg.CSignature, retType string, returnsErr bool, retVal *GoSi
 			continue
 		}
 		if typeName == "" {
-			err = errors.Errorf("%q: Parameter %d Skipped %q of %v - unmapped type", cs.Name, i, p.Name(), p.Type())
-			log.Printf("%v (%d): param %v param type %v", cs.Name, i, p.Name(), p.Type())
+			typeName = fnParamTypes[cs.Name][p.Name()] // will panic if not found
+			// err = errors.Errorf("%q: Parameter %d Skipped %q of %v - unmapped type", cs.Name, i, p.Name(), p.Type())
+			// log.Printf("%v (%d) - Param: %q. Param type %v", cs.Name, i, p.Name(), p.Type())
 			continue
 		}
 		paramName := p.Name()
@@ -108,7 +107,8 @@ func csig2gosig(cs *bg.CSignature, retType string, returnsErr bool, retVal *GoSi
 			p := params[pos]
 			typeName := goNameOf(p.Type())
 			if typeName == "" {
-				log.Printf("RetVal of %v (%d) cannot be generated: param %v param type %v", cs.Name, pos, p.Name(), p.Type())
+				typeName = fnParamTypes[cs.Name][p.Name()]
+				// log.Printf("RetVal of %v (%d) cannot be generated: param %v param type %v", cs.Name, pos, p.Name(), p.Type())
 				continue
 			}
 			retVal.RetVals = append(retVal.RetVals, Param{Name: p.Name(), Type: typeName})
