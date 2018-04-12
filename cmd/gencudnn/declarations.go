@@ -54,6 +54,10 @@ var ctypes2GoTypes = map[string]string{
 	"cudnnPersistentRNNPlan_t":            "PersistentRNNPlan",
 }
 
+var alphaBetaParams = []string{
+	"alpha", "alpha1", "alpha2", "alpha3", "beta", "beta1",
+}
+
 var builtins = map[string]string{
 	"float":              "float32",
 	"double":             "float64",

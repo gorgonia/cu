@@ -194,7 +194,7 @@ func toC(name, typ string) string {
 	}
 
 	for _, v := range ctypes2GoTypes {
-		if v == typ {
+		if v == typ || typ == "*"+v {
 			return name + ".internal"
 		}
 	}
@@ -203,6 +203,10 @@ func toC(name, typ string) string {
 		if k == typ {
 			return fmt.Sprintf("C.%v(%v)", v, name)
 		}
+	}
+
+	if typ == "Memory" {
+		return fmt.Sprintf("%v.Pointer()", name)
 	}
 	// log.Printf("name %q typ %q", name, typ)
 	// panic("Unreachable")

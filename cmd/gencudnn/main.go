@@ -35,6 +35,7 @@ func init() {
 // #include <cudnn_v7.h>
 import "C"
 `
+
 }
 
 func handleErr(err error) {
@@ -61,7 +62,7 @@ func main() {
 	// generateMappings(true)
 
 	// Step 3: generate enums, then edit the file in the dnn package.
-	// generateEnums()
+	generateEnums()
 	// generateStubs(true)
 
 	// Step 3a: run parse.py to get more sanity
@@ -69,14 +70,60 @@ func main() {
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
 
 	// step 5:
-	generateFunctions()
+	// generateFunctions()
 
+	// report things that aren't done yet
+	reportTODOs(hdrfile, otherTypes, enums, functions)
 }
 
 func explore(file string, things ...bindgen.FilterFunc) {
 	t, err := bindgen.Parse(model, file)
 	handleErr(err)
 	bindgen.Explore(t, things...)
+}
+
+func reportTODOs(file string, things ...bindgen.FilterFunc) {
+	// track what's been generated
+	for k := range enumMappings {
+		generated[k] = struct{}{}
+	}
+	for k, v := range creations {
+		generated[k] = struct{}{}
+		for _, fn := range v {
+			generated[fn] = struct{}{}
+		}
+	}
+	for k, v := range setFns {
+		generated[k] = struct{}{}
+		for _, fn := range v {
+			generated[fn] = struct{}{}
+		}
+	}
+	for k, v := range destructions {
+		generated[k] = struct{}{}
+		for _, fn := range v {
+			generated[fn] = struct{}{}
+		}
+	}
+	for _, v := range methods {
+		for _, fn := range v {
+			generated[fn] = struct{}{}
+		}
+	}
+
+	t, err := bindgen.Parse(bindgen.Model(), file)
+	handleErr(err)
+	for _, thing := range things {
+		decls, err := bindgen.Get(t, thing)
+		handleErr(err)
+		for _, decl := range decls {
+			name := bindgen.NameOf(decl)
+			_, ignored := ignored[name]
+			if _, ok := generated[name]; !ok && !ignored {
+				fmt.Printf("%q not generated yet\n", name)
+			}
+		}
+	}
 }
 
 func generateEnums() {
@@ -292,12 +339,87 @@ func generateFunctions() {
 			}
 			sig := GoSignature{}
 			sig.Receiver.Name = string(rec[0])
-			sig.Receiver.Type = goNameOfStr(rec)
+			sig.Receiver.Type = reqPtr(goNameOfStr(rec))
 			sig.Name = fnNameMap[name]
 
 			csig2gosig(csig, "", true, &sig)
 
-			fmt.Fprintf(buf, "%v {} \n", sig)
+			fmt.Fprintf(buf, "%v { \n", sig)
+			ab := sig.AlphaBetas()
+			if len(ab) > 0 {
+				check := sig.FirstTensor()
+				if check == "" {
+					panic(fmt.Sprintf("No tensors to check: %v", sig))
+				}
+				data := AlphaBeta{
+					Params:      ab,
+					Check:       check,
+					LSO:         len(ab) - 1,
+					MultiReturn: len(sig.RetVals) > 1,
+				}
+				alphaTemplate.Execute(buf, data)
+			}
+
+			// update tracking matrix
+			// the goal is to find out which parameter has not been coverted yet
+			cparams := csig.Parameters()
+			track := make([]bool, len(cparams))
+
+			// receiver
+			var receiverParam string
+			for i, p := range cparams {
+				if reqPtr(goNameOf(p.Type())) == sig.Receiver.Type {
+					track[i] = true
+					receiverParam = p.Name()
+					break // only ONE receiver
+				}
+			}
+
+			// alpha/betas
+			for _, a := range ab {
+				for i, p := range cparams {
+					if p.Name() == a {
+						track[i] = true
+					}
+				}
+			}
+
+			// other params
+			for _, p := range sig.Params {
+				for i, cp := range cparams {
+					if cp.Name() == p.Name {
+						track[i] = true
+					}
+				}
+			}
+
+			for i, t := range track {
+				if !t {
+					fmt.Fprintf(buf, "// TODO: %v %v\n", cparams[i].Name(), cparams[i].Type())
+				}
+			}
+
+			// make the call
+			callParams := make([]Param, len(cparams))
+			for i, p := range cparams {
+				pname := p.Name()
+				callParams[i].Type = goNameOf(p.Type())
+				callParams[i].Name = pname
+				if inList(pname, alphaBetaParams) {
+					callParams[i].Name += "C"
+				}
+				if pname == receiverParam {
+					callParams[i].Name = sig.Receiver.Name
+				}
+
+			}
+			data := Call{
+				Params:      callParams,
+				CFuncName:   csig.Name,
+				MultiReturn: len(sig.RetVals) > 1,
+			}
+			callTemplate.Execute(buf, data)
+			fmt.Fprintf(buf, "}\n")
 		}
 	}
 }

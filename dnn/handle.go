@@ -4,7 +4,7 @@ package cudnn
 import "C"
 
 type Context struct {
-	h C.cudnnHandle_t
+	internal C.cudnnHandle_t
 }
 
 func NewContext() *Context {
@@ -13,10 +13,8 @@ func NewContext() *Context {
 		panic(err)
 	}
 	return &Context{
-		h: h,
+		internal: h,
 	}
 }
 
-func (ctx *Context) Destroy() error {
-	return result(C.cudnnDestroy(ctx.h))
-}
+func (ctx *Context) Destroy() error { return result(C.cudnnDestroy(ctx.h)) }

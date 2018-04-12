@@ -63,6 +63,27 @@ func (s GoSignature) Format(f fmt.State, c rune) {
 	}
 }
 
+// HasAlphaBeta returns true if one of the parameters are alpha/beta
+func (s GoSignature) AlphaBetas() []string {
+	var retVal []string
+	for _, p := range s.Params {
+		if inList(p.Name, alphaBetaParams) {
+			retVal = append(retVal, p.Name)
+		}
+	}
+	return retVal
+}
+
+// FirstTensor finds the first tensor parameter of the function and returns the name
+func (s GoSignature) FirstTensor() string {
+	for _, p := range s.Params {
+		if strings.Contains(p.Type, ctypes2GoTypes["cudnnTensorDescriptor_t"]) {
+			return p.Name
+		}
+	}
+	return ""
+}
+
 func csig2gosig(cs *bg.CSignature, retType string, returnsErr bool, retVal *GoSignature) (*GoSignature, error) {
 	if retVal == nil {
 		retVal = new(GoSignature)
@@ -79,24 +100,37 @@ func csig2gosig(cs *bg.CSignature, retType string, returnsErr bool, retVal *GoSi
 	retValPos := getRetValOnly(cs)
 	ioParamList := ioParams[cs.Name]
 	for i, p := range params {
-		if _, ok := retValPos[i]; ok {
-			continue
-		}
+		_, isRetVal := retValPos[i]
+		name := p.Name()
 		typeName := goNameOf(p.Type())
-		if retVal.Receiver.Type == typeName {
+
+		// because the cuDNN library will allocate on the users' behalf, any memory related stuff has to be preallocated by the user
+		if isRetVal && typeName != "Memory" {
 			continue
 		}
+
+		if ab, ok := alphaBetas[cs.Name]; ok {
+			if _, ok := ab[i]; ok {
+				retVal.Params = append(retVal.Params, Param{Name: name, Type: "float64"})
+				continue
+			}
+		}
+
+		if retVal.Receiver.Type == reqPtr(typeName) {
+			continue
+		}
+
 		if typeName == "" {
-			typeName = fnParamTypes[cs.Name][p.Name()] // will panic if not found
+			typeName = fnParamTypes[cs.Name][name] // will panic if not found
 			// err = errors.Errorf("%q: Parameter %d Skipped %q of %v - unmapped type", cs.Name, i, p.Name(), p.Type())
 			// log.Printf("%v (%d) - Param: %q. Param type %v", cs.Name, i, p.Name(), p.Type())
 			continue
 		}
-		paramName := p.Name()
-		if inList(paramName, ioParamList) {
-			retVal.Doc += fmt.Sprintf("\n//\t%v is both an input and output", paramName)
+
+		if inList(name, ioParamList) {
+			retVal.Doc += fmt.Sprintf("\n//\t%v is both an input and output", name)
 		}
-		retVal.Params = append(retVal.Params, Param{Name: paramName, Type: reqPtr(typeName)})
+		retVal.Params = append(retVal.Params, Param{Name: name, Type: reqPtr(typeName)})
 	}
 
 	var writeErrName bool
@@ -106,6 +140,12 @@ func csig2gosig(cs *bg.CSignature, retType string, returnsErr bool, retVal *GoSi
 		for pos := range retValPos {
 			p := params[pos]
 			typeName := goNameOf(p.Type())
+
+			// we cannot return memory. If we do, it implies the API will actually handle allocations.
+			if typeName == "Memory" {
+				continue
+			}
+
 			if typeName == "" {
 				typeName = fnParamTypes[cs.Name][p.Name()]
 				// log.Printf("RetVal of %v (%d) cannot be generated: param %v param type %v", cs.Name, pos, p.Name(), p.Type())

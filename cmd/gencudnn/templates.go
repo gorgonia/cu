@@ -2,9 +2,11 @@ package main
 
 import "text/template"
 
-var alphaTemplateRaw = `var {{range .Params }}{{.}}C, {{end}} unsafe.Pointer
-	if {{.Check}} == Float {
-		var {{range .Params}} {{.}}F, {{end}} C.float
+var alphaTemplateRaw = `{{$lso := .LSO -}}
+var {{range $i, $p := .Params }}{{$p}}C {{if lt $i $lso}},{{end}} {{end }} unsafe.Pointer
+	switch {{.Check}}.dataType {
+	case Float, Half:
+		var {{range $i, $p :=  .Params }}{{$p}}C{{if lt $i $lso}},{{end }} {{end }} C.float 
 		{{range .Params -}} 
 		{{.}}F = C.float(float32({{.}}))
 		{{end -}}
@@ -12,8 +14,8 @@ var alphaTemplateRaw = `var {{range .Params }}{{.}}C, {{end}} unsafe.Pointer
 		{{range .Params -}}
 		{{.}}C = unsafe.Pointer(&{{.}}F)
 		{{end -}}
-	} else {
-		var {{range .Params}} {{.}}F, {{end}} C.double
+	case Double:
+		var {{range $i, $p :=  .Params }}{{$p}}C{{if lt $i $lso}},{{end }} {{end }} C.double
 		{{range .Params -}} 
 		{{.}}F = C.double({{.}})
 		{{end -}}
@@ -21,8 +23,33 @@ var alphaTemplateRaw = `var {{range .Params }}{{.}}C, {{end}} unsafe.Pointer
 		{{range .Params -}}
 		{{.}}C = unsafe.Pointer(&{{.}}F)
 		{{end -}}
+	default:
+		{{if .MultiReturn -}}
+		err = errors.New("Unsupported data type: %v", {{.Check}}.dataType)
+		return
+		{{else -}}
+		return errors.New("Unsupported data type: %v", {{.Check}}.dataType) 
+		{{end -}}
 	}
 `
+
+type AlphaBeta struct {
+	Params      []string // parameters that are alpha/beta
+	Check       string   // what to check
+	LSO         int      // length of params -1
+	MultiReturn bool
+}
+
+var callTemplateRaw = `{{if .MultiReturn -}} err = result(C.{{.CFuncName}}({{range $i, $v := .Params}}{{toC $v.Name $v.Type -}}, {{end -}}))
+return
+{{else -}}return result(C.{{.CFuncName}}({{range $i, $v := .Params}}{{toC $v.Name $v.Type -}}, {{end -}})) {{end -}}
+`
+
+type Call struct {
+	Params      []Param
+	CFuncName   string
+	MultiReturn bool
+}
 
 type Con struct {
 	Ctype     string
@@ -83,6 +110,7 @@ var destructRaw = `C.{{.Destroy}}(obj.internal)`
 
 var (
 	alphaTemplate            *template.Template
+	callTemplate             *template.Template
 	constructionTemplate     *template.Template
 	constructionTODOTemplate *template.Template
 	constructStructTemplate  *template.Template
@@ -97,6 +125,7 @@ var funcs = template.FuncMap{
 
 func init() {
 	alphaTemplate = template.Must(template.New("alpha").Parse(alphaTemplateRaw))
+	callTemplate = template.Must(template.New("call").Funcs(funcs).Parse(callTemplateRaw))
 	constructionTemplate = template.Must(template.New("cons").Funcs(funcs).Parse(constructionRaw))
 	constructionTODOTemplate = template.Must(template.New("cons").Funcs(funcs).Parse(constructionTODORaw))
 	constructStructTemplate = template.Must(template.New("cons2").Funcs(funcs).Parse(constructStructRaw))

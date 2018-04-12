@@ -151,9 +151,9 @@ func generateCRUD(buf io.Writer, t *cc.TranslationUnit, fnType string) {
 			}
 			a[typ] = append(a[typ], cs.Name)
 		case "methods":
-			if strings.Contains(strings.ToLower(cs.Name), "get") {
-				continue
-			}
+			// if strings.Contains(strings.ToLower(cs.Name), "get") {
+			// 	continue
+			// }
 			if _, ok := ignored[cs.Name]; ok {
 				continue
 			}
@@ -200,17 +200,13 @@ func generateAlphaBeta(buf io.Writer, t *cc.TranslationUnit) {
 			if !(bindgen.IsConstType(p.Type()) && bindgen.IsPointer(p.Type())) {
 				continue
 			}
-
-			switch p.Name() {
-			case "alpha", "alpha1", "alpha2", "alpha3", "beta", "beta1":
+			if inList(p.Name(), alphaBetaParams) {
 				if !printedName {
 					printedName = true
 					fmt.Fprintf(buf, "%q: {", cs.Name)
 				}
 				fmt.Fprintf(buf, "%d: %q, ", i, p.Name())
-			default:
 			}
-
 		}
 		if printedName {
 			fmt.Fprint(buf, "},\n") // close the first

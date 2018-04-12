@@ -1,10 +1,5 @@
 package main
 
-import (
-	"github.com/cznic/cc"
-	bg "github.com/gorgonia/bindgen"
-)
-
 var fnNameMap map[string]string
 var enumMappings map[string]string
 
@@ -35,7 +30,3 @@ var methods map[string][]string
 var orphaned map[string]struct{}
 
 var generated = map[string]struct{}{}
-
-var paramMap = map[bg.ParamKey]struct{ Name, Type string }{
-	bg.ParamKey{Name: "handle", Type: bg.TypeKey{Name: "cudnnHandle_t", Kind: cc.Ptr}}: {"handle", "*Context"},
-}
