@@ -116,7 +116,7 @@ func csig2gosig(cs *bg.CSignature, retType string, returnsErr bool, retVal *GoSi
 			}
 		}
 
-		if retVal.Receiver.Type == reqPtr(typeName) {
+		if retVal.Receiver.Type == typeName {
 			continue
 		}
 
@@ -130,7 +130,7 @@ func csig2gosig(cs *bg.CSignature, retType string, returnsErr bool, retVal *GoSi
 		if inList(name, ioParamList) {
 			retVal.Doc += fmt.Sprintf("\n//\t%v is both an input and output", name)
 		}
-		retVal.Params = append(retVal.Params, Param{Name: name, Type: reqPtr(typeName)})
+		retVal.Params = append(retVal.Params, Param{Name: name, Type: typeName})
 	}
 
 	var writeErrName bool

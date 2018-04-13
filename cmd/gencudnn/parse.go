@@ -170,9 +170,7 @@ func goNameOf(a cc.Type) string {
 func goNameOfStr(n string) (retVal string) {
 	var ok bool
 	defer func() {
-		if retVal == "Context" {
-			retVal = "*Context"
-		}
+		retVal = reqPtr(retVal)
 	}()
 	if retVal, ok = ctypes2GoTypes[n]; ok {
 		return retVal

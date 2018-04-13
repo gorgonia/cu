@@ -62,7 +62,7 @@ func main() {
 	// generateMappings(true)
 
 	// Step 3: generate enums, then edit the file in the dnn package.
-	generateEnums()
+	// generateEnums()
 	// generateStubs(true)
 
 	// Step 3a: run parse.py to get more sanity
@@ -70,7 +70,7 @@ func main() {
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
 
 	// step 5:
-	// generateFunctions()
+	generateFunctions()
 
 	// report things that aren't done yet
 	reportTODOs(hdrfile, otherTypes, enums, functions)
@@ -127,9 +127,9 @@ func reportTODOs(file string, things ...bindgen.FilterFunc) {
 }
 
 func generateEnums() {
-	buf, err := os.OpenFile(path.Join(pkgloc, "enums.go"), os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	fullpath := path.Join(pkgloc, "enums.go")
+	buf, err := os.OpenFile(fullpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	handleErr(err)
-	defer buf.Close()
 	fmt.Fprintln(buf, pkghdr)
 
 	t, err := bindgen.Parse(model, hdrfile)
@@ -161,6 +161,10 @@ func generateEnums() {
 		fmt.Fprint(buf, ")\n")
 		fmt.Fprintf(buf, "func (e %v) c() C.%v { return C.%v(e) }\n", enumMappings[e.Name], e.Name, e.Name)
 	}
+	buf.Close()
+	if err := goimports(fullpath); err != nil {
+		log.Printf("Failed to Goimports %q: %v", fullpath, err)
+	}
 }
 
 // generateStubs creates most of the stubs
@@ -176,8 +180,11 @@ func generateStubs(debugMode bool) {
 		handleErr(err)
 		fmt.Fprintln(buf, pkghdr)
 	}
+
+	var todoCount int
 outer:
 	for k, vs := range setFns {
+		var hasTODO bool
 		gotype, ok := ctypes2GoTypes[k]
 		if !ok {
 			log.Printf("Cannot generate for %q", k)
@@ -243,6 +250,7 @@ outer:
 		if _, err = csig2gosig(cs, "*"+gotype, true, &sig); err != nil {
 			body.TODO = err.Error()
 			log.Print(body.TODO)
+			hasTODO = true
 		}
 		for _, p := range sig.Params {
 			body.Params = append(body.Params, p.Name)
@@ -255,6 +263,7 @@ outer:
 
 		fmt.Fprintf(buf, "\n%v{ \n", sig)
 		if len(vs) > 1 {
+			hasTODO = true
 			constructionTODOTemplate.Execute(buf, body)
 		} else {
 			constructionTemplate.Execute(buf, body)
@@ -280,6 +289,7 @@ outer:
 			}
 
 			if typName == "" {
+				hasTODO = true
 				fmt.Fprintf(buf, "//TODO: %q: Parameter %d Skipped %q of %v - unmapped type\n", cs.Name, i, p.Name(), p.Type())
 				continue
 			}
@@ -308,7 +318,11 @@ outer:
 				log.Printf("Failed to Goimports %q: %v", fullpath, err)
 			}
 		}
+		if hasTODO {
+			todoCount++
+		}
 	}
+	log.Printf("%d/%d TODOs", todoCount, len(setFns))
 
 	buf.Close()
 	if err := goimports(fullpath); err != nil {
@@ -327,7 +341,7 @@ func generateFunctions() {
 	handleErr(err)
 
 	for rec, fns := range methods {
-		log.Printf("Receiver : %v. Functions: %d", rec, len(fns))
+		var todoCount int
 		for _, decl := range decls {
 			csig := decl.(*bindgen.CSignature)
 			name := csig.Name
@@ -368,7 +382,7 @@ func generateFunctions() {
 			// receiver
 			var receiverParam string
 			for i, p := range cparams {
-				if reqPtr(goNameOf(p.Type())) == sig.Receiver.Type {
+				if goNameOf(p.Type()) == sig.Receiver.Type {
 					track[i] = true
 					receiverParam = p.Name()
 					break // only ONE receiver
@@ -393,10 +407,15 @@ func generateFunctions() {
 				}
 			}
 
+			var hasTodo bool
 			for i, t := range track {
 				if !t {
-					fmt.Fprintf(buf, "// TODO: %v %v\n", cparams[i].Name(), cparams[i].Type())
+					fmt.Fprintf(buf, "// TODO: %v %v\n", cparams[i].Name(), nameOfType(cparams[i].Type()))
+					hasTodo = true
 				}
+			}
+			if hasTodo {
+				todoCount++
 			}
 
 			// make the call
@@ -421,5 +440,10 @@ func generateFunctions() {
 			callTemplate.Execute(buf, data)
 			fmt.Fprintf(buf, "}\n")
 		}
+		log.Printf("Receiver : %v. Functions: %d. TODOs: %d", rec, len(fns), todoCount)
+	}
+	buf.Close()
+	if err := goimports(fullpath); err != nil {
+		log.Printf("Failed to Goimports %q: %v", fullpath, err)
 	}
 }
