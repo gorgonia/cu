@@ -181,6 +181,7 @@ func goNameOfStr(n string) (retVal string) {
 	if retVal, ok = builtins[n]; ok {
 		return retVal
 	}
+
 	return ""
 }
 
