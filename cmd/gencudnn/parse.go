@@ -65,6 +65,17 @@ func isBuiltin(a string) bool {
 	return false
 }
 
+func isPointerOfBuiltin(a string) (isPtr, isbuiltin bool) {
+	if _, ok := builtins[a]; ok {
+		return false, true
+	}
+	dp := depointerize(a)
+	if _, ok := builtins[dp]; ok {
+		return true, true
+	}
+	return dp == a, false
+}
+
 func processNameBasic(str string) string {
 	return strings.TrimSuffix(strings.TrimPrefix(str, "cudnn"), "_t")
 }
@@ -77,7 +88,6 @@ func nameOfType(a cc.Type) string {
 	if bindgen.IsConstType(a) {
 		return strings.TrimPrefix(a.String(), "const ")
 	}
-
 	return a.String()
 }
 
@@ -161,6 +171,13 @@ func unexport(a string) string {
 	return strings.ToLower(string(a[0])) + a[1:]
 }
 
+func safeParamName(a string) string {
+	if a == "C" {
+		return "C_"
+	}
+	return a
+}
+
 func goNameOf(a cc.Type) string {
 	n := nameOfType(a)
 	return goNameOfStr(n)
@@ -181,11 +198,18 @@ func goNameOfStr(n string) (retVal string) {
 	if retVal, ok = builtins[n]; ok {
 		return retVal
 	}
+	if retVal, ok = nonPrimitives[n]; ok {
+		return retVal
+	}
 
 	return ""
 }
 
 func toC(name, typ string) string {
+	if inList(strings.TrimRight(name, "C"), alphaBetaParams) {
+		return name
+	}
+
 	for _, v := range enumMappings {
 		if v == typ {
 			return name + ".c()"
@@ -198,17 +222,27 @@ func toC(name, typ string) string {
 		}
 	}
 
-	for k, v := range go2cBuiltins {
-		if k == typ {
-			return fmt.Sprintf("C.%v(%v)", v, name)
-		}
+	if v, ok := go2cBuiltins[typ]; ok {
+		return fmt.Sprintf("C.%v(%v)", v, name)
+
 	}
 
 	if typ == "Memory" {
 		return fmt.Sprintf("%v.Pointer()", name)
 	}
+
 	// log.Printf("name %q typ %q", name, typ)
 	// panic("Unreachable")
+	return name
+}
+
+func toCType(goType string) string {
+	if v, ok := go2cBuiltins[goType]; ok {
+		return v
+	}
+	if v, ok := go2cNonPrimitives[goType]; ok {
+		return v
+	}
 	return "TODO"
 }
 
@@ -243,6 +277,10 @@ func getRetValOnly(cs *bindgen.CSignature) map[int]string {
 		}
 	}
 	return retVal
+}
+
+func depointerize(typeName string) string {
+	return strings.TrimSuffix(strings.TrimPrefix(typeName, "*"), "*")
 }
 
 func reqPtr(gotyp string) string {

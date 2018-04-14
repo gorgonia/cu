@@ -67,7 +67,6 @@ var builtins = map[string]string{
 	"unsigned long long": "uint64",
 
 	"size_t": "uintptr",
-	"void*":  "Memory",
 }
 
 var go2cBuiltins = map[string]string{
@@ -79,6 +78,14 @@ var go2cBuiltins = map[string]string{
 	"uint64":  "ulonglong",
 
 	"uintptr": "size_t",
+}
+
+var nonPrimitives = map[string]string{
+	"void*": "Memory",
+}
+
+var go2cNonPrimitives = map[string]string{
+	"void*": "Memory",
 }
 
 // special for manual checks. The types are Go types.

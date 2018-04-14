@@ -498,5 +498,4 @@ func init() {
 		"cudnnFilterDescriptor_t":       {"cudnnGetFilter4dDescriptor", "cudnnGetFilterNdDescriptor"},
 		"cudnnLRNDescriptor_t":          {"cudnnGetLRNDescriptor"},
 	}
-
 }

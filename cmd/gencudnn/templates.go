@@ -40,7 +40,7 @@ type AlphaBeta struct {
 	MultiReturn bool
 }
 
-var callTemplateRaw = `{{if .MultiReturn -}} err = result(C.{{.CFuncName}}({{range $i, $v := .Params}}{{toC $v.Name $v.Type -}}, {{end -}}))
+var callTemplateRaw = `{{if .MultiReturn -}} err = result(C.{{.CFuncName}}({{range $i, $v := .Params}}{{if $v.IsPtr}}&{{end}}{{toC $v.Name $v.Type -}}, {{end -}}))
 return
 {{else -}}return result(C.{{.CFuncName}}({{range $i, $v := .Params}}{{toC $v.Name $v.Type -}}, {{end -}})) {{end -}}
 `
@@ -89,7 +89,7 @@ var constructionRaw = `var internal C.{{.Ctype}}
 	}
 
 
-	retVal :=  &{{.GoType}} {
+	retVal =  &{{.GoType}} {
 		internal: internal,
 		{{range .Params -}}
 		{{.}}: {{.}},

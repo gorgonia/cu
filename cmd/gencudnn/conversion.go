@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	bg "github.com/gorgonia/bindgen"
@@ -84,7 +85,7 @@ func (s GoSignature) FirstTensor() string {
 	return ""
 }
 
-func csig2gosig(cs *bg.CSignature, retType string, returnsErr bool, retVal *GoSignature) (*GoSignature, error) {
+func csig2gosig(cs *bg.CSignature, retVal *GoSignature) (*GoSignature, error) {
 	if retVal == nil {
 		retVal = new(GoSignature)
 	}
@@ -98,13 +99,15 @@ func csig2gosig(cs *bg.CSignature, retType string, returnsErr bool, retVal *GoSi
 	var err error
 	params := cs.Parameters()
 	retValPos := getRetValOnly(cs)
+
 	ioParamList := ioParams[cs.Name]
 	for i, p := range params {
 		_, isRetVal := retValPos[i]
 		name := p.Name()
+		name = safeParamName(name)
 		typeName := goNameOf(p.Type())
 
-		// because the cuDNN library will allocate on the users' behalf, any memory related stuff has to be preallocated by the user
+		// because the cuDNN library will not allocate on the users' behalf, any memory related stuff has to be preallocated by the user
 		if isRetVal && typeName != "Memory" {
 			continue
 		}
@@ -122,9 +125,13 @@ func csig2gosig(cs *bg.CSignature, retType string, returnsErr bool, retVal *GoSi
 
 		if typeName == "" {
 			typeName = fnParamTypes[cs.Name][name] // will panic if not found
+
+			if typeName == "" {
+				continue
+			}
 			// err = errors.Errorf("%q: Parameter %d Skipped %q of %v - unmapped type", cs.Name, i, p.Name(), p.Type())
 			// log.Printf("%v (%d) - Param: %q. Param type %v", cs.Name, i, p.Name(), p.Type())
-			continue
+			// continue
 		}
 
 		if inList(name, ioParamList) {
@@ -133,34 +140,40 @@ func csig2gosig(cs *bg.CSignature, retType string, returnsErr bool, retVal *GoSi
 		retVal.Params = append(retVal.Params, Param{Name: name, Type: typeName})
 	}
 
-	var writeErrName bool
-	if retType != "" {
-		retVal.RetVals = append(retVal.RetVals, Param{Type: retType})
-	} else {
-		for pos := range retValPos {
-			p := params[pos]
-			typeName := goNameOf(p.Type())
+	// handle retVals
+	for i, p := range params {
+		cTypeName := nameOfType(p.Type())
+		typeName := goNameOf(p.Type())
+		_, isRetVal := retValPos[i]
+		if cs.Name == "cudnnGetPooling2dForwardOutputDim" {
+			log.Printf("cudnnGetPooling2dForwardOutputDim param %d: %v | %t", i, p.Name(), isRetVal)
+		}
 
-			// we cannot return memory. If we do, it implies the API will actually handle allocations.
-			if typeName == "Memory" {
-				continue
+		// we cannot return memory. If we do, it implies the API will actually handle allocations.
+		if !isRetVal || typeName == "Memory" {
+			continue
+		}
+
+		if typeName == "" {
+			typeName = fnParamTypes[cs.Name][p.Name()]
+			var isPtr, builtin bool
+			if isPtr, builtin = isPointerOfBuiltin(cTypeName); builtin && isPtr {
+				typeName = builtins[depointerize(cTypeName)]
 			}
 
 			if typeName == "" {
-				typeName = fnParamTypes[cs.Name][p.Name()]
-				// log.Printf("RetVal of %v (%d) cannot be generated: param %v param type %v", cs.Name, pos, p.Name(), p.Type())
+				// log.Printf("RetVal of %v (%d) cannot be generated: param %v param type %v. Using %q", cs.Name, pos, p.Name(), p.Type(), typeName)
 				continue
 			}
-			retVal.RetVals = append(retVal.RetVals, Param{Name: p.Name(), Type: typeName})
-			writeErrName = true
 		}
+		retVal.RetVals = append(retVal.RetVals, Param{Name: safeParamName(p.Name()), Type: typeName})
 	}
 
-	switch {
-	case returnsErr && !writeErrName:
-		retVal.RetVals = append(retVal.RetVals, Param{Type: "error"})
-	case returnsErr && writeErrName:
+	writeErrName := len(retVal.RetVals) > 0
+	if writeErrName {
 		retVal.RetVals = append(retVal.RetVals, Param{Name: "err", Type: "error"})
+	} else {
+		retVal.RetVals = append(retVal.RetVals, Param{Type: "error"})
 	}
 
 	return retVal, err

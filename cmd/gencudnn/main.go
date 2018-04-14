@@ -245,20 +245,23 @@ outer:
 			Destroy: destroy,
 			Set:     vs,
 		}
-		sig.Receiver = Param{Type: gotype}
+		sig.Receiver = Param{Name: "retVal", Type: "*" + gotype}
+		sig.RetVals = append(sig.RetVals, Param{Name: "DUMMY"})
 
-		if _, err = csig2gosig(cs, "*"+gotype, true, &sig); err != nil {
+		if _, err = csig2gosig(cs, &sig); err != nil {
 			body.TODO = err.Error()
 			log.Print(body.TODO)
 			hasTODO = true
 		}
+		sig.RetVals[0] = sig.Receiver
+		sig.Receiver = Param{} // Param is set to empty
+
 		for _, p := range sig.Params {
 			body.Params = append(body.Params, p.Name)
 			body.ParamType = append(body.ParamType, p.Type)
 		}
 
 		sig.Name = fmt.Sprintf("New%v", gotype)
-		sig.Receiver = Param{} // Param is set to empty
 		constructStructTemplate.Execute(buf, body)
 
 		fmt.Fprintf(buf, "\n%v{ \n", sig)
@@ -314,6 +317,7 @@ outer:
 
 		if !debugMode {
 			buf.Close()
+			log.Printf("Written to %v", fullpath)
 			if err := goimports(fullpath); err != nil {
 				log.Printf("Failed to Goimports %q: %v", fullpath, err)
 			}
@@ -352,11 +356,11 @@ func generateFunctions() {
 				continue
 			}
 			sig := GoSignature{}
-			sig.Receiver.Name = string(rec[0])
+			sig.Receiver.Name = strings.ToLower(depointerize(goNameOfStr(rec))[0:2])
 			sig.Receiver.Type = reqPtr(goNameOfStr(rec))
 			sig.Name = fnNameMap[name]
 
-			csig2gosig(csig, "", true, &sig)
+			csig2gosig(csig, &sig)
 
 			fmt.Fprintf(buf, "%v { \n", sig)
 			ab := sig.AlphaBetas()
@@ -392,7 +396,28 @@ func generateFunctions() {
 			// alpha/betas
 			for _, a := range ab {
 				for i, p := range cparams {
-					if p.Name() == a {
+					if safeParamName(p.Name()) == a {
+						track[i] = true
+					}
+				}
+			}
+
+			// retVals
+			otherParams := make(map[int]string)
+			for _, p := range sig.RetVals {
+				for i, cp := range cparams {
+					cpName := safeParamName(cp.Name())
+					if cpName == p.Name {
+						cT := depointerize(nameOfType(cp.Type()))
+						goTypeName := goNameOfStr(cT)
+						cTypeName := toCType(goTypeName)
+						if cTypeName == "TODO" {
+							continue
+						}
+						if goTypeName != "" && goTypeName != "Memory" {
+							fmt.Fprintf(buf, "var %vC C.%v\n", cpName, cTypeName)
+						}
+						otherParams[i] = cpName + "C"
 						track[i] = true
 					}
 				}
@@ -401,9 +426,19 @@ func generateFunctions() {
 			// other params
 			for _, p := range sig.Params {
 				for i, cp := range cparams {
-					if cp.Name() == p.Name {
-						track[i] = true
+					cpName := safeParamName(cp.Name())
+					if cpName != p.Name {
+						continue
 					}
+					track[i] = true
+
+					// the reason why we get the name of a C type then convert it back to c name is
+					// because of weird naming issues (ulonglong ,etc )
+					// goTypeName := goNameOf(cp.Type())
+					// cTypeName := toCType(goTypeName)
+					// if cTypeName == "TODO" {
+					// 	continue
+					// }
 				}
 			}
 
@@ -422,11 +457,31 @@ func generateFunctions() {
 			callParams := make([]Param, len(cparams))
 			for i, p := range cparams {
 				pname := p.Name()
-				callParams[i].Type = goNameOf(p.Type())
-				callParams[i].Name = pname
-				if inList(pname, alphaBetaParams) {
+				callParams[i].Name = otherParams[i]
+				switch {
+				case callParams[i].Name == "":
+					callParams[i].Name = safeParamName(pname)
+					fallthrough
+				case inList(pname, alphaBetaParams):
 					callParams[i].Name += "C"
 				}
+
+				cTypeName := nameOfType(p.Type())
+				callParams[i].Type = goNameOfStr(cTypeName)
+				if _, ok := otherParams[i]; ok {
+					callParams[i].Type = ""
+					callParams[i].IsPtr = bindgen.IsPointer(p.Type())
+				}
+
+				// if isPtr, isBuiltin := isPointerOfBuiltin(cTypeName); isBuiltin && cTypeName != "void*" {
+				// 	// last checks
+				// 	if !isPtr {
+				// 		isPtr = bindgen.IsPointer(p.Type())
+				// 	}
+				// 	callParams[i].Type = goNameOfStr(depointerize(cTypeName))
+				// 	callParams[i].IsPtr = isPtr
+				// }
+
 				if pname == receiverParam {
 					callParams[i].Name = sig.Receiver.Name
 				}

@@ -60,6 +60,7 @@ def main():
 		inputParams = [p.text.strip() for i, p in enumerate(params) if (paramUse[i].strip()=='Input') or (paramUse[i].strip()=="Inputs")]
 		outputParams = [p.text.strip() for i, p in enumerate(params) if (paramUse[i].strip()=='Output') or (paramUse[i].strip()=="Outputs")]
 		ioParams = [p.text.strip() for i, p in enumerate(params) if paramUse[i].strip()=='Input/Output']
+
 		inputs[fnName] = inputParams
 		outputs[fnName] = outputParams
 		ios[fnName] = ioParams
@@ -91,7 +92,7 @@ def main():
 		for inp in v :
 			split = inp.split(",")
 			for s in split:
-				print('"{}", '.format(s), end="")
+				print('"{}", '.format(s.strip()), end="")
 		print("},")
 	print("}")
 
@@ -102,7 +103,7 @@ def main():
 		for inp in v :
 			split = inp.split(",")
 			for s in split:
-				print('"{}", '.format(s), end="")
+				print('"{}", '.format(s.strip()), end="")
 		print("},")
 	print("}")
 
@@ -113,13 +114,13 @@ def main():
 		for inp in v :
 			split = inp.split(",")
 			for s in split:
-				print('"{}", '.format(s), end="")
+				print('"{}", '.format(s.strip()), end="")
 		print("},")
 	print("}")
 
 	print("var docs = map[string]string{")
 	for k, v in docs.items():
-		print('"{}": "{}",'.format(k, v))
+		print('"{}": "{}",'.format(k, v.strip()))
 	print("}")
 
 main()
