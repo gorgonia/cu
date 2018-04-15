@@ -4,6 +4,7 @@ package cudnn
 import "C"
 import (
 	"runtime"
+	"unsafe"
 
 	"github.com/pkg/errors"
 )
@@ -71,6 +72,8 @@ const (
 	ConvolutionFwdAlgoCount               ConvolutionFwdAlgo = C.CUDNN_CONVOLUTION_FWD_ALGO_COUNT
 )
 
+func (c ConvolutionFwdAlgo) C() C.cudnnConvolutionFwdAlgo_t { return C.cudnnConvolutionFwdAlgo_t(c) }
+
 // type ConvolutionBwdFilterPreference int
 
 // const (
@@ -92,6 +95,10 @@ const (
 	ConvolutionBwdFilterAlgoCount            ConvolutionBwdFilterAlgo = C.CUDNN_CONVOLUTION_BWD_FILTER_ALGO_COUNT
 )
 
+func (c ConvolutionBwdFilterAlgo) C() C.cudnnConvolutionBwdFilterAlgo_t {
+	return C.cudnnConvolutionBwdFilterAlgo_t(c)
+}
+
 // type ConvolutionBwdDataPreference int
 // const (
 // NoWorkspace ConvolutionBwdDataPreference = C.CUDNN_CONVOLUTION_BWD_DATA_NO_WORKSPACE
@@ -111,8 +118,12 @@ const (
 	ConvolutionBwdDataAlgoCount            ConvolutionBwdDataAlgo = C.CUDNN_CONVOLUTION_BWD_DATA_ALGO_COUNT
 )
 
+func (c ConvolutionBwdDataAlgo) C() C.cudnnConvolutionBwdDataAlgo_t {
+	return C.cudnnConvolutionBwdDataAlgo_t(c)
+}
+
 type Convolution struct {
-	internal C.cudnnFilterDescriptor_t
+	internal C.cudnnConvolutionDescriptor_t
 
 	mathType     MathType
 	groupCount   int
@@ -125,14 +136,14 @@ type Convolution struct {
 }
 
 func NewConvolution(mathType MathType, groupCount int, padding, filterStride, dilation []int, convolutionMode ConvolutionMode, datatype DataType) (*Convolution, error) {
-	var internal C.cudnnFilterDescriptor_t
-	if err := result(C.cudnnCreateConvolutionDescriptor); err != nil {
+	var internal C.cudnnConvolutionDescriptor_t
+	if err := result(C.cudnnCreateConvolutionDescriptor(&internal)); err != nil {
 		return nil, err
 	}
-	if err := result(C.cudnnSetConvolutionMathType(internal, mathType)); err != nil {
+	if err := result(C.cudnnSetConvolutionMathType(internal, mathType.C())); err != nil {
 		return nil, err
 	}
-	if err := result(C.cudnnSetConvolutionGroupCount(internal, groupCount)); err != nil {
+	if err := result(C.cudnnSetConvolutionGroupCount(internal, C.int(groupCount))); err != nil {
 		return nil, err
 	}
 	switch len(padding) {
@@ -144,11 +155,14 @@ func NewConvolution(mathType MathType, groupCount int, padding, filterStride, di
 		padH, padW := padding[0], padding[1]
 		u, v := filterStride[0], filterStride[1]
 		dilationH, dilationW := dilation[0], dilation[1]
-		if err := result(C.cudnnSetConvolution2dDescriptor(internal, C.int(padH), C.int(padW), C.int(u), C.int(w), C.int(dilationH), C.int(dilationW), convolutionMode.c(), datatype.c())); err != nil {
+		if err := result(C.cudnnSetConvolution2dDescriptor(internal, C.int(padH), C.int(padW), C.int(u), C.int(v), C.int(dilationH), C.int(dilationW), convolutionMode.C(), datatype.C())); err != nil {
 			return nil, err
 		}
 	default:
-		if err := result(C.cudnnGetConvolutionNdDescriptor(internal, C.int(len(padding)), &padding[0], &filterStride[0], &dilation[0], convolutionMode.c(), datatype.c())); err != nil {
+		padA := (*C.int)(unsafe.Pointer(&padding[0]))
+		strideA := (*C.int)(unsafe.Pointer(&filterStride[0]))
+		dilationA := (*C.int)(unsafe.Pointer(&dilation[0]))
+		if err := result(C.cudnnSetConvolutionNdDescriptor(internal, C.int(len(padding)), padA, strideA, dilationA, convolutionMode.C(), datatype.C())); err != nil {
 			return nil, err
 		}
 	}
@@ -162,7 +176,7 @@ func NewConvolution(mathType MathType, groupCount int, padding, filterStride, di
 		dilation:     dilation,
 	}
 	runtime.SetFinalizer(retVal, destroyConvolution)
-	return retVal
+	return retVal, nil
 }
 
 func (c *Convolution) MathType() MathType { return c.mathType }
@@ -193,4 +207,62 @@ func (c *Convolution) ForwardOutputShape(t *TensorDescriptor, filter *Filter) ([
 	//TODO
 }
 
-func destroyConvolution(obj *Convolution) { cudnnDestroyConvolutionDescriptor(obj.internal) }
+func destroyConvolution(obj *Convolution) { C.cudnnDestroyConvolutionDescriptor(obj.internal) }
+
+type ConvolutionMode int
+
+const (
+	StandardConvolution ConvolutionMode = C.CUDNN_CONVOLUTION
+	CrossCorrelation    ConvolutionMode = C.CUDNN_CROSS_CORRELATION
+)
+
+// C returns the C representation of ConvolutionMode
+func (e ConvolutionMode) C() C.cudnnConvolutionMode_t { return C.cudnnConvolutionMode_t(e) }
+
+// TODO
+type ConvolutionFwdPerf struct {
+	internal    *C.cudnnConvolutionFwdAlgo_t
+	Algo        ConvolutionFwdAlgo
+	Time        float64
+	Memory      uintptr // size
+	Determinism Determinism
+	MathType    MathType
+	Err         error
+}
+
+func convolutionFwdPerfFromC(p C.cudnnConvolutionFwdAlgo_t) *ConvolutionFwdPerf {
+	retVal := &ConvolutionFwdPerf{}
+	return retVal
+}
+
+type ConvolutionBwdPerf struct {
+	internal *C.cudnnConvolutionBwdFilterAlgoPerf_t
+	Err      error
+
+	Algo        ConvolutionBwdFilterAlgo
+	Time        float64
+	Memory      uintptr // size
+	Determinism Determinism
+	MathType    MathType
+}
+
+func convolutionBwdPerfFromC(p C.cudnnConvolutionBwdFilterAlgoPerf_t) *ConvolutionBwdPerf {
+	retVal := &ConvolutionBwdPerf{}
+	return retVal
+}
+
+type ConvolutionBwdDataPerf struct {
+	internal *C.cudnnConvolutionBwdDataAlgoPerf_t
+	Algo     ConvolutionBwdDataAlgo
+	Err      error
+
+	Time        float64
+	Memory      uintptr // size
+	Determinism Determinism
+	MathType    MathType
+}
+
+func ConvolutionBwdDataPerfFromC(p C.cudnnConvolutionBwdDataAlgoPerf_t) *ConvolutionBwdDataPerf {
+	retVal := &ConvolutionBwdDataPerf{}
+	return retVal
+}

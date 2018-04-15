@@ -13,7 +13,8 @@ const (
 	Blocking    ErrQueryMode = C.CUDNN_ERRQUERY_BLOCKING
 )
 
-func (e ErrQueryMode) c() C.cudnnErrQueryMode_t { return C.cudnnErrQueryMode_t(e) }
+// C returns the C representation of ErrQueryMode
+func (e ErrQueryMode) C() C.cudnnErrQueryMode_t { return C.cudnnErrQueryMode_t(e) }
 
 type DataType int
 
@@ -26,7 +27,8 @@ const (
 	Int8x4 DataType = C.CUDNN_DATA_INT8x4
 )
 
-func (e DataType) c() C.cudnnDataType_t { return C.cudnnDataType_t(e) }
+// C returns the C representation of DataType
+func (e DataType) C() C.cudnnDataType_t { return C.cudnnDataType_t(e) }
 
 type MathType int
 
@@ -35,7 +37,8 @@ const (
 	TensorOpMath MathType = C.CUDNN_TENSOR_OP_MATH
 )
 
-func (e MathType) c() C.cudnnMathType_t { return C.cudnnMathType_t(e) }
+// C returns the C representation of MathType
+func (e MathType) C() C.cudnnMathType_t { return C.cudnnMathType_t(e) }
 
 type NanPropagation int
 
@@ -44,7 +47,8 @@ const (
 	PropagateNan    NanPropagation = C.CUDNN_PROPAGATE_NAN
 )
 
-func (e NanPropagation) c() C.cudnnNanPropagation_t { return C.cudnnNanPropagation_t(e) }
+// C returns the C representation of NanPropagation
+func (e NanPropagation) C() C.cudnnNanPropagation_t { return C.cudnnNanPropagation_t(e) }
 
 type Determinism int
 
@@ -53,7 +57,8 @@ const (
 	Deterministic    Determinism = C.CUDNN_DETERMINISTIC
 )
 
-func (e Determinism) c() C.cudnnDeterminism_t { return C.cudnnDeterminism_t(e) }
+// C returns the C representation of Determinism
+func (e Determinism) C() C.cudnnDeterminism_t { return C.cudnnDeterminism_t(e) }
 
 type TensorFormat int
 
@@ -63,7 +68,8 @@ const (
 	NCHWVectC TensorFormat = C.CUDNN_TENSOR_NCHW_VECT_C
 )
 
-func (e TensorFormat) c() C.cudnnTensorFormat_t { return C.cudnnTensorFormat_t(e) }
+// C returns the C representation of TensorFormat
+func (e TensorFormat) C() C.cudnnTensorFormat_t { return C.cudnnTensorFormat_t(e) }
 
 type OpTensorOp int
 
@@ -76,7 +82,8 @@ const (
 	Not  OpTensorOp = C.CUDNN_OP_TENSOR_NOT
 )
 
-func (e OpTensorOp) c() C.cudnnOpTensorOp_t { return C.cudnnOpTensorOp_t(e) }
+// C returns the C representation of OpTensorOp
+func (e OpTensorOp) C() C.cudnnOpTensorOp_t { return C.cudnnOpTensorOp_t(e) }
 
 type ReduceTensorOp int
 
@@ -92,7 +99,8 @@ const (
 	ReduceMulNoZeros ReduceTensorOp = C.CUDNN_REDUCE_TENSOR_MUL_NO_ZEROS
 )
 
-func (e ReduceTensorOp) c() C.cudnnReduceTensorOp_t { return C.cudnnReduceTensorOp_t(e) }
+// C returns the C representation of ReduceTensorOp
+func (e ReduceTensorOp) C() C.cudnnReduceTensorOp_t { return C.cudnnReduceTensorOp_t(e) }
 
 type ReduceTensorIndices int
 
@@ -101,7 +109,8 @@ const (
 	ReduceFlattenedIndices ReduceTensorIndices = C.CUDNN_REDUCE_TENSOR_FLATTENED_INDICES
 )
 
-func (e ReduceTensorIndices) c() C.cudnnReduceTensorIndices_t { return C.cudnnReduceTensorIndices_t(e) }
+// C returns the C representation of ReduceTensorIndices
+func (e ReduceTensorIndices) C() C.cudnnReduceTensorIndices_t { return C.cudnnReduceTensorIndices_t(e) }
 
 type IndicesType int
 
@@ -112,16 +121,8 @@ const (
 	Indices8  IndicesType = C.CUDNN_8BIT_INDICES
 )
 
-func (e IndicesType) c() C.cudnnIndicesType_t { return C.cudnnIndicesType_t(e) }
-
-type ConvolutionMode int
-
-const (
-	Convolution      ConvolutionMode = C.CUDNN_CONVOLUTION
-	CrossCorrelation ConvolutionMode = C.CUDNN_CROSS_CORRELATION
-)
-
-func (e ConvolutionMode) c() C.cudnnConvolutionMode_t { return C.cudnnConvolutionMode_t(e) }
+// C returns the C representation of IndicesType
+func (e IndicesType) C() C.cudnnIndicesType_t { return C.cudnnIndicesType_t(e) }
 
 type SoftmaxAlgorithm int
 
@@ -131,7 +132,8 @@ const (
 	Log      SoftmaxAlgorithm = C.CUDNN_SOFTMAX_LOG
 )
 
-func (e SoftmaxAlgorithm) c() C.cudnnSoftmaxAlgorithm_t { return C.cudnnSoftmaxAlgorithm_t(e) }
+// C returns the C representation of SoftmaxAlgorithm
+func (e SoftmaxAlgorithm) C() C.cudnnSoftmaxAlgorithm_t { return C.cudnnSoftmaxAlgorithm_t(e) }
 
 type SoftmaxMode int
 
@@ -140,7 +142,8 @@ const (
 	Channel  SoftmaxMode = C.CUDNN_SOFTMAX_MODE_CHANNEL
 )
 
-func (e SoftmaxMode) c() C.cudnnSoftmaxMode_t { return C.cudnnSoftmaxMode_t(e) }
+// C returns the C representation of SoftmaxMode
+func (e SoftmaxMode) C() C.cudnnSoftmaxMode_t { return C.cudnnSoftmaxMode_t(e) }
 
 type PoolingMode int
 
@@ -151,7 +154,8 @@ const (
 	MaxDeterministic           PoolingMode = C.CUDNN_POOLING_MAX_DETERMINISTIC
 )
 
-func (e PoolingMode) c() C.cudnnPoolingMode_t { return C.cudnnPoolingMode_t(e) }
+// C returns the C representation of PoolingMode
+func (e PoolingMode) C() C.cudnnPoolingMode_t { return C.cudnnPoolingMode_t(e) }
 
 type ActivationMode int
 
@@ -163,7 +167,8 @@ const (
 	Elu         ActivationMode = C.CUDNN_ACTIVATION_ELU
 )
 
-func (e ActivationMode) c() C.cudnnActivationMode_t { return C.cudnnActivationMode_t(e) }
+// C returns the C representation of ActivationMode
+func (e ActivationMode) C() C.cudnnActivationMode_t { return C.cudnnActivationMode_t(e) }
 
 type LRNMode int
 
@@ -171,7 +176,8 @@ const (
 	CrossChannelDim1 LRNMode = C.CUDNN_LRN_CROSS_CHANNEL_DIM1
 )
 
-func (e LRNMode) c() C.cudnnLRNMode_t { return C.cudnnLRNMode_t(e) }
+// C returns the C representation of LRNMode
+func (e LRNMode) C() C.cudnnLRNMode_t { return C.cudnnLRNMode_t(e) }
 
 type DivNormMode int
 
@@ -179,7 +185,8 @@ const (
 	PrecomputedMeans DivNormMode = C.CUDNN_DIVNORM_PRECOMPUTED_MEANS
 )
 
-func (e DivNormMode) c() C.cudnnDivNormMode_t { return C.cudnnDivNormMode_t(e) }
+// C returns the C representation of DivNormMode
+func (e DivNormMode) C() C.cudnnDivNormMode_t { return C.cudnnDivNormMode_t(e) }
 
 type BatchNormMode int
 
@@ -189,7 +196,8 @@ const (
 	SpatialPersistent BatchNormMode = C.CUDNN_BATCHNORM_SPATIAL_PERSISTENT
 )
 
-func (e BatchNormMode) c() C.cudnnBatchNormMode_t { return C.cudnnBatchNormMode_t(e) }
+// C returns the C representation of BatchNormMode
+func (e BatchNormMode) C() C.cudnnBatchNormMode_t { return C.cudnnBatchNormMode_t(e) }
 
 type SamplerType int
 
@@ -197,7 +205,8 @@ const (
 	Bilinear SamplerType = C.CUDNN_SAMPLER_BILINEAR
 )
 
-func (e SamplerType) c() C.cudnnSamplerType_t { return C.cudnnSamplerType_t(e) }
+// C returns the C representation of SamplerType
+func (e SamplerType) C() C.cudnnSamplerType_t { return C.cudnnSamplerType_t(e) }
 
 type RNNMode int
 
@@ -208,7 +217,8 @@ const (
 	GRU     RNNMode = C.CUDNN_GRU
 )
 
-func (e RNNMode) c() C.cudnnRNNMode_t { return C.cudnnRNNMode_t(e) }
+// C returns the C representation of RNNMode
+func (e RNNMode) C() C.cudnnRNNMode_t { return C.cudnnRNNMode_t(e) }
 
 type DirectionMode int
 
@@ -217,7 +227,8 @@ const (
 	Bidirectional  DirectionMode = C.CUDNN_BIDIRECTIONAL
 )
 
-func (e DirectionMode) c() C.cudnnDirectionMode_t { return C.cudnnDirectionMode_t(e) }
+// C returns the C representation of DirectionMode
+func (e DirectionMode) C() C.cudnnDirectionMode_t { return C.cudnnDirectionMode_t(e) }
 
 type RNNInputMode int
 
@@ -226,7 +237,8 @@ const (
 	SkipInput   RNNInputMode = C.CUDNN_SKIP_INPUT
 )
 
-func (e RNNInputMode) c() C.cudnnRNNInputMode_t { return C.cudnnRNNInputMode_t(e) }
+// C returns the C representation of RNNInputMode
+func (e RNNInputMode) C() C.cudnnRNNInputMode_t { return C.cudnnRNNInputMode_t(e) }
 
 type RNNAlgo int
 
@@ -236,7 +248,8 @@ const (
 	PersistDynamic RNNAlgo = C.CUDNN_RNN_ALGO_PERSIST_DYNAMIC
 )
 
-func (e RNNAlgo) c() C.cudnnRNNAlgo_t { return C.cudnnRNNAlgo_t(e) }
+// C returns the C representation of RNNAlgo
+func (e RNNAlgo) C() C.cudnnRNNAlgo_t { return C.cudnnRNNAlgo_t(e) }
 
 type CTCLossAlgo int
 
@@ -245,4 +258,5 @@ const (
 	NonDeterministicCTCLoss CTCLossAlgo = C.CUDNN_CTC_LOSS_ALGO_NON_DETERMINISTIC
 )
 
-func (e CTCLossAlgo) c() C.cudnnCTCLossAlgo_t { return C.cudnnCTCLossAlgo_t(e) }
+// C returns the C representation of CTCLossAlgo
+func (e CTCLossAlgo) C() C.cudnnCTCLossAlgo_t { return C.cudnnCTCLossAlgo_t(e) }

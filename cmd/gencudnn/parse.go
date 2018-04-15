@@ -48,6 +48,9 @@ func isIgnored(a string) bool {
 	if _, ok := ignored[a]; ok {
 		return true
 	}
+	if _, ok := ignoredTypes[a]; ok {
+		return true
+	}
 	return false
 }
 
@@ -212,7 +215,7 @@ func toC(name, typ string) string {
 
 	for _, v := range enumMappings {
 		if v == typ {
-			return name + ".c()"
+			return name + ".C()"
 		}
 	}
 

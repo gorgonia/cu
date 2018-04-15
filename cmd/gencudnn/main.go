@@ -51,6 +51,7 @@ func goimports(filename string) error {
 }
 
 func main() {
+	// Step 0: run parse.py to get more sanity
 	// Step 1: Explore
 	// explore(hdrfile, functions, enums, otherTypes)
 	// explore(hdrfile, otherTypes)
@@ -63,9 +64,7 @@ func main() {
 
 	// Step 3: generate enums, then edit the file in the dnn package.
 	// generateEnums()
-	// generateStubs(true)
-
-	// Step 3a: run parse.py to get more sanity
+	// generateStubs(false) // true/false indicates debug mode
 
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
 
@@ -158,8 +157,8 @@ func generateEnums() {
 			enumName := processEnumName(lcp, cname)
 			fmt.Fprintf(buf, "%v %v = C.%v\n", enumName, enumMappings[e.Name], cname)
 		}
-		fmt.Fprint(buf, ")\n")
-		fmt.Fprintf(buf, "func (e %v) c() C.%v { return C.%v(e) }\n", enumMappings[e.Name], e.Name, e.Name)
+		fmt.Fprintf(buf, ")\n// C returns the C representation of %v\n", enumMappings[e.Name])
+		fmt.Fprintf(buf, "func (e %v) C() C.%v { return C.%v(e) }\n", enumMappings[e.Name], e.Name, e.Name)
 	}
 	buf.Close()
 	if err := goimports(fullpath); err != nil {
@@ -174,7 +173,7 @@ func generateStubs(debugMode bool) {
 	var buf io.WriteCloser
 	var fullpath string
 	if debugMode {
-		filename := "FOO.go"
+		filename := "generated_FOO.go"
 		fullpath = path.Join(pkgloc, filename)
 		buf, err = os.OpenFile(fullpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 		handleErr(err)
@@ -184,6 +183,9 @@ func generateStubs(debugMode bool) {
 	var todoCount int
 outer:
 	for k, vs := range setFns {
+		if isIgnored(k) {
+			continue
+		}
 		var hasTODO bool
 		gotype, ok := ctypes2GoTypes[k]
 		if !ok {
@@ -193,7 +195,7 @@ outer:
 		// if we're not in debugging mode, then we should write out to different files per type generated
 		// this makes it easier to work on all the TODOs
 		if !debugMode {
-			filename := gotype + "_gen.go"
+			filename := fmt.Sprintf("generated_%v.go", strings.ToLower(gotype))
 			fullpath = path.Join(pkgloc, filename)
 			buf, err = os.OpenFile(fullpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 			handleErr(err)
@@ -245,7 +247,7 @@ outer:
 			Destroy: destroy,
 			Set:     vs,
 		}
-		sig.Receiver = Param{Name: "retVal", Type: "*" + gotype}
+		sig.Receiver = Param{Name: "DUMMY", Type: "*" + gotype}
 		sig.RetVals = append(sig.RetVals, Param{Name: "DUMMY"})
 
 		if _, err = csig2gosig(cs, &sig); err != nil {
@@ -254,13 +256,14 @@ outer:
 			hasTODO = true
 		}
 		sig.RetVals[0] = sig.Receiver
+		sig.RetVals[0].Name = "retVal"
 		sig.Receiver = Param{} // Param is set to empty
 
 		for _, p := range sig.Params {
 			body.Params = append(body.Params, p.Name)
 			body.ParamType = append(body.ParamType, p.Type)
 		}
-
+		sig.Doc = fmt.Sprintf("New%v creates a new %v.", gotype, gotype)
 		sig.Name = fmt.Sprintf("New%v", gotype)
 		constructStructTemplate.Execute(buf, body)
 
@@ -296,9 +299,9 @@ outer:
 				fmt.Fprintf(buf, "//TODO: %q: Parameter %d Skipped %q of %v - unmapped type\n", cs.Name, i, p.Name(), p.Type())
 				continue
 			}
-
+			getterSig.Doc = fmt.Sprintf("%v returns the internal %v.", strings.Title(p.Name()), p.Name())
 			getterSig.Receiver.Name = strings.ToLower(string(gotype[0]))
-			getterSig.Receiver.Type = "*" + gotype
+			getterSig.Receiver.Type = reqPtr(gotype)
 			getterSig.Name = strings.Title(p.Name())
 			getterSig.RetVals = []Param{{Type: typName}}
 			fmt.Fprintf(buf, "\n%v{ return %v.%v }\n", getterSig, getterSig.Receiver.Name, p.Name())
@@ -337,7 +340,7 @@ outer:
 func generateFunctions() {
 	t, err := bindgen.Parse(model, hdrfile)
 	handleErr(err)
-	filename := "FOO2.go"
+	filename := "generated_API.go"
 	fullpath := path.Join(pkgloc, filename)
 	buf, err := os.OpenFile(fullpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	fmt.Fprintln(buf, pkghdr)
@@ -345,7 +348,7 @@ func generateFunctions() {
 	handleErr(err)
 
 	for rec, fns := range methods {
-		var todoCount int
+		var todoCount, dblchk int
 		for _, decl := range decls {
 			csig := decl.(*bindgen.CSignature)
 			name := csig.Name
@@ -360,15 +363,17 @@ func generateFunctions() {
 			sig.Receiver.Type = reqPtr(goNameOfStr(rec))
 			sig.Name = fnNameMap[name]
 
-			csig2gosig(csig, &sig)
+			_, err := csig2gosig(csig, &sig)
 
 			fmt.Fprintf(buf, "%v { \n", sig)
+			if err != nil {
+				fmt.Fprintf(buf, "// DOUBLECHECK: %v\n", err)
+				dblchk++
+			}
+
 			ab := sig.AlphaBetas()
 			if len(ab) > 0 {
 				check := sig.FirstTensor()
-				if check == "" {
-					panic(fmt.Sprintf("No tensors to check: %v", sig))
-				}
 				data := AlphaBeta{
 					Params:      ab,
 					Check:       check,
@@ -382,6 +387,9 @@ func generateFunctions() {
 			// the goal is to find out which parameter has not been coverted yet
 			cparams := csig.Parameters()
 			track := make([]bool, len(cparams))
+			converted := make([]bool, len(cparams))
+			primOut := make([]bool, len(cparams))
+			enumOut := make([]bool, len(cparams))
 
 			// receiver
 			var receiverParam string
@@ -398,27 +406,35 @@ func generateFunctions() {
 				for i, p := range cparams {
 					if safeParamName(p.Name()) == a {
 						track[i] = true
+						converted[i] = true
 					}
 				}
 			}
 
 			// retVals
-			otherParams := make(map[int]string)
+			// otherParams := make(map[int]string)
 			for _, p := range sig.RetVals {
 				for i, cp := range cparams {
 					cpName := safeParamName(cp.Name())
-					if cpName == p.Name {
-						cT := depointerize(nameOfType(cp.Type()))
-						goTypeName := goNameOfStr(cT)
-						cTypeName := toCType(goTypeName)
-						if cTypeName == "TODO" {
-							continue
-						}
-						if goTypeName != "" && goTypeName != "Memory" {
-							fmt.Fprintf(buf, "var %vC C.%v\n", cpName, cTypeName)
-						}
-						otherParams[i] = cpName + "C"
+					if cpName != p.Name {
+						continue
+					}
+					if isOutputPtrOfPrim(csig.Name, cp) {
+						// create conversion
+						fmt.Fprintf(buf, "var %vC C.%v\n", cpName, ctype2gotype2ctype(cp.Type()))
 						track[i] = true
+						converted[i] = true
+						primOut[i] = true
+						continue
+					}
+
+					if isEnumOutput(csig.Name, cp) {
+						// log.Printf("%v:: %v %v is enum output", csig.Name, cp.Name(), nameOfType(cp.Type()))
+						fmt.Fprintf(buf, "var %vC C.%v\n", cpName, nameOfType(cp.Type()))
+						converted[i] = true
+						track[i] = true
+						enumOut[i] = true
+						continue
 					}
 				}
 			}
@@ -431,14 +447,6 @@ func generateFunctions() {
 						continue
 					}
 					track[i] = true
-
-					// the reason why we get the name of a C type then convert it back to c name is
-					// because of weird naming issues (ulonglong ,etc )
-					// goTypeName := goNameOf(cp.Type())
-					// cTypeName := toCType(goTypeName)
-					// if cTypeName == "TODO" {
-					// 	continue
-					// }
 				}
 			}
 
@@ -457,35 +465,22 @@ func generateFunctions() {
 			callParams := make([]Param, len(cparams))
 			for i, p := range cparams {
 				pname := p.Name()
-				callParams[i].Name = otherParams[i]
-				switch {
-				case callParams[i].Name == "":
-					callParams[i].Name = safeParamName(pname)
-					fallthrough
-				case inList(pname, alphaBetaParams):
-					callParams[i].Name += "C"
-				}
-
-				cTypeName := nameOfType(p.Type())
-				callParams[i].Type = goNameOfStr(cTypeName)
-				if _, ok := otherParams[i]; ok {
-					callParams[i].Type = ""
-					callParams[i].IsPtr = bindgen.IsPointer(p.Type())
-				}
-
-				// if isPtr, isBuiltin := isPointerOfBuiltin(cTypeName); isBuiltin && cTypeName != "void*" {
-				// 	// last checks
-				// 	if !isPtr {
-				// 		isPtr = bindgen.IsPointer(p.Type())
-				// 	}
-				// 	callParams[i].Type = goNameOfStr(depointerize(cTypeName))
-				// 	callParams[i].IsPtr = isPtr
-				// }
-
+				callParams[i] = cParam2GoParam(p)
 				if pname == receiverParam {
 					callParams[i].Name = sig.Receiver.Name
+					callParams[i].Type = sig.Receiver.Type
+				}
+				if converted[i] {
+					callParams[i].Name += "C"
+					callParams[i].Type = ""
 				}
 
+				switch {
+				case primOut[i]:
+					callParams[i].IsPtr = true
+				case enumOut[i]:
+					callParams[i].IsPtr = true
+				}
 			}
 			data := Call{
 				Params:      callParams,
@@ -493,9 +488,31 @@ func generateFunctions() {
 				MultiReturn: len(sig.RetVals) > 1,
 			}
 			callTemplate.Execute(buf, data)
+
+			// reverse the calls
+			for _, p := range cparams {
+				if isOutputPtrOfPrim(csig.Name, p) {
+					goType := goNameOfStr(depointerize(nameOfType(p.Type())))
+					pname := safeParamName(p.Name())
+					fmt.Fprintf(buf, "%v = %v(%vC)\n", pname, goType, pname)
+					continue
+				}
+				if isEnumOutput(csig.Name, p) {
+					goType := goNameOfStr(depointerize(nameOfType(p.Type())))
+					pname := safeParamName(p.Name())
+					fmt.Fprintf(buf, "%v = %v(%vC)\n", pname, goType, pname)
+					continue
+				}
+			}
+
+			if len(sig.RetVals) > 1 {
+				fmt.Fprintf(buf, "return\n")
+			}
+
 			fmt.Fprintf(buf, "}\n")
 		}
-		log.Printf("Receiver : %v. Functions: %d. TODOs: %d", rec, len(fns), todoCount)
+
+		log.Printf("Receiver : %v. Functions: %d. TODOs: %d. Double Checks: %d", rec, len(fns), todoCount, dblchk)
 	}
 	buf.Close()
 	if err := goimports(fullpath); err != nil {

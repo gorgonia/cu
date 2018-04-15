@@ -25,7 +25,7 @@ func NewOp(op OpTensorOp, dt DataType, prop NanPropagation) (*Op, error) {
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetOpTensorDescriptor(internal, op.c(), dt.c(), prop.c())); err != nil {
+	if err := result(C.cudnnSetOpTensorDescriptor(internal, op.C(), dt.C(), prop.C())); err != nil {
 		return nil, err
 	}
 	retVal := &Op{
@@ -94,7 +94,7 @@ func (ctx *Context) DoOp(op *Op,
 		betaC = unsafe.Pointer(&b)
 	}
 
-	res := C.cudnnOpTensor(ctx.h, op.internal,
+	res := C.cudnnOpTensor(ctx.internal, op.internal,
 		alpha1C, aDesc.internal, aData.Pointer(),
 		alpha2C, bDesc.internal, bData.Pointer(),
 		betaC, cDesc.internal, cData.Pointer(),
@@ -102,9 +102,9 @@ func (ctx *Context) DoOp(op *Op,
 	return result(res)
 }
 
-func (ctx *Context) AddTensor(alpha float64, aDesc *TensorDescriptor, aData Memory,
-	beta float64, cDesc *TensorDescriptor, cData Memory) error {
-	return nil // TODO
-}
+// func (ctx *Context) AddTensor(alpha float64, aDesc *TensorDescriptor, aData Memory,
+// 	beta float64, cDesc *TensorDescriptor, cData Memory) error {
+// 	return nil // TODO
+// }
 
 func destroyOp(obj *Op) { C.cudnnDestroyOpTensorDescriptor(obj.internal) }

@@ -4,6 +4,7 @@ package cudnn
 import "C"
 import (
 	"runtime"
+	"unsafe"
 
 	"github.com/pkg/errors"
 )
@@ -46,7 +47,7 @@ func (t *TensorDescriptor) set(internal C.cudnnTensorDescriptor_t) error {
 		if len(t.strides) == 4 {
 			// use explicit
 			NStrides, CStrides, HStrides, WStrides := t.strides[0], t.strides[1], t.strides[2], t.strides[3]
-			res := C.cudnnSetTensor4dDescriptorEx(internal, t.dataType.c(),
+			res := C.cudnnSetTensor4dDescriptorEx(internal, t.dataType.C(),
 				C.int(N), C.int(C), C.int(H), C.int(W),
 				C.int(NStrides), C.int(CStrides), C.int(HStrides), C.int(WStrides),
 			)
@@ -54,19 +55,22 @@ func (t *TensorDescriptor) set(internal C.cudnnTensorDescriptor_t) error {
 		}
 
 		// otherwise the strides will be calculated by cudnn
-		res := C.cudnnSetTensor4dDescriptor(internal, t.format.c(), t.dataType.c(),
+		res := C.cudnnSetTensor4dDescriptor(internal, t.format.C(), t.dataType.C(),
 			C.int(N), C.int(C), C.int(H), C.int(W),
 		)
 		return result(res)
 	default:
 		if len(t.strides) > 0 {
+			dimA := (*C.int)(unsafe.Pointer(&t.shape[0]))
+			strideA := (*C.int)(unsafe.Pointer(&t.strides[0]))
 			// NO, there is no confusion here. Ex is used to set tensor without strides. Silly nVidia.
-			res := C.cudnnSetTensorNdDescriptor(internal, t.format.c(), d.dataType.c(),
-				C.int(len(t.shape)), &t.shape[0], &t.strides[0])
+			res := C.cudnnSetTensorNdDescriptor(internal, t.dataType.C(),
+				C.int(len(t.shape)), dimA, strideA)
 			return result(res)
 		}
-		res := C.cudnnSetTensorNdDescriptorEx(internal, t.format.c(), d.dataType.c(),
-			C.int(len(t.shape)), &t.shape[0])
+		dimA := (*C.int)(unsafe.Pointer(&t.shape[0]))
+		res := C.cudnnSetTensorNdDescriptorEx(internal, t.format.C(), t.dataType.C(),
+			C.int(len(t.shape)), dimA)
 		return result(res)
 	}
 
@@ -89,4 +93,4 @@ func (t *TensorDescriptor) Strides() []int {
 	return retVal
 }
 
-func destroyTensor(obj *TensorDescriptor) { C.cudnnCreateTensorDescriptor(obj.internal) }
+func destroyTensor(obj *TensorDescriptor) { C.cudnnDestroyTensorDescriptor(obj.internal) }

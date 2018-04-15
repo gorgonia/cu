@@ -6,7 +6,7 @@ var alphaTemplateRaw = `{{$lso := .LSO -}}
 var {{range $i, $p := .Params }}{{$p}}C {{if lt $i $lso}},{{end}} {{end }} unsafe.Pointer
 	switch {{.Check}}.dataType {
 	case Float, Half:
-		var {{range $i, $p :=  .Params }}{{$p}}C{{if lt $i $lso}},{{end }} {{end }} C.float 
+		var {{range $i, $p :=  .Params }}{{$p}}F{{if lt $i $lso}},{{end }} {{end }} C.float 
 		{{range .Params -}} 
 		{{.}}F = C.float(float32({{.}}))
 		{{end -}}
@@ -15,7 +15,7 @@ var {{range $i, $p := .Params }}{{$p}}C {{if lt $i $lso}},{{end}} {{end }} unsaf
 		{{.}}C = unsafe.Pointer(&{{.}}F)
 		{{end -}}
 	case Double:
-		var {{range $i, $p :=  .Params }}{{$p}}C{{if lt $i $lso}},{{end }} {{end }} C.double
+		var {{range $i, $p :=  .Params }}{{$p}}F{{if lt $i $lso}},{{end }} {{end }} C.double
 		{{range .Params -}} 
 		{{.}}F = C.double({{.}})
 		{{end -}}
@@ -25,10 +25,10 @@ var {{range $i, $p := .Params }}{{$p}}C {{if lt $i $lso}},{{end}} {{end }} unsaf
 		{{end -}}
 	default:
 		{{if .MultiReturn -}}
-		err = errors.New("Unsupported data type: %v", {{.Check}}.dataType)
+		err = errors.Errorf("Unsupported data type: %v", {{.Check}}.dataType)
 		return
 		{{else -}}
-		return errors.New("Unsupported data type: %v", {{.Check}}.dataType) 
+		return errors.Errorf("Unsupported data type: %v", {{.Check}}.dataType) 
 		{{end -}}
 	}
 `
@@ -40,8 +40,8 @@ type AlphaBeta struct {
 	MultiReturn bool
 }
 
-var callTemplateRaw = `{{if .MultiReturn -}} err = result(C.{{.CFuncName}}({{range $i, $v := .Params}}{{if $v.IsPtr}}&{{end}}{{toC $v.Name $v.Type -}}, {{end -}}))
-return
+var callTemplateRaw = `// call {{.CFuncName}}
+{{if .MultiReturn -}} err = result(C.{{.CFuncName}}({{range $i, $v := .Params}}{{if $v.IsPtr}}&{{end}}{{toC $v.Name $v.Type -}}, {{end -}}))
 {{else -}}return result(C.{{.CFuncName}}({{range $i, $v := .Params}}{{toC $v.Name $v.Type -}}, {{end -}})) {{end -}}
 `
 
@@ -62,7 +62,8 @@ type Con struct {
 	TODO      string // TODO represents a part where human intervention is required
 }
 
-var constructStructRaw = `type {{.GoType}} struct {
+var constructStructRaw = `// {{.GoType}} is a representation of {{.Ctype}}. 
+type {{.GoType}} struct {
 	internal C.{{.Ctype}}
 
 	{{$l := len .Set}}

@@ -10,6 +10,7 @@ var ignoredEnums = map[string]struct{}{
 	"cudnnConvolutionBwdFilterAlgo_t":       empty,
 	"cudnnConvolutionBwdDataPreference_t":   empty,
 	"cudnnConvolutionBwdDataAlgo_t":         empty,
+	"cudnnConvolutionMode_t":                empty,
 }
 
 var ignoredTypes = map[string]struct{}{

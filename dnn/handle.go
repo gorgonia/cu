@@ -17,4 +17,4 @@ func NewContext() *Context {
 	}
 }
 
-func (ctx *Context) Destroy() error { return result(C.cudnnDestroy(ctx.h)) }
+func (ctx *Context) Destroy() error { return result(C.cudnnDestroy(ctx.internal)) }

@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	bg "github.com/gorgonia/bindgen"
+	"github.com/pkg/errors"
 )
 
 // Param represents a parameter in the signature
@@ -82,7 +82,7 @@ func (s GoSignature) FirstTensor() string {
 			return p.Name
 		}
 	}
-	return ""
+	panic(fmt.Sprintf("No tensors to check in %v", s))
 }
 
 func csig2gosig(cs *bg.CSignature, retVal *GoSignature) (*GoSignature, error) {
@@ -104,7 +104,6 @@ func csig2gosig(cs *bg.CSignature, retVal *GoSignature) (*GoSignature, error) {
 	for i, p := range params {
 		_, isRetVal := retValPos[i]
 		name := p.Name()
-		name = safeParamName(name)
 		typeName := goNameOf(p.Type())
 
 		// because the cuDNN library will not allocate on the users' behalf, any memory related stuff has to be preallocated by the user
@@ -112,61 +111,39 @@ func csig2gosig(cs *bg.CSignature, retVal *GoSignature) (*GoSignature, error) {
 			continue
 		}
 
-		if ab, ok := alphaBetas[cs.Name]; ok {
-			if _, ok := ab[i]; ok {
-				retVal.Params = append(retVal.Params, Param{Name: name, Type: "float64"})
-				continue
-			}
+		// all alpha/betas receive float64
+		if isAlphaBeta(cs.Name, p) {
+			goParam := cParam2GoParam(p)
+			goParam.Type = "float64"
+			retVal.Params = append(retVal.Params, goParam)
+			continue
 		}
 
 		if retVal.Receiver.Type == typeName {
 			continue
 		}
-
-		if typeName == "" {
-			typeName = fnParamTypes[cs.Name][name] // will panic if not found
-
-			if typeName == "" {
-				continue
-			}
-			// err = errors.Errorf("%q: Parameter %d Skipped %q of %v - unmapped type", cs.Name, i, p.Name(), p.Type())
-			// log.Printf("%v (%d) - Param: %q. Param type %v", cs.Name, i, p.Name(), p.Type())
-			// continue
-		}
-
+		goParam := cParam2GoParam(p)
 		if inList(name, ioParamList) {
-			retVal.Doc += fmt.Sprintf("\n//\t%v is both an input and output", name)
+			retVal.Doc += fmt.Sprintf("\n//\t%v is both an input and output", safeParamName(name))
 		}
-		retVal.Params = append(retVal.Params, Param{Name: name, Type: typeName})
+		retVal.Params = append(retVal.Params, goParam)
 	}
 
 	// handle retVals
 	for i, p := range params {
-		cTypeName := nameOfType(p.Type())
-		typeName := goNameOf(p.Type())
-		_, isRetVal := retValPos[i]
-		if cs.Name == "cudnnGetPooling2dForwardOutputDim" {
-			log.Printf("cudnnGetPooling2dForwardOutputDim param %d: %v | %t", i, p.Name(), isRetVal)
-		}
-
-		// we cannot return memory. If we do, it implies the API will actually handle allocations.
-		if !isRetVal || typeName == "Memory" {
+		if !isOutput(cs.Name, p) {
 			continue
 		}
-
-		if typeName == "" {
-			typeName = fnParamTypes[cs.Name][p.Name()]
-			var isPtr, builtin bool
-			if isPtr, builtin = isPointerOfBuiltin(cTypeName); builtin && isPtr {
-				typeName = builtins[depointerize(cTypeName)]
-			}
-
-			if typeName == "" {
-				// log.Printf("RetVal of %v (%d) cannot be generated: param %v param type %v. Using %q", cs.Name, pos, p.Name(), p.Type(), typeName)
-				continue
-			}
+		goParam := cParam2GoParam(p)
+		// we only ever need to return one error. It's enough for a //TODO notation
+		if goParam.Type == "Memory" {
+			err = errors.Errorf("%q returns Memory type in Parameter %d", cs.Name, i)
+			continue
 		}
-		retVal.RetVals = append(retVal.RetVals, Param{Name: safeParamName(p.Name()), Type: typeName})
+		if retVal.Receiver.Type == goParam.Type && retVal.Receiver.Name == "DUMMY" {
+			continue
+		}
+		retVal.RetVals = append(retVal.RetVals, goParam)
 	}
 
 	writeErrName := len(retVal.RetVals) > 0
