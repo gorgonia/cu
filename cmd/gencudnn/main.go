@@ -64,12 +64,12 @@ func main() {
 
 	// Step 3: generate enums, then edit the file in the dnn package.
 	// generateEnums()
-	// generateStubs(false) // true/false indicates debug mode
+	generateStubs(false) // true/false indicates debug mode
 
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
 
 	// step 5:
-	generateFunctions()
+	// generateFunctions()
 
 	// report things that aren't done yet
 	reportTODOs(hdrfile, otherTypes, enums, functions)
@@ -320,7 +320,7 @@ outer:
 
 		if !debugMode {
 			buf.Close()
-			log.Printf("Written to %v", fullpath)
+			log.Printf("Written to %v. TODO: %v", fullpath, hasTODO)
 			if err := goimports(fullpath); err != nil {
 				log.Printf("Failed to Goimports %q: %v", fullpath, err)
 			}
