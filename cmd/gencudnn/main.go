@@ -51,7 +51,7 @@ func goimports(filename string) error {
 }
 
 func main() {
-	// pkg := parsePkg()
+	pkg := parsePkg(false)
 
 	// Step 0: run parse.py to get more sanity
 	// Step 1: Explore
@@ -75,6 +75,8 @@ func main() {
 
 	// report things that aren't done yet
 	reportTODOs(hdrfile, otherTypes, enums, functions)
+	pkg = parsePkg(true)
+	fmt.Printf("These has no assignment to a pointer retVal: %v", pkg.checkNils())
 }
 
 func explore(file string, things ...bindgen.FilterFunc) {

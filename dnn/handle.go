@@ -7,7 +7,7 @@ type Context struct {
 	internal C.cudnnHandle_t
 }
 
-func NewContext() *Context {
+func NewContext() (retVal *Context) {
 	var h C.cudnnHandle_t
 	if err := result(C.cudnnCreate(&h)); err != nil {
 		panic(err)
