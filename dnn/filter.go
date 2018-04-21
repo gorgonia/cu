@@ -29,7 +29,7 @@ func NewFilter(dataType DataType, format TensorFormat, shape []int) (retVal *Fil
 	case 0:
 		return nil, errors.New("Cannot create filter with an empty shape")
 	case 4:
-		if err = result(C.cudnnSetFitler4DDescriptor(internal, dataType.C(), format.C(), C.int(shape[0]), C.int(shape[1]), C.int(shape[2]), C.int(shape[3]))); err != nil {
+		if err = result(C.cudnnSetFilter4dDescriptor(internal, dataType.C(), format.C(), C.int(shape[0]), C.int(shape[1]), C.int(shape[2]), C.int(shape[3]))); err != nil {
 			return nil, err
 		}
 	default:

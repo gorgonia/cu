@@ -52,11 +52,6 @@ func goimports(filename string) error {
 
 func main() {
 	pkg := parsePkg()
-	ts := pkg.TypeDecls()
-	for _, t := range ts {
-		log.Printf("%v", t.Name.Name)
-	}
-	os.Exit(1)
 
 	// Step 0: run parse.py to get more sanity
 	// Step 1: Explore
@@ -71,7 +66,7 @@ func main() {
 
 	// Step 3: generate enums, then edit the file in the dnn package.
 	// generateEnums()
-	generateStubs(false) // true/false indicates debug mode
+	generateStubs(false, pkg) // true/false indicates debug mode
 
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
 
@@ -133,7 +128,7 @@ func reportTODOs(file string, things ...bindgen.FilterFunc) {
 }
 
 func generateEnums() {
-	fullpath := path.Join(pkgloc, "enums.go")
+	fullpath := path.Join(pkgloc, "generated_enums.go")
 	buf, err := os.OpenFile(fullpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	handleErr(err)
 	fmt.Fprintln(buf, pkghdr)
@@ -174,7 +169,7 @@ func generateEnums() {
 }
 
 // generateStubs creates most of the stubs
-func generateStubs(debugMode bool) {
+func generateStubs(debugMode bool, state *PkgState) {
 	t, err := bindgen.Parse(model, hdrfile)
 	handleErr(err)
 	var buf io.WriteCloser
@@ -186,6 +181,8 @@ func generateStubs(debugMode bool) {
 		handleErr(err)
 		fmt.Fprintln(buf, pkghdr)
 	}
+
+	decls := state.TypeDecls()
 
 	var todoCount int
 outer:
@@ -199,6 +196,10 @@ outer:
 			log.Printf("Cannot generate for %q", k)
 			continue
 		}
+		if alreadyProcessedType(gotype, decls) {
+			continue
+		}
+
 		// if we're not in debugging mode, then we should write out to different files per type generated
 		// this makes it easier to work on all the TODOs
 		if !debugMode {

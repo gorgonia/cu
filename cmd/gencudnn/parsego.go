@@ -48,6 +48,14 @@ func parsePkg() *PkgState {
 		log.Printf("Cannot find package cudnn")
 		return nil
 	}
-
 	return &PkgState{pkgs["cudnn"]}
+}
+
+func alreadyProcessedType(typ string, decls []*ast.TypeSpec) bool {
+	for _, d := range decls {
+		if typ == d.Name.Name {
+			return true
+		}
+	}
+	return false
 }
