@@ -51,6 +51,13 @@ func goimports(filename string) error {
 }
 
 func main() {
+	pkg := parsePkg()
+	ts := pkg.TypeDecls()
+	for _, t := range ts {
+		log.Printf("%v", t.Name.Name)
+	}
+	os.Exit(1)
+
 	// Step 0: run parse.py to get more sanity
 	// Step 1: Explore
 	// explore(hdrfile, functions, enums, otherTypes)
