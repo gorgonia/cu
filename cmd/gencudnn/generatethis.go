@@ -111,6 +111,8 @@ func generateCRUD(buf io.Writer, t *cc.TranslationUnit, fnType string) {
 	switch fnType {
 	case "create":
 		fmt.Fprintf(buf, "creations = ")
+	case "get":
+		fmt.Fprintf(buf, "getFns = ")
 	case "set":
 		fmt.Fprintf(buf, "setFns = ")
 	case "destroy":

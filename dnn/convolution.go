@@ -221,7 +221,7 @@ func (e ConvolutionMode) C() C.cudnnConvolutionMode_t { return C.cudnnConvolutio
 
 // TODO
 type ConvolutionFwdPerf struct {
-	internal    *C.cudnnConvolutionFwdAlgo_t
+	internal    C.cudnnConvolutionFwdAlgo_t
 	Algo        ConvolutionFwdAlgo
 	Time        float64
 	Memory      uintptr // size

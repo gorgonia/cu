@@ -51,7 +51,7 @@ func goimports(filename string) error {
 }
 
 func main() {
-	pkg := parsePkg()
+	// pkg := parsePkg()
 
 	// Step 0: run parse.py to get more sanity
 	// Step 1: Explore
@@ -66,12 +66,12 @@ func main() {
 
 	// Step 3: generate enums, then edit the file in the dnn package.
 	// generateEnums()
-	generateStubs(false, pkg) // true/false indicates debug mode
+	// generateStubs(false, pkg) // true/false indicates debug mode
 
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
 
 	// step 5:
-	// generateFunctions()
+	// generateFunctions(pkg)
 
 	// report things that aren't done yet
 	reportTODOs(hdrfile, otherTypes, enums, functions)
@@ -345,7 +345,7 @@ outer:
 	}
 }
 
-func generateFunctions() {
+func generateFunctions(pkg *PkgState) {
 	t, err := bindgen.Parse(model, hdrfile)
 	handleErr(err)
 	filename := "generated_API.go"
