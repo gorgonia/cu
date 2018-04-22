@@ -5,30 +5,29 @@ import (
 	"gorgonia.org/tensor"
 )
 
-func DescriptorFromTensor(t *tensor.Dense) cudnn.TensorDescrptor {
+// Describe extracts the metadata from a tensor.Dense and returns a cuDNN TensorDescriptor
+func Describe(t *tensor.Dense) (*cudnn.TensorDescriptor, error) {
 	shape := t.Shape().Clone()
-	var strides []int
-	return cudnn.TensorDescriptor{
-		DataType: Dtype2DataType(t.Dtype()),
-		Shape:    shape,
-		Strides:  strides,
-	}
+	strides := make([]int, len(shape))
+	copy(strides, t.Strides())
+	return cudnn.NewTensorDescriptor(cudnn.NCHW, Dtype2DataType(t.Dtype()), shape, strides)
 }
 
+// Dtype2DataType converts a tensor.Dtype to a cudnnDataType.
 func Dtype2DataType(t tensor.Dtype) cudnn.DataType {
 	switch t.Name() {
 	case "float64":
-		return Double
+		return cudnn.Double
 	case "float32":
-		return Float
+		return cudnn.Float
 	case "float16":
-		return Half
+		return cudnn.Half
 	case "int8":
-		return Int8
+		return cudnn.Int8
 	case "int32":
-		return Int32
+		return cudnn.Int32
 	case "int128":
-		return Int8x4
+		return cudnn.Int8x4
 	}
 	panic("Unreachable")
 }
