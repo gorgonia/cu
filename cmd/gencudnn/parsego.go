@@ -138,6 +138,16 @@ func (v *usedCTypeVisit) Visit(node ast.Node) ast.Visitor {
 	if ts, ok := node.(*ast.TypeSpec); ok {
 		if st, ok := ts.Type.(*ast.StructType); ok {
 			for _, field := range st.Fields.List {
+				var hasInternal bool
+				for _, name := range field.Names {
+					if name.Name == "internal" {
+						hasInternal = true
+						break
+					}
+				}
+				if !hasInternal {
+					continue
+				}
 				if selExpr, ok := field.Type.(*ast.SelectorExpr); ok {
 					if xid, ok := selExpr.X.(*ast.Ident); ok && xid.Name == "C" {
 						v.counter[selExpr.Sel.Name]++
