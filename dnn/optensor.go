@@ -38,10 +38,16 @@ func NewOp(op OpTensorOp, dt DataType, prop NanPropagation) (*Op, error) {
 	return retVal, nil
 }
 
-func (op *Op) Op() OpTensorOp                 { return op.op }
-func (op *Op) DataType() DataType             { return op.dataType }
+// Op returns the operation that needs to be done.
+func (op *Op) Op() OpTensorOp { return op.op }
+
+// DataType returns the data type that the operation is supposed to work on.
+func (op *Op) DataType() DataType { return op.dataType }
+
+// NaNPropagation returns the NaN propagation strategy.
 func (op *Op) NaNPropagation() NanPropagation { return op.nanPropagation }
 
+// DoOp actually performs the operation.
 func (ctx *Context) DoOp(op *Op,
 	alpha1 float64, aDesc *TensorDescriptor, aData Memory,
 	alpha2 float64, bDesc *TensorDescriptor, bData Memory,
@@ -101,10 +107,5 @@ func (ctx *Context) DoOp(op *Op,
 	)
 	return result(res)
 }
-
-// func (ctx *Context) AddTensor(alpha float64, aDesc *TensorDescriptor, aData Memory,
-// 	beta float64, cDesc *TensorDescriptor, cData Memory) error {
-// 	return nil // TODO
-// }
 
 func destroyOp(obj *Op) { C.cudnnDestroyOpTensorDescriptor(obj.internal) }

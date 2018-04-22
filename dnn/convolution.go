@@ -122,6 +122,17 @@ func (c ConvolutionBwdDataAlgo) C() C.cudnnConvolutionBwdDataAlgo_t {
 	return C.cudnnConvolutionBwdDataAlgo_t(c)
 }
 
+type ConvolutionMode int
+
+const (
+	StandardConvolution ConvolutionMode = C.CUDNN_CONVOLUTION
+	CrossCorrelation    ConvolutionMode = C.CUDNN_CROSS_CORRELATION
+)
+
+// C returns the C representation of ConvolutionMode
+func (e ConvolutionMode) C() C.cudnnConvolutionMode_t { return C.cudnnConvolutionMode_t(e) }
+
+// Convolution is a struct describing the convolution operations. Internally it holds a cudnnConvolutionDescriptor_t, which will be passed around when making cgo calls.
 type Convolution struct {
 	internal C.cudnnConvolutionDescriptor_t
 
@@ -132,7 +143,10 @@ type Convolution struct {
 	dilation     []int
 
 	// cache of outputShape
+	dims        int
 	outputShape []int
+	inputTensor C.cudnnTensorDescriptor_t
+	inputFilter C.cudnnFilterDescriptor_t
 }
 
 func NewConvolution(mathType MathType, groupCount int, padding, filterStride, dilation []int, convolutionMode ConvolutionMode, datatype DataType) (*Convolution, error) {
@@ -199,25 +213,45 @@ func (c *Convolution) Dilation() []int {
 	return retVal
 }
 
-func (c *Convolution) ForwardOutputShape(t *TensorDescriptor, filter *Filter) ([]int, error) {
-	if c.outputShape != nil {
-		return c.outputShape, nil
+func (c *Convolution) ForwardOutputShape(input *TensorDescriptor, filter *Filter, dims int) (retVal []int, err error) {
+	if c.outputShape != nil && c.dims == dims && input.internal == c.inputTensor && filter.internal == c.inputFilter {
+		retVal = make([]int, len(c.outputShape))
+		copy(retVal, c.outputShape)
+		return
 	}
-	return nil, nil
-	//TODO
+	return c.CalcForwardOutputShape(input, filter, dims)
+}
+
+func (c *Convolution) CalcForwardOutputShape(input *TensorDescriptor, filter *Filter, dims int) (retVal []int, err error) {
+	c.inputTensor = input.internal
+	c.inputFilter = filter.internal
+	c.dims = dims
+	switch dims {
+	case 0, 1:
+		return nil, errors.Errorf("Only 2+ dims can be inferred")
+	case 2:
+		c.outputShape = make([]int, 4)
+		n := (*C.int)(unsafe.Pointer(&c.outputShape[0]))
+		c_ := (*C.int)(unsafe.Pointer(&c.outputShape[1]))
+		h := (*C.int)(unsafe.Pointer(&c.outputShape[2]))
+		w := (*C.int)(unsafe.Pointer(&c.outputShape[3]))
+		if err = result(C.cudnnGetConvolution2dForwardOutputDim(c.internal, input.internal, filter.internal, n, c_, h, w)); err != nil {
+			return nil, err
+		}
+	default:
+		c.outputShape = make([]int, dims)
+		ptr := (*C.int)(unsafe.Pointer(&c.outputShape[0]))
+		if err = result(C.cudnnGetConvolutionNdForwardOutputDim(c.internal, input.internal, filter.internal, C.int(dims), ptr)); err != nil {
+			return nil, err
+		}
+	}
+
+	retVal = make([]int, len(c.outputShape))
+	copy(retVal, c.outputShape)
+	return
 }
 
 func destroyConvolution(obj *Convolution) { C.cudnnDestroyConvolutionDescriptor(obj.internal) }
-
-type ConvolutionMode int
-
-const (
-	StandardConvolution ConvolutionMode = C.CUDNN_CONVOLUTION
-	CrossCorrelation    ConvolutionMode = C.CUDNN_CROSS_CORRELATION
-)
-
-// C returns the C representation of ConvolutionMode
-func (e ConvolutionMode) C() C.cudnnConvolutionMode_t { return C.cudnnConvolutionMode_t(e) }
 
 // TODO
 type ConvolutionFwdPerf struct {
