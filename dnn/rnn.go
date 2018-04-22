@@ -10,11 +10,33 @@ type RNNPlan struct {
 	internal C.cudnnPersistentRNNPlan_t
 
 	minibatch int
-	datatType DataType
+	dataType  DataType
 	desc      *RNN
 }
 
-func NewRNNPlan()
+func NewRNNPlan(minibatch int, dataType DataType, desc *RNN) (plan *RNNPlan, err error) {
+	var internal C.cudnnPersistentRNNPlan_t
+	if err = result(C.cudnnCreatePersistentRNNPlan(desc.internal, C.int(minibatch), dataType.C(), &internal)); err != nil {
+		return nil, err
+	}
+	plan = &RNNPlan{
+		internal:  internal,
+		minibatch: minibatch,
+		dataType:  dataType,
+		desc:      desc,
+	}
+	runtime.SetFinalizer(plan, destroyRNNPlan)
+	return plan, nil
+}
+
+func (p *RNNPlan) Update(rnn *RNN) error {
+	if p.desc == rnn {
+		return nil
+	}
+	return result(C.cudnnSetPersistentRNNPlan(rnn.internal, p.internal))
+}
+
+func destroyRNNPlan(obj *RNNPlan) { C.cudnnDestroyPersistentRNNPlan(obj.internal) }
 
 // RNN is a representation of cudnnRNNDescriptor_t.
 type RNN struct {
@@ -72,5 +94,12 @@ func (r *RNN) Mode() RNNMode                { return r.mode }
 func (r *RNN) Algo() RNNAlgo                { return r.algo }
 func (r *RNN) DataType() DataType           { return r.dataType }
 func (r *RNN) MatrixMathType() MathType     { return r.matrixMathType }
+
+func (r *RNN) SetMatrixMathType(mathType MathType) error {
+	if mathType == r.matrixMathType {
+		return nil
+	}
+	return result(C.cudnnSetRNNMatrixMathType(r.internal, mathType.C()))
+}
 
 func destroyRNN(obj *RNN) { C.cudnnDestroyRNNDescriptor(obj.internal) }

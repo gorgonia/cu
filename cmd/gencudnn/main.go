@@ -53,7 +53,7 @@ func goimports(filename string) error {
 func main() {
 	pkg := parsePkg(false)
 
-	// Step 0: run parse.py to get more sanity
+	// Step 0: run parse.py to get more sanity about inputs and outputs
 	// Step 1: Explore
 	// explore(hdrfile, functions, enums, otherTypes)
 	// explore(hdrfile, otherTypes)
@@ -74,9 +74,11 @@ func main() {
 	// generateFunctions(pkg)
 
 	// report things that aren't done yet
-	reportTODOs(hdrfile, otherTypes, enums, functions)
 	pkg = parsePkg(true)
-	fmt.Printf("These has no assignment to a pointer retVal: %v", pkg.checkNils())
+	reportPotentialNils(pkg)
+	reportUnconvertedFns(pkg, hdrfile, functions)
+	reportUnconvertedTypes(pkg, hdrfile, otherTypes, enums)
+
 }
 
 func explore(file string, things ...bindgen.FilterFunc) {
@@ -85,48 +87,64 @@ func explore(file string, things ...bindgen.FilterFunc) {
 	bindgen.Explore(t, things...)
 }
 
-func reportTODOs(file string, things ...bindgen.FilterFunc) {
-	// track what's been generated
-	for k := range enumMappings {
-		generated[k] = struct{}{}
-	}
-	for k, v := range creations {
-		generated[k] = struct{}{}
-		for _, fn := range v {
-			generated[fn] = struct{}{}
-		}
-	}
-	for k, v := range setFns {
-		generated[k] = struct{}{}
-		for _, fn := range v {
-			generated[fn] = struct{}{}
-		}
-	}
-	for k, v := range destructions {
-		generated[k] = struct{}{}
-		for _, fn := range v {
-			generated[fn] = struct{}{}
-		}
-	}
-	for _, v := range methods {
-		for _, fn := range v {
-			generated[fn] = struct{}{}
+// find potential nils
+func reportPotentialNils(pkg *PkgState) {
+	nils := pkg.checkNils()
+	if len(nils) > 0 {
+		fmt.Printf("These functions have a *T return value, but a possible null exception error might happen\n")
+		for _, n := range nils {
+			fmt.Printf("\t%q\n", n)
 		}
 	}
 
+}
+
+// find unused/unconverted functions
+func reportUnconvertedFns(pkg *PkgState, file string, things ...bindgen.FilterFunc) {
+	used := pkg.usedCFn()
 	t, err := bindgen.Parse(bindgen.Model(), file)
 	handleErr(err)
+
+	var allFuncs = make(map[string]struct{})
 	for _, thing := range things {
 		decls, err := bindgen.Get(t, thing)
 		handleErr(err)
 		for _, decl := range decls {
 			name := bindgen.NameOf(decl)
-			_, ignored := ignored[name]
-			if _, ok := generated[name]; !ok && !ignored {
-				fmt.Printf("%q not generated yet\n", name)
-			}
+			allFuncs[name] = struct{}{}
+		}
+
+	}
+	fmt.Printf("Unconverted C functions:\n")
+	for k := range allFuncs {
+		if _, ok := used[k]; !ok {
+			fmt.Printf("\t%q\n", k)
 		}
 	}
+}
+
+func reportUnconvertedTypes(pkg *PkgState, file string, things ...bindgen.FilterFunc) {
+	used := pkg.usedCTypes()
+	t, err := bindgen.Parse(bindgen.Model(), file)
+	handleErr(err)
+
+	var allTypes = make(map[string]struct{})
+	for _, thing := range things {
+		decls, err := bindgen.Get(t, thing)
+		handleErr(err)
+		for _, decl := range decls {
+			name := bindgen.NameOf(decl)
+			allTypes[name] = struct{}{}
+		}
+	}
+
+	fmt.Printf("Unconverted/Unused C Types: \n")
+	for k := range allTypes {
+		if _, ok := used[k]; !ok {
+			fmt.Printf("\t%q\n", k)
+		}
+	}
+
 }
 
 func generateEnums() {

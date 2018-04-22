@@ -249,26 +249,26 @@ func (co *Context) ConvolutionBackwardBias(alpha float64, dyDesc *TensorDescript
 	return result(C.cudnnConvolutionBackwardBias(co.internal, alphaC, dyDesc.internal, dy.Pointer(), betaC, dbDesc.internal, db.Pointer()))
 }
 
-// FindConvolutionBackwardFilterAlgorithm attempts all cuDNN algorithms (including CUDNN_TENSOR_OP_MATH and CUDNN_DEFAULT_MATH versions of algorithms where CUDNN_TENSOR_OP_MATH may be available) for cudnnConvolutionBackwardFilter(), using GPU memory allocated via cudaMalloc(), and outputs performance metrics to a user-allocated array of cudnnConvolutionBwdFilterAlgoPerf_t. These metrics are written in sorted fashion where the first element has the lowest compute time. The total number of resulting algorithms can be queried through the API cudnnGetConvolutionBackwardMaxCount().
-func (co *Context) FindConvolutionBackwardFilterAlgorithm(xDesc *TensorDescriptor, dyDesc *TensorDescriptor, convDesc *Convolution, dwDesc *Filter, requestedAlgoCount int) (returnedAlgoCount int, perfResults *ConvolutionBwdPerf, err error) {
-	var returnedAlgoCountC C.int
-	// TODO: perfResults cudnnConvolutionBwdFilterAlgoPerf_t
-	// call cudnnFindConvolutionBackwardFilterAlgorithm
-	err = result(C.cudnnFindConvolutionBackwardFilterAlgorithm(co.internal, xDesc.internal, dyDesc.internal, convDesc.internal, dwDesc.internal, C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal))
-	returnedAlgoCount = int(returnedAlgoCountC)
-	return
-}
+// // FindConvolutionBackwardFilterAlgorithm attempts all cuDNN algorithms (including CUDNN_TENSOR_OP_MATH and CUDNN_DEFAULT_MATH versions of algorithms where CUDNN_TENSOR_OP_MATH may be available) for cudnnConvolutionBackwardFilter(), using GPU memory allocated via cudaMalloc(), and outputs performance metrics to a user-allocated array of cudnnConvolutionBwdFilterAlgoPerf_t. These metrics are written in sorted fashion where the first element has the lowest compute time. The total number of resulting algorithms can be queried through the API cudnnGetConvolutionBackwardMaxCount().
+// func (co *Context) FindConvolutionBackwardFilterAlgorithm(xDesc *TensorDescriptor, dyDesc *TensorDescriptor, convDesc *Convolution, dwDesc *Filter, requestedAlgoCount int) (returnedAlgoCount int, perfResults *ConvolutionBwdPerf, err error) {
+// 	var returnedAlgoCountC C.int
+// 	// TODO: perfResults cudnnConvolutionBwdFilterAlgoPerf_t
+// 	// call cudnnFindConvolutionBackwardFilterAlgorithm
+// 	err = result(C.cudnnFindConvolutionBackwardFilterAlgorithm(co.internal, xDesc.internal, dyDesc.internal, convDesc.internal, dwDesc.internal, C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal))
+// 	returnedAlgoCount = int(returnedAlgoCountC)
+// 	return
+// }
 
-// FindConvolutionBackwardFilterAlgorithmEx attempts all cuDNN algorithms (including CUDNN_TENSOR_OP_MATH and CUDNN_DEFAULT_MATH versions of algorithms where CUDNN_TENSOR_OP_MATH may be available) for cudnnConvolutionBackwardFilter, using user-allocated GPU memory, and outputs performance metrics to a user-allocated array of cudnnConvolutionBwdFilterAlgoPerf_t. These metrics are written in sorted fashion where the first element has the lowest compute time. The total number of resulting algorithms can be queried through the API cudnnGetConvolutionBackwardMaxCount().
-//	dw is both an input and output
-func (co *Context) FindConvolutionBackwardFilterAlgorithmEx(xDesc *TensorDescriptor, x Memory, dyDesc *TensorDescriptor, y Memory, convDesc *Convolution, dwDesc *Filter, dw Memory, requestedAlgoCount int, workSpace Memory, workSpaceSizeInBytes uintptr) (returnedAlgoCount int, perfResults *ConvolutionBwdPerf, err error) {
-	var returnedAlgoCountC C.int
-	// TODO: perfResults cudnnConvolutionBwdFilterAlgoPerf_t
-	// call cudnnFindConvolutionBackwardFilterAlgorithmEx
-	err = result(C.cudnnFindConvolutionBackwardFilterAlgorithmEx(co.internal, xDesc.internal, x.Pointer(), dyDesc.internal, y.Pointer(), convDesc.internal, dwDesc.internal, dw.Pointer(), C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal, workSpace.Pointer(), C.size_t(workSpaceSizeInBytes)))
-	returnedAlgoCount = int(returnedAlgoCountC)
-	return
-}
+// // FindConvolutionBackwardFilterAlgorithmEx attempts all cuDNN algorithms (including CUDNN_TENSOR_OP_MATH and CUDNN_DEFAULT_MATH versions of algorithms where CUDNN_TENSOR_OP_MATH may be available) for cudnnConvolutionBackwardFilter, using user-allocated GPU memory, and outputs performance metrics to a user-allocated array of cudnnConvolutionBwdFilterAlgoPerf_t. These metrics are written in sorted fashion where the first element has the lowest compute time. The total number of resulting algorithms can be queried through the API cudnnGetConvolutionBackwardMaxCount().
+// //	dw is both an input and output
+// func (co *Context) FindConvolutionBackwardFilterAlgorithmEx(xDesc *TensorDescriptor, x Memory, dyDesc *TensorDescriptor, y Memory, convDesc *Convolution, dwDesc *Filter, dw Memory, requestedAlgoCount int, workSpace Memory, workSpaceSizeInBytes uintptr) (returnedAlgoCount int, perfResults *ConvolutionBwdPerf, err error) {
+// 	var returnedAlgoCountC C.int
+// 	// TODO: perfResults cudnnConvolutionBwdFilterAlgoPerf_t
+// 	// call cudnnFindConvolutionBackwardFilterAlgorithmEx
+// 	err = result(C.cudnnFindConvolutionBackwardFilterAlgorithmEx(co.internal, xDesc.internal, x.Pointer(), dyDesc.internal, y.Pointer(), convDesc.internal, dwDesc.internal, dw.Pointer(), C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal, workSpace.Pointer(), C.size_t(workSpaceSizeInBytes)))
+// 	returnedAlgoCount = int(returnedAlgoCountC)
+// 	return
+// }
 
 // ConvolutionBackwardFilter computes the convolution gradient with respect to filter coefficients using the specified algo, returning results in gradDesc.Scaling factors alpha and beta can be used to scale the input tensor and the output tensor respectively.
 //	dw is both an input and output
@@ -294,26 +294,26 @@ func (co *Context) ConvolutionBackwardFilter(alpha float64, xDesc *TensorDescrip
 	return result(C.cudnnConvolutionBackwardFilter(co.internal, alphaC, xDesc.internal, x.Pointer(), dyDesc.internal, dy.Pointer(), convDesc.internal, algo.C(), workSpace.Pointer(), C.size_t(workSpaceSizeInBytes), betaC, dwDesc.internal, dw.Pointer()))
 }
 
-// FindConvolutionBackwardDataAlgorithm attempts all cuDNN algorithms (including CUDNN_TENSOR_OP_MATH and CUDNN_DEFAULT_MATH versions of algorithms where CUDNN_TENSOR_OP_MATH may be available) for cudnnConvolutionBackwardData(), using memory allocated via cudaMalloc() and outputs performance metrics to a user-allocated array of cudnnConvolutionBwdDataAlgoPerf_t. These metrics are written in sorted fashion where the first element has the lowest compute time. The total number of resulting algorithms can be queried through the API cudnnGetConvolutionBackwardMaxCount().
-func (co *Context) FindConvolutionBackwardDataAlgorithm(wDesc *Filter, dyDesc *TensorDescriptor, convDesc *Convolution, dxDesc *TensorDescriptor, requestedAlgoCount int) (returnedAlgoCount int, perfResults *ConvolutionBwdDataPerf, err error) {
-	var returnedAlgoCountC C.int
-	// TODO: perfResults cudnnConvolutionBwdDataAlgoPerf_t
-	// call cudnnFindConvolutionBackwardDataAlgorithm
-	err = result(C.cudnnFindConvolutionBackwardDataAlgorithm(co.internal, wDesc.internal, dyDesc.internal, convDesc.internal, dxDesc.internal, C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal))
-	returnedAlgoCount = int(returnedAlgoCountC)
-	return
-}
+// // FindConvolutionBackwardDataAlgorithm attempts all cuDNN algorithms (including CUDNN_TENSOR_OP_MATH and CUDNN_DEFAULT_MATH versions of algorithms where CUDNN_TENSOR_OP_MATH may be available) for cudnnConvolutionBackwardData(), using memory allocated via cudaMalloc() and outputs performance metrics to a user-allocated array of cudnnConvolutionBwdDataAlgoPerf_t. These metrics are written in sorted fashion where the first element has the lowest compute time. The total number of resulting algorithms can be queried through the API cudnnGetConvolutionBackwardMaxCount().
+// func (co *Context) FindConvolutionBackwardDataAlgorithm(wDesc *Filter, dyDesc *TensorDescriptor, convDesc *Convolution, dxDesc *TensorDescriptor, requestedAlgoCount int) (returnedAlgoCount int, perfResults *ConvolutionBwdDataPerf, err error) {
+// 	var returnedAlgoCountC C.int
+// 	// TODO: perfResults cudnnConvolutionBwdDataAlgoPerf_t
+// 	// call cudnnFindConvolutionBackwardDataAlgorithm
+// 	err = result(C.cudnnFindConvolutionBackwardDataAlgorithm(co.internal, wDesc.internal, dyDesc.internal, convDesc.internal, dxDesc.internal, C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal))
+// 	returnedAlgoCount = int(returnedAlgoCountC)
+// 	return
+// }
 
-// FindConvolutionBackwardDataAlgorithmEx attempts all cuDNN algorithms (including CUDNN_TENSOR_OP_MATH and CUDNN_DEFAULT_MATH versions of algorithms where CUDNN_TENSOR_OP_MATH may be available) for cudnnConvolutionBackwardData, using user-allocated GPU memory, and outputs performance metrics to a user-allocated array of cudnnConvolutionBwdDataAlgoPerf_t. These metrics are written in sorted fashion where the first element has the lowest compute time. The total number of resulting algorithms can be queried through the API cudnnGetConvolutionBackwardMaxCount().
-//	dxDesc is both an input and output
-func (co *Context) FindConvolutionBackwardDataAlgorithmEx(wDesc *Filter, w Memory, dyDesc *TensorDescriptor, dy Memory, convDesc *Convolution, dxDesc *TensorDescriptor, dx Memory, requestedAlgoCount int, workSpace Memory, workSpaceSizeInBytes uintptr) (returnedAlgoCount int, perfResults *ConvolutionBwdDataPerf, err error) {
-	var returnedAlgoCountC C.int
-	// TODO: perfResults cudnnConvolutionBwdDataAlgoPerf_t
-	// call cudnnFindConvolutionBackwardDataAlgorithmEx
-	err = result(C.cudnnFindConvolutionBackwardDataAlgorithmEx(co.internal, wDesc.internal, w.Pointer(), dyDesc.internal, dy.Pointer(), convDesc.internal, dxDesc.internal, dx.Pointer(), C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal, workSpace.Pointer(), C.size_t(workSpaceSizeInBytes)))
-	returnedAlgoCount = int(returnedAlgoCountC)
-	return
-}
+// // FindConvolutionBackwardDataAlgorithmEx attempts all cuDNN algorithms (including CUDNN_TENSOR_OP_MATH and CUDNN_DEFAULT_MATH versions of algorithms where CUDNN_TENSOR_OP_MATH may be available) for cudnnConvolutionBackwardData, using user-allocated GPU memory, and outputs performance metrics to a user-allocated array of cudnnConvolutionBwdDataAlgoPerf_t. These metrics are written in sorted fashion where the first element has the lowest compute time. The total number of resulting algorithms can be queried through the API cudnnGetConvolutionBackwardMaxCount().
+// //	dxDesc is both an input and output
+// func (co *Context) FindConvolutionBackwardDataAlgorithmEx(wDesc *Filter, w Memory, dyDesc *TensorDescriptor, dy Memory, convDesc *Convolution, dxDesc *TensorDescriptor, dx Memory, requestedAlgoCount int, workSpace Memory, workSpaceSizeInBytes uintptr) (returnedAlgoCount int, perfResults *ConvolutionBwdDataPerf, err error) {
+// 	var returnedAlgoCountC C.int
+// 	// TODO: perfResults cudnnConvolutionBwdDataAlgoPerf_t
+// 	// call cudnnFindConvolutionBackwardDataAlgorithmEx
+// 	err = result(C.cudnnFindConvolutionBackwardDataAlgorithmEx(co.internal, wDesc.internal, w.Pointer(), dyDesc.internal, dy.Pointer(), convDesc.internal, dxDesc.internal, dx.Pointer(), C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal, workSpace.Pointer(), C.size_t(workSpaceSizeInBytes)))
+// 	returnedAlgoCount = int(returnedAlgoCountC)
+// 	return
+// }
 
 // ConvolutionBackwardData computes the convolution gradient with respect to the output tensor using the specified algo, returning results in gradDesc. Scaling factors alpha and beta can be used to scale the input tensor and the output tensor respectively.
 //	dx is both an input and output
@@ -515,7 +515,7 @@ func (co *Context) LRNCrossChannelForward(normDesc *LRN, lrnMode LRNMode, alpha 
 }
 
 // LRNCrossChannelBackward performs the backward LRN layer computation.
-func (co *Context) LRNCrossChannelBackward(normDesc *LRN, lrnMode LRNMode, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, xDesc *TensorDescriptor, x Memory, beta float64, dx Memory) (dxDesc *TensorDescriptor, err error) {
+func (co *Context) LRNCrossChannelBackward(normDesc *LRN, lrnMode LRNMode, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
 	// DOUBLECHECK: "cudnnLRNCrossChannelBackward" returns Memory type in Parameter 12
 	var alphaC, betaC unsafe.Pointer
 	switch yDesc.dataType {
@@ -532,13 +532,10 @@ func (co *Context) LRNCrossChannelBackward(normDesc *LRN, lrnMode LRNMode, alpha
 		alphaC = unsafe.Pointer(&alphaF)
 		betaC = unsafe.Pointer(&betaF)
 	default:
-		err = errors.Errorf("Unsupported data type: %v", yDesc.dataType)
-		return
+		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
 	}
-	// TODO: dxDesc cudnnTensorDescriptor_t
 	// call cudnnLRNCrossChannelBackward
-	err = result(C.cudnnLRNCrossChannelBackward(co.internal, normDesc.internal, lrnMode.C(), alphaC, yDesc.internal, y.Pointer(), dyDesc.internal, dy.Pointer(), xDesc.internal, x.Pointer(), betaC, dxDesc.internal, dx.Pointer()))
-	return
+	return result(C.cudnnLRNCrossChannelBackward(co.internal, normDesc.internal, lrnMode.C(), alphaC, yDesc.internal, y.Pointer(), dyDesc.internal, dy.Pointer(), xDesc.internal, x.Pointer(), betaC, dxDesc.internal, dx.Pointer()))
 }
 
 // DivisiveNormalizationForward performs the forward spatial DivisiveNormalization layer computation. It divides every value in a layer by the standard deviation of it's spatial neighbors as described in `What is the Best Multi-Stage Architecture for Object Recognition`, Jarrett 2009, Local Contrast Normalization Layer section. Note that Divisive Normalization only implements the x/max(c, sigma_x) portion of the computation, where sigma_x is the variance over the spatial neighborhood of x. The full LCN (Local Contrastive Normalization) computation can be implemented as a two-step process:
@@ -890,12 +887,13 @@ func (co *Context) CTCLoss(probsDesc *TensorDescriptor, probs Memory, labels []i
 	return result(C.cudnnCTCLoss(co.internal, probsDesc.internal, probs.Pointer(), labelsPtr, labelLengthsPtr, inputLengthsPtr, costs.Pointer(), gradientsDesc.internal, gradients.Pointer(), algo.C(), ctcLossDesc.internal, workspace.Pointer(), C.size_t(workSpaceSizeInBytes)))
 }
 
-// Derives a secondary tensor descriptor for BatchNormalization scale, invVariance, bnBias, bnScale subtensors from the layer's x data descriptor. Use the tensor descriptor produced by this function as the bnScaleBiasMeanVarDesc and bnScaleBiasDiffDesc parameters in Spatial and Per-Activation Batch Normalization forward and backward functions. Resulting dimensions will be 1xC(x1)x1x1 for BATCHNORM_MODE_SPATIAL and 1xC(xD)xHxW for BATCHNORM_MODE_PER_ACTIVATION (parentheses for 5D). For HALF input data type the resulting tensor descriptor will have a FLOAT type. For other data types it will have the same type as the input data.
-func (te *TensorDescriptor) DeriveBNTensorDescriptor(xDesc *TensorDescriptor, mode BatchNormMode) (derivedBnDesc *TensorDescriptor, err error) {
-	// call cudnnDeriveBNTensorDescriptor
-	err = result(C.cudnnDeriveBNTensorDescriptor(te.internal, xDesc.internal, mode.C()))
-	return
-}
+// // Derives a secondary tensor descriptor for BatchNormalization scale, invVariance, bnBias, bnScale subtensors from the layer's x data descriptor. Use the tensor descriptor produced by this function as the bnScaleBiasMeanVarDesc and bnScaleBiasDiffDesc parameters in Spatial and Per-Activation Batch Normalization forward and backward functions. Resulting dimensions will be 1xC(x1)x1x1 for BATCHNORM_MODE_SPATIAL and 1xC(xD)xHxW for BATCHNORM_MODE_PER_ACTIVATION (parentheses for 5D). For HALF input data type the resulting tensor descriptor will have a FLOAT type. For other data types it will have the same type as the input data.
+// func (te *TensorDescriptor) DeriveBNTensorDescriptor(xDesc *TensorDescriptor, mode BatchNormMode) (derivedBnDesc *TensorDescriptor, err error) {
+// 	// TODO
+// 	// call cudnnDeriveBNTensorDescriptor
+// 	err = result(C.cudnnDeriveBNTensorDescriptor(te.internal, xDesc.internal, mode.C()))
+// 	return
+// }
 
 // DropoutGetReserveSpaceSize is used to query the amount of reserve needed to run dropout with the input dimensions given by xDesc. The same reserve space is expected to be passed to cudnnDropoutForward and cudnnDropoutBackward, and its contents is expected to remain unchanged between cudnnDropoutForward and cudnnDropoutBackward calls.
 func (te *TensorDescriptor) DropoutGetReserveSpaceSize() (sizeInBytes uintptr, err error) {
