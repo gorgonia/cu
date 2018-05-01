@@ -78,19 +78,8 @@ func (t *TensorDescriptor) set(internal C.cudnnTensorDescriptor_t) error {
 }
 
 func (t *TensorDescriptor) Format() TensorFormat { return t.format }
-
-func (t *TensorDescriptor) DataType() DataType { return t.dataType }
-
-func (t *TensorDescriptor) Shape() []int {
-	retVal := make([]int, len(t.shape))
-	copy(retVal, t.shape)
-	return retVal
-}
-
-func (t *TensorDescriptor) Strides() []int {
-	retVal := make([]int, len(t.strides))
-	copy(retVal, t.strides)
-	return retVal
-}
+func (t *TensorDescriptor) DataType() DataType   { return t.dataType }
+func (t *TensorDescriptor) Shape() []int         { return cloneShape(t.shape) }
+func (t *TensorDescriptor) Strides() []int       { return cloneShape(t.strides) }
 
 func destroyTensor(obj *TensorDescriptor) { C.cudnnDestroyTensorDescriptor(obj.internal) }

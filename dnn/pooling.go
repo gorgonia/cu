@@ -22,9 +22,9 @@ type Pooling struct {
 	strides           []int
 
 	// cache output shapes
-	outputShape []int
 	outDims     int // the dims for which the output shape was requested
-	inputTensor C.cudnnTensorDescriptor_t
+	outputShape []int
+	inputTensor []int
 }
 
 // NewPooling creates a new Pooling op.
@@ -78,34 +78,20 @@ func (p *Pooling) Mode() PoolingMode { return p.mode }
 func (p *Pooling) NaNPropagation() NanPropagation { return p.maxpoolingNanNopt }
 
 // Shape returns a copy of the input window shape.
-func (p *Pooling) Shape() []int {
-	retVal := make([]int, len(p.shape))
-	copy(retVal, p.shape)
-	return retVal
-}
+func (p *Pooling) Shape() []int { return cloneShape(p.shape) }
 
 // Padding returns a copy of the input padding shape
-func (p *Pooling) Padding() []int {
-	retVal := make([]int, len(p.padding))
-	copy(retVal, p.padding)
-	return retVal
-}
+func (p *Pooling) Padding() []int { return cloneShape(p.padding) }
 
 // Strides returns a copy of the input strides
-func (p *Pooling) Strides() []int {
-	retVal := make([]int, len(p.strides))
-	copy(retVal, p.strides)
-	return retVal
-}
+func (p *Pooling) Strides() []int { return cloneShape(p.strides) }
 
 // OutputShape computes the output shape given the input tensor.
 //
 // This method caches the outputShape. If a inputTensor is seen before, and the dims is exactly the same, then the cached output shape is used
 func (p *Pooling) OutputShape(input *TensorDescriptor, dims int) (retVal []int, err error) {
-	if p.outputShape != nil && dims == p.outDims && input.internal == p.inputTensor {
-		retVal = make([]int, len(p.outputShape))
-		copy(retVal, p.outputShape)
-		return
+	if dims == p.outDims && shapeEq(input.shape, p.inputTensor) {
+		return cloneShape(p.outputShape)
 	}
 	return p.CalcOutputShape(input, dims)
 }
@@ -113,7 +99,7 @@ func (p *Pooling) OutputShape(input *TensorDescriptor, dims int) (retVal []int, 
 // CalcOutputShape is like  OutputShape, but doesn't go through a check for the cached value.
 func (p *Pooling) CalcOutputShape(input *TensorDescriptor, dims int) (retVal []int, err error) {
 	p.outDims = dims
-	p.inputTensor = input.internal
+	p.inputTensor = cloneShape(input.shape)
 
 	switch dims {
 	case 0:
@@ -135,9 +121,7 @@ func (p *Pooling) CalcOutputShape(input *TensorDescriptor, dims int) (retVal []i
 			return nil, err
 		}
 	}
-	retVal = make([]int, len(p.outputShape))
-	copy(retVal, p.outputShape)
-	return
+	return cloneShape(p.outputShape)
 }
 
 func destroyPooling(obj *Pooling) { C.cudnnDestroyPoolingDescriptor(obj.internal) }

@@ -21,3 +21,9 @@ func shapeEq(a, b []int) bool {
 	}
 	return true
 }
+
+func cloneShape(a []int) []int {
+	retVal := make([]int, len(a))
+	copy(retVal, a)
+	return retVal
+}

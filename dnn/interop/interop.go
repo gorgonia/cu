@@ -13,6 +13,11 @@ func Describe(t *tensor.Dense) (*cudnn.TensorDescriptor, error) {
 	return cudnn.NewTensorDescriptor(cudnn.NCHW, Dtype2DataType(t.Dtype()), shape, strides)
 }
 
+func DescribeAsFilter(t *tensor.Dense, format cudnn.TensorFormat) (*cudnn.Filter, error) {
+	shape := t.Shape().Clone()
+	return cudnn.NewFilter(Dtype2DataType(t.Dtype()), format, shape)
+}
+
 // Dtype2DataType converts a tensor.Dtype to a cudnnDataType.
 func Dtype2DataType(t tensor.Dtype) cudnn.DataType {
 	switch t.Name() {

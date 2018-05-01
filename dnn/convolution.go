@@ -144,42 +144,28 @@ type Convolution struct {
 
 	// cache of outputShape
 	dims        int
+	inputTensor []int
+	inputFilter []int
 	outputShape []int
-	inputTensor C.cudnnTensorDescriptor_t
-	inputFilter C.cudnnFilterDescriptor_t
 }
 
 func NewConvolution(mathType MathType, groupCount int, padding, filterStride, dilation []int, convolutionMode ConvolutionMode, datatype DataType) (*Convolution, error) {
+	// checks
+	if !(len(padding) == len(filterStride) && len(filterStride) == len(dilation)) {
+		return nil, errors.Errorf("Unmatching inputs: padding %v, filterStride %v, dilation %v", padding, filterStride, dilation)
+	}
+	if len(padding) < 4 {
+		return nil, errors.Errorf("Convolution expects 4 dimensional inputs")
+	}
+
 	var internal C.cudnnConvolutionDescriptor_t
-	if err := result(C.cudnnCreateConvolutionDescriptor(&internal)); err != nil {
+	padA := (*C.int)(unsafe.Pointer(&padding[0]))
+	strideA := (*C.int)(unsafe.Pointer(&filterStride[0]))
+	dilationA := (*C.int)(unsafe.Pointer(&dilation[0]))
+	if err = result(C.gocudnnNewConvolution(&internal, mathType.C(), C.int(groupCount), C.int(len(padding)), padA, filterStrideA, dilationA, convolutionMode.C(), datatype.C())); err != nil {
 		return nil, err
 	}
-	if err := result(C.cudnnSetConvolutionMathType(internal, mathType.C())); err != nil {
-		return nil, err
-	}
-	if err := result(C.cudnnSetConvolutionGroupCount(internal, C.int(groupCount))); err != nil {
-		return nil, err
-	}
-	switch len(padding) {
-	case 0:
-		fallthrough
-	case 1:
-		return nil, errors.Errorf("Only 2+ dims are allowed")
-	case 2:
-		padH, padW := padding[0], padding[1]
-		u, v := filterStride[0], filterStride[1]
-		dilationH, dilationW := dilation[0], dilation[1]
-		if err := result(C.cudnnSetConvolution2dDescriptor(internal, C.int(padH), C.int(padW), C.int(u), C.int(v), C.int(dilationH), C.int(dilationW), convolutionMode.C(), datatype.C())); err != nil {
-			return nil, err
-		}
-	default:
-		padA := (*C.int)(unsafe.Pointer(&padding[0]))
-		strideA := (*C.int)(unsafe.Pointer(&filterStride[0]))
-		dilationA := (*C.int)(unsafe.Pointer(&dilation[0]))
-		if err := result(C.cudnnSetConvolutionNdDescriptor(internal, C.int(len(padding)), padA, strideA, dilationA, convolutionMode.C(), datatype.C())); err != nil {
-			return nil, err
-		}
-	}
+
 	retVal := &Convolution{
 		internal: internal,
 
@@ -193,38 +179,22 @@ func NewConvolution(mathType MathType, groupCount int, padding, filterStride, di
 	return retVal, nil
 }
 
-func (c *Convolution) MathType() MathType { return c.mathType }
-func (c *Convolution) GroupCount() int    { return c.groupCount }
-func (c *Convolution) Padding() []int {
-	retVal := make([]int, len(c.padding))
-	copy(retVal, c.padding)
-	return retVal
-}
-
-func (c *Convolution) FilterStride() []int {
-	retVal := make([]int, len(c.filterStride))
-	copy(retVal, c.filterStride)
-	return retVal
-}
-
-func (c *Convolution) Dilation() []int {
-	retVal := make([]int, len(c.dilation))
-	copy(retVal, c.dilation)
-	return retVal
-}
+func (c *Convolution) MathType() MathType  { return c.mathType }
+func (c *Convolution) GroupCount() int     { return c.groupCount }
+func (c *Convolution) Padding() []int      { return cloneShape(c.padding) }
+func (c *Convolution) FilterStride() []int { return cloneShape(c.filterStride) }
+func (c *Convolution) Dilation() []int     { return cloneShape(c.dilation) }
 
 func (c *Convolution) ForwardOutputShape(input *TensorDescriptor, filter *Filter, dims int) (retVal []int, err error) {
-	if c.outputShape != nil && c.dims == dims && input.internal == c.inputTensor && filter.internal == c.inputFilter {
-		retVal = make([]int, len(c.outputShape))
-		copy(retVal, c.outputShape)
-		return
+	if c.dims == dims && shapeEq(c.inputTensor, input.shape) && shapeEq(c.inputFilter, filter.shape) {
+		return cloneShape(c.outputShape)
 	}
 	return c.CalcForwardOutputShape(input, filter, dims)
 }
 
 func (c *Convolution) CalcForwardOutputShape(input *TensorDescriptor, filter *Filter, dims int) (retVal []int, err error) {
-	c.inputTensor = input.internal
-	c.inputFilter = filter.internal
+	c.inputTensor = cloneShape(input.shape)
+	c.inputFilter = cloneShape(filter.shape)
 	c.dims = dims
 	switch dims {
 	case 0, 1:
@@ -245,10 +215,7 @@ func (c *Convolution) CalcForwardOutputShape(input *TensorDescriptor, filter *Fi
 			return nil, err
 		}
 	}
-
-	retVal = make([]int, len(c.outputShape))
-	copy(retVal, c.outputShape)
-	return
+	return cloneShape(c.outputShape)
 }
 
 func destroyConvolution(obj *Convolution) { C.cudnnDestroyConvolutionDescriptor(obj.internal) }

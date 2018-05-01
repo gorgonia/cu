@@ -3,31 +3,13 @@ package cudnn
 // #include <cudnn_v7.h>
 import "C"
 
-// Status is the cudnn status
-type Status int
+type cudnnStatus int
 
-const (
-	Success Status = iota
-	NotInitialized
-	AllocFailed
-	BadParam
-	InternalError
-	InvalidValue
-	ArchMismatch
-	MappingError
-	ExecutionFailed
-	NotSupported
-	LicenseError
-	RuntimePrerequisiteMissing
-	RuntimeInProgress
-	RuntimeFpOverflow
-)
+func (err cudnnStatus) Error() string  { return err.String() }
+func (err cudnnStatus) String() string { return resString[err] }
 
-func (err Status) Error() string  { return err.String() }
-func (err Status) String() string { return resString[int(err)] }
-
-func result(s C.cudnnStatus_t) error {
-	err := Status(s)
+func result(x C.cudnnStatus_t) error {
+	err := cudnnStatus(x)
 	if err == Success {
 		return nil
 	}
@@ -37,28 +19,36 @@ func result(s C.cudnnStatus_t) error {
 	return err
 }
 
-var resString = [...]string{
-	"Success",
-	"NotInitialized",
-	"AllocFailed",
-	"BadParam",
-	"InternalError",
-	"InvalidValue",
-	"ArchMismatch",
-	"MappingError",
-	"ExecutionFailed",
-	"NotSupported",
-	"LicenseError",
-	"RuntimePrerequisiteMissing",
-	"RuntimeInProgress",
-	"RuntimeFpOverflow",
-}
-
-var (
-	dtypeMismatch2 = "Dtype Mismatch. Expected %v or %v. Got %v"
-	dtypeMismatch3 = "Dtype Mismatch. Expected %v. Got %v and %v"
-	memoryError3   = "Memory error. Expected location to be %p. Got %p and %p instead"
-
-	shapeMismatch3 = "Shape Mismatch. Expected %v. Got %v and %v"
-	nyi            = "Not Yet Implemented"
+const (
+	Success                    cudnnStatus = C.CUDNN_STATUS_SUCCESS
+	NotInitialized             cudnnStatus = C.CUDNN_STATUS_NOT_INITIALIZED
+	AllocFailed                cudnnStatus = C.CUDNN_STATUS_ALLOC_FAILED
+	BadParam                   cudnnStatus = C.CUDNN_STATUS_BAD_PARAM
+	InternalError              cudnnStatus = C.CUDNN_STATUS_INTERNAL_ERROR
+	InvalidValue               cudnnStatus = C.CUDNN_STATUS_INVALID_VALUE
+	ArchMismatch               cudnnStatus = C.CUDNN_STATUS_ARCH_MISMATCH
+	MappingError               cudnnStatus = C.CUDNN_STATUS_MAPPING_ERROR
+	ExecutionFailed            cudnnStatus = C.CUDNN_STATUS_EXECUTION_FAILED
+	NotSupported               cudnnStatus = C.CUDNN_STATUS_NOT_SUPPORTED
+	LicenseError               cudnnStatus = C.CUDNN_STATUS_LICENSE_ERROR
+	RuntimePrerequisiteMissing cudnnStatus = C.CUDNN_STATUS_RUNTIME_PREREQUISITE_MISSING
+	RuntimeInProgress          cudnnStatus = C.CUDNN_STATUS_RUNTIME_IN_PROGRESS
+	RuntimeFpOverflow          cudnnStatus = C.CUDNN_STATUS_RUNTIME_FP_OVERFLOW
 )
+
+var resString = map[cudnnStatus]string{
+	Success:                    "Success",
+	NotInitialized:             "NotInitialized",
+	AllocFailed:                "AllocFailed",
+	BadParam:                   "BadParam",
+	InternalError:              "InternalError",
+	InvalidValue:               "InvalidValue",
+	ArchMismatch:               "ArchMismatch",
+	MappingError:               "MappingError",
+	ExecutionFailed:            "ExecutionFailed",
+	NotSupported:               "NotSupported",
+	LicenseError:               "LicenseError",
+	RuntimePrerequisiteMissing: "RuntimePrerequisiteMissing",
+	RuntimeInProgress:          "RuntimeInProgress",
+	RuntimeFpOverflow:          "RuntimeFpOverflow",
+}
