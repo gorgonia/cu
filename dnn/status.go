@@ -52,3 +52,11 @@ var resString = map[cudnnStatus]string{
 	RuntimeInProgress:          "RuntimeInProgress",
 	RuntimeFpOverflow:          "RuntimeFpOverflow",
 }
+
+const (
+	dtypeMismatch3 = "Dtype Mismatch. These three should match %v, %v and %v."
+	dtypeMismatch2 = "Dtype Mismatch. Expected %v or %v. Got %v instead."
+	shapeMismatch3 = "Shape Mismatch. These three should match %v, %v and %v"
+	memoryError3   = "Memory Error. A: %p B: %p C: %p"
+	nyi            = "Not yet implemented. %v %v"
+)

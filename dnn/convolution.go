@@ -4,6 +4,7 @@ package cudnn
 // #include "convolution.h"
 import "C"
 import (
+	"log"
 	"runtime"
 	"unsafe"
 
@@ -150,24 +151,28 @@ type Convolution struct {
 	outputShape []int
 }
 
-func NewConvolution(mathType MathType, groupCount int, padding, filterStride, dilation []int, convolutionMode ConvolutionMode, datatype DataType) (*Convolution, error) {
+func NewConvolution(mathType MathType, groupCount int, padding, filterStride, dilation []int, convolutionMode ConvolutionMode, datatype DataType) (retVal *Convolution, err error) {
 	// checks
 	if !(len(padding) == len(filterStride) && len(filterStride) == len(dilation)) {
 		return nil, errors.Errorf("Unmatching inputs: padding %v, filterStride %v, dilation %v", padding, filterStride, dilation)
 	}
-	if len(padding) < 4 {
+	if len(padding) < 2 {
 		return nil, errors.Errorf("Convolution expects 4 dimensional inputs")
 	}
 
 	var internal C.cudnnConvolutionDescriptor_t
-	padA := (*C.int)(unsafe.Pointer(&padding[0]))
-	strideA := (*C.int)(unsafe.Pointer(&filterStride[0]))
-	dilationA := (*C.int)(unsafe.Pointer(&dilation[0]))
+	padA, padAManaged := ints2CIntPtr(padding)
+	defer returnManaged(padAManaged)
+
+	filterStrideA, filterStrideAManaged := ints2CIntPtr(filterStride)
+	defer returnManaged(filterStrideAManaged)
+	dilationA, dilationAManaged := ints2CIntPtr(dilation)
+	defer returnManaged(dilationAManaged)
 	if err = result(C.gocudnnNewConvolution(&internal, mathType.C(), C.int(groupCount), C.int(len(padding)), padA, filterStrideA, dilationA, convolutionMode.C(), datatype.C())); err != nil {
 		return nil, err
 	}
 
-	retVal := &Convolution{
+	retVal = &Convolution{
 		internal: internal,
 
 		mathType:     mathType,
@@ -187,8 +192,12 @@ func (c *Convolution) FilterStride() []int { return cloneShape(c.filterStride) }
 func (c *Convolution) Dilation() []int     { return cloneShape(c.dilation) }
 
 func (c *Convolution) ForwardOutputShape(input *TensorDescriptor, filter *Filter, dims int) (retVal []int, err error) {
+	log.Printf("c == nil %v", c == nil)
+	log.Printf("c.dims %v, dims %v", c.dims, dims)
+	log.Printf("c.InputTensor %v, inputShape %v", c.inputTensor, input.shape)
+	log.Printf("c.inputFilter %v, filterShape %v", c.inputFilter, filter.shape)
 	if c.dims == dims && shapeEq(c.inputTensor, input.shape) && shapeEq(c.inputFilter, filter.shape) {
-		return cloneShape(c.outputShape)
+		return cloneShape(c.outputShape), nil
 	}
 	return c.CalcForwardOutputShape(input, filter, dims)
 }
@@ -211,12 +220,13 @@ func (c *Convolution) CalcForwardOutputShape(input *TensorDescriptor, filter *Fi
 		}
 	default:
 		c.outputShape = make([]int, dims)
-		ptr := (*C.int)(unsafe.Pointer(&c.outputShape[0]))
+		ptr, ptrManaged := ints2CIntPtr(c.outputShape)
+		defer returnManaged(ptrManaged)
 		if err = result(C.cudnnGetConvolutionNdForwardOutputDim(c.internal, input.internal, filter.internal, C.int(dims), ptr)); err != nil {
 			return nil, err
 		}
 	}
-	return cloneShape(c.outputShape)
+	return cloneShape(c.outputShape), nil
 }
 
 func destroyConvolution(obj *Convolution) { C.cudnnDestroyConvolutionDescriptor(obj.internal) }

@@ -51,9 +51,12 @@ func NewPooling(mode PoolingMode, maxpoolingNanOpt NanPropagation, shape, stride
 		}
 	default:
 		nbDims := len(shape)
-		shapePtr := (*C.int)(unsafe.Pointer(&shape[0]))
-		paddingPtr := (*C.int)(unsafe.Pointer(&padding[0]))
-		stridePtr := (*C.int)(unsafe.Pointer(&strides[0]))
+		shapePtr, shapePtrManaged := ints2CIntPtr(shape)
+		defer returnManaged(shapePtrManaged)
+		paddingPtr, paddingPtrManaged := ints2CIntPtr(padding)
+		defer returnManaged(paddingPtrManaged)
+		stridePtr, stridePtrManaged := ints2CIntPtr(strides)
+		defer returnManaged(stridePtrManaged)
 		if err = result(C.cudnnSetPoolingNdDescriptor(internal, mode.C(), maxpoolingNanOpt.C(), C.int(nbDims), shapePtr, paddingPtr, stridePtr)); err != nil {
 			return nil, err
 		}
@@ -91,7 +94,7 @@ func (p *Pooling) Strides() []int { return cloneShape(p.strides) }
 // This method caches the outputShape. If a inputTensor is seen before, and the dims is exactly the same, then the cached output shape is used
 func (p *Pooling) OutputShape(input *TensorDescriptor, dims int) (retVal []int, err error) {
 	if dims == p.outDims && shapeEq(input.shape, p.inputTensor) {
-		return cloneShape(p.outputShape)
+		return cloneShape(p.outputShape), nil
 	}
 	return p.CalcOutputShape(input, dims)
 }
@@ -116,12 +119,13 @@ func (p *Pooling) CalcOutputShape(input *TensorDescriptor, dims int) (retVal []i
 
 	default:
 		p.outputShape = make([]int, dims)
-		ptr := (*C.int)(unsafe.Pointer(&p.outputShape[0]))
+		ptr, ptrManaged := ints2CIntPtr(p.outputShape)
+		defer returnManaged(ptrManaged)
 		if err = result(C.cudnnGetPoolingNdForwardOutputDim(p.internal, input.internal, C.int(dims), ptr)); err != nil {
 			return nil, err
 		}
 	}
-	return cloneShape(p.outputShape)
+	return cloneShape(p.outputShape), nil
 }
 
 func destroyPooling(obj *Pooling) { C.cudnnDestroyPoolingDescriptor(obj.internal) }

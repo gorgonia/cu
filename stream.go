@@ -15,7 +15,7 @@ func makeStream(s C.CUstream) Stream { return Stream(uintptr(unsafe.Pointer(s)))
 func (s Stream) c() C.CUstream       { return C.CUstream(unsafe.Pointer(uintptr(s))) }
 
 // C is the exported version of the c method
-func (s Stream) C() C.CUStream { return s.c() }
+func (s Stream) C() C.CUstream { return s.c() }
 
 // MakeStream creates a stream. The flags determines the behaviors of the stream.
 func MakeStream(flags StreamFlags) (Stream, error) {

@@ -5,8 +5,6 @@ package cudnn
 // #include <cudnn_v7.h>
 import "C"
 import (
-	"unsafe"
-
 	"github.com/pkg/errors"
 )
 
@@ -33,7 +31,8 @@ func NewFilter(dataType DataType, format TensorFormat, shape []int) (retVal *Fil
 			return nil, err
 		}
 	default:
-		filterDimA := (*C.int)(unsafe.Pointer(&shape[0]))
+		filterDimA, filterDimAManaged := ints2CIntPtr(shape)
+		defer returnManaged(filterDimAManaged)
 		if err = result(C.cudnnSetFilterNdDescriptor(internal, dataType.C(), format.C(), C.int(len(shape)), filterDimA)); err != nil {
 			return nil, err
 		}

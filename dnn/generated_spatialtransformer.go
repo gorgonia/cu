@@ -6,7 +6,6 @@ package cudnn
 import "C"
 import (
 	"runtime"
-	"unsafe"
 )
 
 // SpatialTransformer is a representation of cudnnSpatialTransformerDescriptor_t.
@@ -26,7 +25,8 @@ func NewSpatialTransformer(samplerType SamplerType, dataType DataType, nbDims in
 		return nil, err
 	}
 
-	dimAC := (*C.int)(unsafe.Pointer(&dimA[0]))
+	dimAC, dimACManaged := ints2CIntPtr(dimA)
+	defer returnManaged(dimACManaged)
 	if err := result(C.cudnnSetSpatialTransformerNdDescriptor(internal, samplerType.C(), dataType.C(), C.int(nbDims), dimAC)); err != nil {
 		return nil, err
 	}

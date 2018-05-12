@@ -879,9 +879,12 @@ func (co *Context) RNNBackwardWeights(rnnDesc *RNN, seqLength int, xDesc []*Tens
 // CTCLoss returns the ctc costs and gradients, given the probabilities and labels.
 func (co *Context) CTCLoss(probsDesc *TensorDescriptor, probs Memory, labels []int, labelLengths []int, inputLengths []int, costs Memory, gradientsDesc *TensorDescriptor, gradients Memory, algo CTCLossAlgo, ctcLossDesc *CTCLoss, workspace Memory, workSpaceSizeInBytes uintptr) error {
 	// DOUBLECHECK: "cudnnCTCLoss" returns Memory type in Parameter 8
-	labelsPtr := (*C.int)(unsafe.Pointer(&labels[0]))
-	labelLengthsPtr := (*C.int)(unsafe.Pointer(&labelLengths[0]))
-	inputLengthsPtr := (*C.int)(unsafe.Pointer(&inputLengths[0]))
+	labelsPtr, labelsPtrManaged := ints2CIntPtr(labels)
+	defer returnManaged(labelsPtrManaged)
+	labelLengthsPtr, labelLengthsPtrManaged := ints2CIntPtr(labelLengths)
+	defer returnManaged(labelLengthsPtrManaged)
+	inputLengthsPtr, inputLengthsPtrManaged := ints2CIntPtr(inputLengths)
+	defer returnManaged(inputLengthsPtrManaged)
 
 	// call cudnnCTCLoss
 	return result(C.cudnnCTCLoss(co.internal, probsDesc.internal, probs.Pointer(), labelsPtr, labelLengthsPtr, inputLengthsPtr, costs.Pointer(), gradientsDesc.internal, gradients.Pointer(), algo.C(), ctcLossDesc.internal, workspace.Pointer(), C.size_t(workSpaceSizeInBytes)))

@@ -4,7 +4,6 @@ package cudnn
 import "C"
 import (
 	"runtime"
-	"unsafe"
 
 	"github.com/pkg/errors"
 )
@@ -61,14 +60,17 @@ func (t *TensorDescriptor) set(internal C.cudnnTensorDescriptor_t) error {
 		return result(res)
 	default:
 		if len(t.strides) > 0 {
-			dimA := (*C.int)(unsafe.Pointer(&t.shape[0]))
-			strideA := (*C.int)(unsafe.Pointer(&t.strides[0]))
+			dimA, dimAManaged := ints2CIntPtr(t.shape)
+			defer returnManaged(dimAManaged)
+			strideA, strideAManaged := ints2CIntPtr(t.strides)
+			defer returnManaged(strideAManaged)
 			// NO, there is no confusion here. Ex is used to set tensor without strides. Silly nVidia.
 			res := C.cudnnSetTensorNdDescriptor(internal, t.dataType.C(),
 				C.int(len(t.shape)), dimA, strideA)
 			return result(res)
 		}
-		dimA := (*C.int)(unsafe.Pointer(&t.shape[0]))
+		dimA, dimAManaged := ints2CIntPtr(t.shape)
+		defer returnManaged(dimAManaged)
 		res := C.cudnnSetTensorNdDescriptorEx(internal, t.format.C(), t.dataType.C(),
 			C.int(len(t.shape)), dimA)
 		return result(res)
