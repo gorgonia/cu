@@ -2,18 +2,31 @@ package t2cudnn
 
 import (
 	cudnn "gorgonia.org/cu/dnn"
+	"gorgonia.org/gorgonia"
 	"gorgonia.org/tensor"
 )
 
+var (
+	_ Tensor = &tensor.Dense{}
+	_ Tensor = &gorgonia.Node{}
+	_ Tensor = tensor.Tensor(nil)
+)
+
+type Tensor interface {
+	Shape() tensor.Shape
+	Strides() []int
+	Dtype() tensor.Dtype
+}
+
 // Describe extracts the metadata from a tensor.Dense and returns a cuDNN TensorDescriptor
-func Describe(t *tensor.Dense) (*cudnn.TensorDescriptor, error) {
+func Describe(t Tensor) (*cudnn.TensorDescriptor, error) {
 	shape := t.Shape().Clone()
 	strides := make([]int, len(shape))
 	copy(strides, t.Strides())
 	return cudnn.NewTensorDescriptor(cudnn.NCHW, Dtype2DataType(t.Dtype()), shape, strides)
 }
 
-func DescribeAsFilter(t *tensor.Dense, format cudnn.TensorFormat) (*cudnn.Filter, error) {
+func DescribeAsFilter(t Tensor, format cudnn.TensorFormat) (*cudnn.Filter, error) {
 	shape := t.Shape().Clone()
 	return cudnn.NewFilter(Dtype2DataType(t.Dtype()), format, shape)
 }

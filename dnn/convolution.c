@@ -23,16 +23,23 @@ cudnnStatus_t gocudnnNewConvolution(cudnnConvolutionDescriptor_t *retVal,
 		return status;
 	}
 
+	int padH;
+	int padW;
+	int u;
+	int v; 
+	int dilationH;
+	int dilationW;
 	switch (size) {
-	case 0, 1:
+	case 0:
+	case 1:
 		return CUDNN_STATUS_BAD_PARAM;
 	case 2:
-		int padH = padding[0];
-		int padW = padding[1];
-		int u = filterStrides[0];
-		int v = filterStrides[1];
-		int dilationH = dilation[0];
-		int dilationW = dilation[1]; 
+		padH = padding[0];
+		padW = padding[1];
+		u = filterStrides[0];
+		v = filterStrides[1];
+		dilationH = dilation[0];
+		dilationW = dilation[1]; 
 		status = cudnnSetConvolution2dDescriptor(*retVal, 
 			padH, padW, 
 			u, v, 
@@ -40,7 +47,7 @@ cudnnStatus_t gocudnnNewConvolution(cudnnConvolutionDescriptor_t *retVal,
 			convolutionMode, dataType);
 		break;
 	default:
-		status = cudnnSetConvolutionNdDescriptor(*retVal, paddingSize, padding, filterStrides, dilation, convolutionMode, dataType);
+		status = cudnnSetConvolutionNdDescriptor(*retVal, size, padding, filterStrides, dilation, convolutionMode, dataType);
 		break;
 	}
 	return status;

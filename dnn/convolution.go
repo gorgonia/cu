@@ -1,6 +1,7 @@
 package cudnn
 
 // #include <cudnn_v7.h>
+// #include "convolution.h"
 import "C"
 import (
 	"runtime"

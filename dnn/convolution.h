@@ -1,5 +1,3 @@
-#include <cudnn_v7.h>
-
 extern cudnnStatus_t gocudnnNewConvolution(cudnnMathType_t mathType, const int groupCount, 
 	const int paddingSize, const int* padding,
 	const int strideSize, const int* filterStrides, 
