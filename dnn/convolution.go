@@ -4,7 +4,6 @@ package cudnn
 // #include "convolution.h"
 import "C"
 import (
-	"log"
 	"runtime"
 	"unsafe"
 
@@ -192,10 +191,6 @@ func (c *Convolution) FilterStride() []int { return cloneShape(c.filterStride) }
 func (c *Convolution) Dilation() []int     { return cloneShape(c.dilation) }
 
 func (c *Convolution) ForwardOutputShape(input *TensorDescriptor, filter *Filter, dims int) (retVal []int, err error) {
-	log.Printf("c == nil %v", c == nil)
-	log.Printf("c.dims %v, dims %v", c.dims, dims)
-	log.Printf("c.InputTensor %v, inputShape %v", c.inputTensor, input.shape)
-	log.Printf("c.inputFilter %v, filterShape %v", c.inputFilter, filter.shape)
 	if c.dims == dims && shapeEq(c.inputTensor, input.shape) && shapeEq(c.inputFilter, filter.shape) {
 		return cloneShape(c.outputShape), nil
 	}
