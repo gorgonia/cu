@@ -31,17 +31,19 @@ func NewDropout(dropout float64) (retVal *Dropout, err error) {
 	if err := result(C.cudnnCreateDropoutDescriptor(&internal)); err != nil {
 		return nil, err
 	}
-	runtime.SetFinalizer(retVal, destroyDropout)
 	retVal = &Dropout{
 		internal: internal,
 		dropout:  float32(dropout),
 	}
+	runtime.SetFinalizer(retVal, destroyDropout)
 	return retVal, nil
 }
 
 // NewDropout creates a new Dropout with the given context (handle, states, etc)
 func NewDropoutWithContext(dropout float64, handle *Context, states Memory, stateSizeInBytes uintptr, seed uint64) (retVal *Dropout, err error) {
-	retVal = NewDropoutDescriptor(dropout)
+	if retVal, err = NewDropout(dropout); err != nil {
+		return
+	}
 	err = retVal.Use(handle, states, stateSizeInBytes, seed)
 	return
 }
@@ -52,7 +54,7 @@ func (d *Dropout) Use(ctx *Context, states Memory, stateSizeInBytes uintptr, see
 	d.states = states
 	d.stateSizeInBytes = stateSizeInBytes
 	d.seed = seed
-	return result(C.cudnnSetDropoutDescriptor(internal, handle.internal, C.float(d.dropout), d.states.Pointer(), C.size_t(d.stateSizeInBytes), C.ulonglong(d.seed)))
+	return result(C.cudnnSetDropoutDescriptor(d.internal, d.handle.internal, C.float(d.dropout), d.states.Pointer(), C.size_t(d.stateSizeInBytes), C.ulonglong(d.seed)))
 }
 
 // IsReady indicates if the dropout operator is ready to be used
