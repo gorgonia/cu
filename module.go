@@ -21,39 +21,38 @@ func (m Module) c() C.CUmodule { return m.mod }
 //
 // The file should be a cubin file as output by nvcc, or a PTX file either as output by nvcc or handwritten, or a fatbin file as output by nvcc from toolchain 4.0 or late
 func Load(name string) (Module, error) {
-	var mod C.CUmodule
-	if err := result(C.cuModuleLoad(&mod, C.CString(name))); err != nil {
-		return Module{}, err
-	}
-	return Module{mod}, nil
+	var mod Module
+	cstr := C.CString(name)
+	defer C.free(unsafe.Pointer(cstr))
+	err := result(C.cuModuleLoad(&mod.mod, cstr))
+	return mod, err
 }
 
 // LoadData loads a module from a input string.
 func LoadData(image string) (Module, error) {
-	var mod C.CUmodule
-	s := C.CString(image) // void* == unsafe.Pointer
-	if err := result(C.cuModuleLoadData(&mod, unsafe.Pointer(s))); err != nil {
-		return Module{}, err
-	}
-	return Module{mod}, nil
+	var mod Module
+	cstr := C.CString(image)
+	defer C.free(unsafe.Pointer(cstr))
+	err := result(C.cuModuleLoadData(&mod.mod, unsafe.Pointer(cstr)))
+	return mod, err
 }
 
 // Function returns a pointer to the function in the module by the name. If it's not found, the error NotFound is returned
 func (m Module) Function(name string) (Function, error) {
-	var fn C.CUfunction
-	str := C.CString(name)
-	if err := result(C.cuModuleGetFunction(&fn, m.mod, str)); err != nil {
-		return Function{}, err
-	}
-	return Function{fn}, nil
+	var fn Function
+	cstr := C.CString(name)
+	defer C.free(unsafe.Pointer(cstr))
+	err := result(C.cuModuleGetFunction(&fn.fn, m.mod, cstr))
+	return fn, err
 }
 
 // Global returns a global pointer as defined in a module. It returns a pointer to the memory in the device.
 func (m Module) Global(name string) (DevicePtr, int64, error) {
 	var d C.CUdeviceptr
 	var size C.size_t
-	str := C.CString(name)
-	if err := result(C.cuModuleGetGlobal(&d, &size, m.mod, str)); err != nil {
+	cstr := C.CString(name)
+	defer C.free(unsafe.Pointer(cstr))
+	if err := result(C.cuModuleGetGlobal(&d, &size, m.mod, cstr)); err != nil {
 		return 0, 0, err
 	}
 	return DevicePtr(d), int64(size), nil
@@ -61,7 +60,9 @@ func (m Module) Global(name string) (DevicePtr, int64, error) {
 
 func (ctx *Ctx) Load(name string) (m Module, err error) {
 	var mod C.CUmodule
-	f := func() error { return result(C.cuModuleLoad(&mod, C.CString(name))) }
+	cstr := C.CString(name)
+	defer C.free(unsafe.Pointer(cstr))
+	f := func() error { return result(C.cuModuleLoad(&mod, cstr)) }
 	if err = ctx.Do(f); err != nil {
 		err = errors.Wrap(err, "LoadModule")
 		return
@@ -72,8 +73,9 @@ func (ctx *Ctx) Load(name string) (m Module, err error) {
 
 func (ctx *Ctx) ModuleFunction(m Module, name string) (function Function, err error) {
 	var fn C.CUfunction
-	str := C.CString(name)
-	f := func() error { return result(C.cuModuleGetFunction(&fn, m.mod, str)) }
+	cstr := C.CString(name)
+	defer C.free(unsafe.Pointer(cstr))
+	f := func() error { return result(C.cuModuleGetFunction(&fn, m.mod, cstr)) }
 	if err = ctx.Do(f); err != nil {
 		err = errors.Wrap(err, "ModuleFunction")
 		return
@@ -86,8 +88,9 @@ func (ctx *Ctx) ModuleGlobal(m Module, name string) (dptr DevicePtr, size int64,
 	var d C.CUdeviceptr
 	var s C.size_t
 
-	str := C.CString(name)
-	f := func() error { return result(C.cuModuleGetGlobal(&d, &s, m.mod, str)) }
+	cstr := C.CString(name)
+	defer C.free(unsafe.Pointer(cstr))
+	f := func() error { return result(C.cuModuleGetGlobal(&d, &s, m.mod, cstr)) }
 	if err = ctx.Do(f); err != nil {
 		err = errors.Wrap(err, "ModuleGlobal")
 		return
