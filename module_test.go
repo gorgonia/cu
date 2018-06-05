@@ -1,6 +1,7 @@
 package cu
 
 import (
+	"path/filepath"
 	"testing"
 	"unsafe"
 )
@@ -11,24 +12,30 @@ func TestModule(t *testing.T) {
 		t.Log("No Devices Found")
 		return
 	}
-	ctx, _ := Device(0).MakeContext(SchedAuto)
-	defer DestroyContext(&ctx)
-
-	var mod Module
-	var f Function
-	var err error
-	if mod, err = Load("/testdata/testmodule.ptx"); err != nil {
+	ctx, err := Device(0).MakeContext(SchedAuto)
+	if err != nil {
 		t.Fatal(err)
 	}
+	defer ctx.Destroy()
 
-	if f, err = mod.Function("testMemset"); err != nil {
+	mod, err := Load(filepath.Join("testdata", "module_test.ptx"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mod.Unload()
+
+	f, err := mod.Function("testMemset")
+	if err != nil {
 		t.Fatal(err)
 	}
 
 	N := 1000
 	N4 := 4 * int64(N)
 	a := make([]float32, N)
-	A, _ := MemAlloc(N4)
+	A, err := MemAlloc(N4)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer MemFree(A)
 	aptr := unsafe.Pointer(&a[0])
 
@@ -46,7 +53,7 @@ func TestModule(t *testing.T) {
 	grid := DivUp(N, block)
 	shmem := 0
 	args := []unsafe.Pointer{unsafe.Pointer(&A), unsafe.Pointer(&value), unsafe.Pointer(&n)}
-	if err = f.LaunchKernel(grid, 1, 1, block, 1, 1, shmem, 0, args); err != nil {
+	if err = f.Launch(grid, 1, 1, block, 1, 1, shmem, Stream{}, args); err != nil {
 		t.Fatal(err)
 	}
 
@@ -64,7 +71,6 @@ func TestModule(t *testing.T) {
 			t.Fail()
 		}
 	}
-	//fmt.Println(a)
 }
 
 // Integer division rounded up.

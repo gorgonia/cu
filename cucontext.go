@@ -9,23 +9,19 @@ import (
 )
 
 // CUContext is a CUDA context
-type CUContext uintptr
+type CUContext struct{ ctx C.CUcontext }
 
-func (ctx CUContext) String() string { return fmt.Sprintf("0x%x", uintptr(ctx)) }
+func (ctx CUContext) String() string { return fmt.Sprintf("0x%x", uintptr(unsafe.Pointer(ctx.ctx))) }
 
-func makeContext(ctx C.CUcontext) CUContext {
-	return CUContext(uintptr(unsafe.Pointer(ctx)))
-}
+func makeContext(ctx C.CUcontext) CUContext { return CUContext{ctx} }
 
 // C returns the CUContext as its C version
-func (ctx CUContext) c() C.CUcontext { return C.CUcontext(unsafe.Pointer(uintptr(ctx))) }
+func (ctx CUContext) c() C.CUcontext { return ctx.ctx }
 
 func (d Device) MakeContext(flags ContextFlags) (CUContext, error) {
-	var ctx C.CUcontext
-	if err := result(C.cuCtxCreate(&ctx, C.uint(flags), C.CUdevice(d))); err != nil {
-		return 0, err
-	}
-	return makeContext(ctx), nil
+	var ctx CUContext
+	err := result(C.cuCtxCreate(&ctx.ctx, C.uint(flags), C.CUdevice(d)))
+	return ctx, err
 }
 
 // Lock ties the calling goroutine to an OS thread, then ties the CUDA context to the thread.
@@ -66,15 +62,13 @@ func (ctx CUContext) Unlock() error {
 	return nil
 }
 
-// DestroyContext destroys the context. It returns an error if it wasn't properly destroyed
+// Destroy destroys the context. It returns an error if it wasn't properly destroyed
 //
 // Wrapper over cuCtxDestroy: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1g27a365aebb0eb548166309f58a1e8b8e
-func DestroyContext(ctx *CUContext) error {
-	if err := result(C.cuCtxDestroy(C.CUcontext(unsafe.Pointer(uintptr(*ctx))))); err != nil {
-		return err
-	}
-	*ctx = 0
-	return nil
+func (ctx *CUContext) Destroy() error {
+	err := result(C.cuCtxDestroy(ctx.ctx))
+	*ctx = CUContext{}
+	return err
 }
 
 // RetainPrimaryCtx retains the primary context on the GPU, creating it if necessary, increasing its usage count.
@@ -87,9 +81,8 @@ func DestroyContext(ctx *CUContext) error {
 // The nvidia-smi tool can be used to set the compute mode for devices. Documentation for nvidia-smi can be obtained by passing a -h option to it.
 // Please note that the primary context always supports pinned allocations. Other flags can be specified by cuDevicePrimaryCtxSetFlags().
 func (d Device) RetainPrimaryCtx() (primaryContext CUContext, err error) {
-	var ctx C.CUcontext
-	if err = result(C.cuDevicePrimaryCtxRetain(&ctx, C.CUdevice(d))); err != nil {
+	if err = result(C.cuDevicePrimaryCtxRetain(&primaryContext.ctx, C.CUdevice(d))); err != nil {
 		return
 	}
-	return makeContext(ctx), nil
+	return primaryContext, nil
 }

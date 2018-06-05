@@ -46,7 +46,7 @@ func TestAttributes(t *testing.T) {
 		t.Errorf("Expected ComputeCapabilityMinor to be %v. Got %v instead", min, attrs[2])
 	}
 
-	DestroyContext(&ctx)
+	ctx.Destroy()
 }
 
 func TestLaunchAndSync(t *testing.T) {
@@ -101,8 +101,8 @@ func TestLaunchAndSync(t *testing.T) {
 		unsafe.Pointer(&size),
 	}
 
-	if err = fn.LaunchAndSync(1, 1, 1, len(a), 1, 1, 1, Stream(0), args); err != nil {
-		t.Error("Launch and Sync Failed: %v", err)
+	if err = fn.LaunchAndSync(1, 1, 1, len(a), 1, 1, 1, Stream{}, args); err != nil {
+		t.Errorf("Launch and Sync Failed: %v", err)
 	}
 
 	if err = MemcpyDtoH(unsafe.Pointer(&a[0]), memA, size); err != nil {
@@ -122,8 +122,8 @@ func TestLaunchAndSync(t *testing.T) {
 
 	MemFree(memA)
 	MemFree(memB)
-	Unload(mod)
-	DestroyContext(&ctx)
+	mod.Unload()
+	ctx.Destroy()
 }
 
 func TestAllocAndCopy(t *testing.T) {
@@ -168,5 +168,5 @@ func TestAllocAndCopy(t *testing.T) {
 	}
 
 	MemFree(mem)
-	DestroyContext(&ctx)
+	ctx.Destroy()
 }

@@ -175,7 +175,7 @@ func StreamPriorityRange() (leastPriority int, greatestPriority int, err error) 
 	return
 }
 
-func Unload(hmod Module) (err error) {
+func (hmod Module) Unload() (err error) {
 	Chmod := hmod.c()
 	return result(C.cuModuleUnload(Chmod))
 }
@@ -520,7 +520,7 @@ func (hArray Array) Descriptor() (pArrayDescriptor ArrayDesc, err error) {
 	return
 }
 
-func DestroyArray(hArray Array) (err error) {
+func (hArray Array) Destroy() (err error) {
 	ChArray := hArray.c()
 	return result(C.cuArrayDestroy(ChArray))
 }
