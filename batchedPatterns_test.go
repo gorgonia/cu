@@ -102,7 +102,7 @@ func TestLaunchAndSync(t *testing.T) {
 	}
 
 	if err = fn.LaunchAndSync(1, 1, 1, len(a), 1, 1, 1, Stream(0), args); err != nil {
-		t.Error("Launch and Sync Failed: %v", err)
+		t.Errorf("Launch and Sync Failed: %v", err)
 	}
 
 	if err = MemcpyDtoH(unsafe.Pointer(&a[0]), memA, size); err != nil {

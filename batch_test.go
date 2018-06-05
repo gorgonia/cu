@@ -274,7 +274,7 @@ func BenchmarkNoBatching(bench *testing.B) {
 			}
 
 			if err = fn.LaunchAndSync(100, 10, 1, 1000, 1, 1, 1, Stream(0), args); err != nil {
-				bench.Error("Launch and Sync Failed: %v", err)
+				bench.Errorf("Launch and Sync Failed: %v", err)
 			}
 
 			if err = MemcpyDtoH(unsafe.Pointer(&a[0]), memA, size); err != nil {
