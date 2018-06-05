@@ -28,7 +28,6 @@ type (
 	JITThreadsPerBlock struct{ Value uint }
 	// Overwrites the option value with the total wall clock time, in
 	// milliseconds, spent in the compiler and linker.
-	// TODO: DOESN'T WORK
 	JITWallTime struct{ Result float32 }
 
 	// Buffer in which to print any log messages that are informational in nature.
@@ -37,7 +36,7 @@ type (
 	JITErrorLogBuffer struct{ Buffer []byte }
 	// Level of optimizations to apply to generated code (0 - 4)
 	JITOptimizationLevel struct{ Value uint }
-	// No option value required. Determines the target based on the current attached context (default)
+	// Determines the target based on the current attached context (default)
 	JITTargetFromContext struct{}
 	// Target is chosen based on supplied Value
 	JITTarget struct{ Value JITTargetOption }
