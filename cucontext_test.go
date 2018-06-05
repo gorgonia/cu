@@ -17,6 +17,12 @@ func TestCUContext(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	maj, _, err := d.ComputeCapability()
+	if err != nil {
+		t.Error(err)
+	}
+
 	version, err := ctx.APIVersion()
 	if err != nil {
 		t.Error(err)
@@ -48,32 +54,33 @@ func TestCUContext(t *testing.T) {
 		t.Error(err)
 	}
 
-	// shared conf
-	if err := SetSharedMemConfig(EightByteBankSize); err != nil {
-		t.Fatal(err)
-	}
+	if maj >= 3 {
+		// shared conf
+		if err := SetSharedMemConfig(EightByteBankSize); err != nil {
+			t.Fatal(err)
+		}
 
-	sharedConf, err := SharedMemConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
+		sharedConf, err := SharedMemConfig()
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	if sharedConf != EightByteBankSize {
-		t.Error("Expected sharedMemConf to be EightByteBankSize")
-	}
+		if sharedConf != EightByteBankSize {
+			t.Error("Expected sharedMemConf to be EightByteBankSize")
+		}
 
-	// cache config
-	if err = SetCurrentCacheConfig(PreferEqual); err != nil {
-		t.Fatal(err)
-	}
+		// cache config
+		if err = SetCurrentCacheConfig(PreferEqual); err != nil {
+			t.Fatal(err)
+		}
 
-	cacheconf, err := CurrentCacheConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if cacheconf != PreferEqual {
-		t.Error("expected cache config to be PreferEqual")
+		cacheconf, err := CurrentCacheConfig()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cacheconf != PreferEqual {
+			t.Error("expected cache config to be PreferEqual")
+		}
 	}
 
 	// push pop

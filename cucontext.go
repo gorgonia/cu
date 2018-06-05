@@ -66,7 +66,9 @@ func (ctx CUContext) Unlock() error {
 //
 // Wrapper over cuCtxDestroy: http://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1g27a365aebb0eb548166309f58a1e8b8e
 func (ctx *CUContext) Destroy() error {
-	return result(C.cuCtxDestroy(ctx.ctx))
+	err := result(C.cuCtxDestroy(ctx.ctx))
+	*ctx = CUContext{}
+	return err
 }
 
 // RetainPrimaryCtx retains the primary context on the GPU, creating it if necessary, increasing its usage count.
