@@ -6,14 +6,16 @@ import "unsafe"
 
 // Array is the pointer to a CUDA array. The name is a bit of a misnomer,
 // as it would lead one to imply that it's rangeable. It's not.
-type Array uintptr
+type Array struct {
+	arr *C.CUarray
+}
 
 func goArray(arr *C.CUarray) Array {
-	return Array(uintptr(unsafe.Pointer(arr)))
+	return Array{arr}
 }
 
 func (arr Array) c() C.CUarray {
-	return *(*C.CUarray)(unsafe.Pointer(uintptr(arr)))
+	return *arr.arr
 }
 
 // Array3Desc is the descriptor for CUDA 3D arrays, which is used to determine what to allocate.
@@ -269,7 +271,7 @@ func MakeArray(pAllocateArray ArrayDesc) (pHandle Array, err error) {
 	var CpHandle C.CUarray
 	CpAllocateArray := pAllocateArray.c()
 	err = result(C.cuArrayCreate(&CpHandle, CpAllocateArray))
-	pHandle = goArray(&CpHandle)
+	pHandle = Array{&CpHandle}
 	return
 }
 
@@ -277,6 +279,6 @@ func Make3DArray(pAllocateArray Array3Desc) (pHandle Array, err error) {
 	var CpHandle C.CUarray
 	CpAllocateArray := pAllocateArray.c()
 	err = result(C.cuArray3DCreate(&CpHandle, CpAllocateArray))
-	pHandle = goArray(&CpHandle)
+	pHandle = Array{&CpHandle}
 	return
 }
