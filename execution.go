@@ -37,7 +37,7 @@ func (fn Function) Launch(gridDimX, gridDimY, gridDimZ int, blockDimX, blockDimY
 		C.uint(sharedMemBytes),
 		stream.c(),
 		(*unsafe.Pointer)(argp),
-		(*unsafe.Pointer)(unsafe.Pointer(uintptr(0)))))
+		(*unsafe.Pointer)(nil)))
 	return err
 }
 
@@ -69,7 +69,7 @@ func (ctx *Ctx) LaunchKernel(fn Function, gridDimX, gridDimY, gridDimZ int, bloc
 			C.uint(sharedMemBytes),
 			stream.c(),
 			(*unsafe.Pointer)(argp),
-			(*unsafe.Pointer)(unsafe.Pointer(uintptr(0)))))
+			(*unsafe.Pointer)(nil)))
 	}
 
 	ctx.err = ctx.Do(f)

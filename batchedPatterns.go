@@ -55,7 +55,7 @@ func (fn Function) LaunchAndSync(gridDimX, gridDimY, gridDimZ, blockDimX, blockD
 		C.uint(sharedMemBytes),
 		stream.c(),
 		(*unsafe.Pointer)(argp),
-		(*unsafe.Pointer)(unsafe.Pointer(uintptr(0)))))
+		(*unsafe.Pointer)(nil)))
 	return err
 }
 
