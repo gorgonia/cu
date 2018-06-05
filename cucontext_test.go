@@ -110,11 +110,11 @@ func TestCUContext(t *testing.T) {
 	}
 
 	// finally we destroy the context
-	if err = DestroyContext(&ctx); err != nil {
+	if err = ctx.Destroy(); err != nil {
 		t.Error(err)
 	}
 
-	if ctx != 0 {
+	if (ctx != CUContext{}) {
 		t.Error("expected ctx to be set to 0")
 	}
 }

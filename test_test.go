@@ -84,9 +84,8 @@ func testSetup() (dev Device, ctx CUContext, err error) {
 }
 
 func testTeardown(ctx CUContext, mod Module) {
-	if mod != 0 {
-		Unload(mod)
+	if (mod != Module{}) {
+		mod.Unload()
 	}
-
-	DestroyContext(&ctx)
+	ctx.Destroy()
 }

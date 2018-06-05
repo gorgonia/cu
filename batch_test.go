@@ -94,8 +94,8 @@ loop:
 		}
 	}
 
-	Unload(mod)
-	DestroyContext(&cuctx)
+	mod.Unload()
+	cuctx.Destroy()
 }
 
 func TestLargeBatch(t *testing.T) {
@@ -211,8 +211,8 @@ loop:
 	if afterFree != beforeFree {
 		t.Errorf("Before: Freemem: %v. After %v | Diff %v", beforeFree, afterFree, (beforeFree-afterFree)/1024)
 	}
-	Unload(mod)
-	DestroyContext(&cuctx)
+	mod.Unload()
+	cuctx.Destroy()
 }
 
 func BenchmarkNoBatching(bench *testing.B) {
@@ -288,9 +288,8 @@ func BenchmarkNoBatching(bench *testing.B) {
 	}
 	MemFree(memA)
 	MemFree(memB)
-	Unload(mod)
-	DestroyContext(&ctx)
-
+	mod.Unload()
+	ctx.Destroy()
 }
 
 func BenchmarkBatching(bench *testing.B) {
@@ -364,7 +363,6 @@ func BenchmarkBatching(bench *testing.B) {
 
 	MemFree(memA)
 	MemFree(memB)
-	Unload(mod)
-	DestroyContext(&cuctx)
-
+	mod.Unload()
+	cuctx.Destroy()
 }

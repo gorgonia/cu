@@ -12,7 +12,7 @@ func TestModule(t *testing.T) {
 		return
 	}
 	ctx, _ := Device(0).MakeContext(SchedAuto)
-	defer DestroyContext(&ctx)
+	defer ctx.Destroy()
 
 	var mod Module
 	var f Function

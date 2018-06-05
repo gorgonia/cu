@@ -46,7 +46,7 @@ func TestAttributes(t *testing.T) {
 		t.Errorf("Expected ComputeCapabilityMinor to be %v. Got %v instead", min, attrs[2])
 	}
 
-	DestroyContext(&ctx)
+	ctx.Destroy()
 }
 
 func TestLaunchAndSync(t *testing.T) {
@@ -122,8 +122,8 @@ func TestLaunchAndSync(t *testing.T) {
 
 	MemFree(memA)
 	MemFree(memB)
-	Unload(mod)
-	DestroyContext(&ctx)
+	mod.Unload()
+	ctx.Destroy()
 }
 
 func TestAllocAndCopy(t *testing.T) {
@@ -168,5 +168,5 @@ func TestAllocAndCopy(t *testing.T) {
 	}
 
 	MemFree(mem)
-	DestroyContext(&ctx)
+	ctx.Destroy()
 }

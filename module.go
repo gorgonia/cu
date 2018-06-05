@@ -59,11 +59,6 @@ func (m Module) Global(name string) (DevicePtr, int64, error) {
 	return DevicePtr(d), int64(size), nil
 }
 
-// Unload unloads the module
-func (m Module) Unload() error {
-	return result(C.cuModuleUnload(m.mod))
-}
-
 func (ctx *Ctx) Load(name string) (m Module, err error) {
 	var mod C.CUmodule
 	f := func() error { return result(C.cuModuleLoad(&mod, C.CString(name))) }
