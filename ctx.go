@@ -28,7 +28,7 @@ func NewContext(d Device, flags ContextFlags) *Ctx {
 	if err != nil {
 		panic(err)
 	}
-	ctx := newContext(makeContext(cctx))
+	ctx := newContext(CUContext{cctx})
 	ctx.device = d
 	ctx.flags = flags
 
@@ -48,7 +48,7 @@ func NewManuallyManagedContext(d Device, flags ContextFlags) *Ctx {
 	if err != nil {
 		panic(err)
 	}
-	ctx := newContext(makeContext(cctx))
+	ctx := newContext(CUContext{cctx})
 	ctx.device = d
 	ctx.flags = flags
 
@@ -150,7 +150,7 @@ func (ctx *Ctx) Run(errChan chan error) error {
 }
 
 func finalizeCtx(ctx *Ctx) {
-	if ctx.CUContext == 0 {
+	if (ctx.CUContext == CUContext{}) {
 		close(ctx.errChan)
 		close(ctx.work)
 		return

@@ -44,9 +44,8 @@ func (fn Function) LaunchAndSync(gridDimX, gridDimY, gridDimZ, blockDimX, blockD
 		*((*uint64)(offset(argv, i))) = *((*uint64)(kernelParams[i])) // argv[i] = *kernelParams[i]
 	}
 
-	f := C.CUfunction(unsafe.Pointer(uintptr(fn)))
 	err := result(C.cuLaunchAndSync(
-		f,
+		fn.fn,
 		C.uint(gridDimX),
 		C.uint(gridDimY),
 		C.uint(gridDimZ),

@@ -5,15 +5,11 @@ import "C"
 import "unsafe"
 
 // Function represents a CUDA function
-type Function uintptr
-
-func makeFunction(fn C.CUfunction) Function {
-	return Function(uintptr(unsafe.Pointer(fn)))
+type Function struct {
+	fn C.CUfunction
 }
 
-func (fn Function) c() C.CUfunction {
-	return C.CUfunction(unsafe.Pointer(uintptr(fn)))
-}
+func (fn Function) c() C.CUfunction { return fn.fn }
 
 const pointerSize = 8 // sorry, 64 bits only.
 
@@ -30,9 +26,8 @@ func (fn Function) LaunchKernel(gridDimX, gridDimY, gridDimZ int, blockDimX, blo
 		*((*uint64)(offset(argv, i))) = *((*uint64)(kernelParams[i])) // argv[i] = *kernelParams[i]
 	}
 
-	f := fn.c()
 	err := result(C.cuLaunchKernel(
-		f,
+		fn.fn,
 		C.uint(gridDimX),
 		C.uint(gridDimY),
 		C.uint(gridDimZ),
@@ -62,10 +57,9 @@ func (ctx *Ctx) LaunchKernel(fn Function, gridDimX, gridDimY, gridDimZ int, bloc
 		*((*uint64)(offset(argv, i))) = *((*uint64)(kernelParams[i])) // argv[i] = *kernelParams[i]
 	}
 
-	function := fn.c()
 	f := func() error {
 		return result(C.cuLaunchKernel(
-			function,
+			fn.fn,
 			C.uint(gridDimX),
 			C.uint(gridDimY),
 			C.uint(gridDimZ),

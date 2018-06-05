@@ -8,18 +8,14 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Module represents a CUDA Module, which is a pointer to a CUmod_st struct
-type Module uintptr
-
-func makeModule(mod C.CUmodule) Module {
-	return Module(uintptr(unsafe.Pointer(mod)))
+// Module represents a CUDA Module
+type Module struct {
+	mod C.CUmodule
 }
 
-func (m Module) c() C.CUmodule {
-	return C.CUmodule(unsafe.Pointer(uintptr(m)))
-}
+func (m Module) c() C.CUmodule { return m.mod }
 
-// Load loaads a module into the current context.
+// Load loads a module into the current context.
 // The CUDA driver API does not attempt to lazily allocate the resources needed by a module;
 // if the memory for functions and data (constant and global) needed by the module cannot be allocated, `Load()` fails.
 //
@@ -27,9 +23,9 @@ func (m Module) c() C.CUmodule {
 func Load(name string) (Module, error) {
 	var mod C.CUmodule
 	if err := result(C.cuModuleLoad(&mod, C.CString(name))); err != nil {
-		return 0, err
+		return Module{}, err
 	}
-	return makeModule(mod), nil
+	return Module{mod}, nil
 }
 
 // LoadData loads a module from a input string.
@@ -37,32 +33,35 @@ func LoadData(image string) (Module, error) {
 	var mod C.CUmodule
 	s := C.CString(image) // void* == unsafe.Pointer
 	if err := result(C.cuModuleLoadData(&mod, unsafe.Pointer(s))); err != nil {
-		return 0, err
+		return Module{}, err
 	}
-	return makeModule(mod), nil
+	return Module{mod}, nil
 }
 
 // Function returns a pointer to the function in the module by the name. If it's not found, the error NotFound is returned
 func (m Module) Function(name string) (Function, error) {
 	var fn C.CUfunction
-	mod := C.CUmodule(unsafe.Pointer(uintptr(m)))
 	str := C.CString(name)
-	if err := result(C.cuModuleGetFunction(&fn, mod, str)); err != nil {
-		return 0, err
+	if err := result(C.cuModuleGetFunction(&fn, m.mod, str)); err != nil {
+		return Function{}, err
 	}
-	return makeFunction(fn), nil
+	return Function{fn}, nil
 }
 
 // Global returns a global pointer as defined in a module. It returns a pointer to the memory in the device.
 func (m Module) Global(name string) (DevicePtr, int64, error) {
 	var d C.CUdeviceptr
 	var size C.size_t
-	mod := m.c()
 	str := C.CString(name)
-	if err := result(C.cuModuleGetGlobal(&d, &size, mod, str)); err != nil {
+	if err := result(C.cuModuleGetGlobal(&d, &size, m.mod, str)); err != nil {
 		return 0, 0, err
 	}
 	return DevicePtr(d), int64(size), nil
+}
+
+// Unload unloads the module
+func (m Module) Unload() error {
+	return result(C.cuModuleUnload(m.mod))
 }
 
 func (ctx *Ctx) Load(name string) (m Module, err error) {
@@ -72,20 +71,19 @@ func (ctx *Ctx) Load(name string) (m Module, err error) {
 		err = errors.Wrap(err, "LoadModule")
 		return
 	}
-	m = makeModule(mod)
+	m = Module{mod}
 	return
 }
 
 func (ctx *Ctx) ModuleFunction(m Module, name string) (function Function, err error) {
 	var fn C.CUfunction
-	mod := m.c()
 	str := C.CString(name)
-	f := func() error { return result(C.cuModuleGetFunction(&fn, mod, str)) }
+	f := func() error { return result(C.cuModuleGetFunction(&fn, m.mod, str)) }
 	if err = ctx.Do(f); err != nil {
 		err = errors.Wrap(err, "ModuleFunction")
 		return
 	}
-	function = makeFunction(fn)
+	function = Function{fn}
 	return
 }
 
@@ -93,9 +91,8 @@ func (ctx *Ctx) ModuleGlobal(m Module, name string) (dptr DevicePtr, size int64,
 	var d C.CUdeviceptr
 	var s C.size_t
 
-	mod := m.c()
 	str := C.CString(name)
-	f := func() error { return result(C.cuModuleGetGlobal(&d, &s, mod, str)) }
+	f := func() error { return result(C.cuModuleGetGlobal(&d, &s, m.mod, str)) }
 	if err = ctx.Do(f); err != nil {
 		err = errors.Wrap(err, "ModuleGlobal")
 		return

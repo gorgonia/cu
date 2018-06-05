@@ -2,16 +2,14 @@ package cu
 
 // #include <cuda.h>
 import "C"
-import "unsafe"
 
 // MaxActiveBlocksPerMultiProcessor returns the number of the maximum active blocks per streaming multiprocessor.
 func (fn Function) MaxActiveBlocksPerMultiProcessor(blockSize int, dynamicSmemSize int64) (int, error) {
 	bs := C.int(blockSize)
 	dss := C.size_t(dynamicSmemSize)
-	f := C.CUfunction(unsafe.Pointer(uintptr(fn)))
 
 	var numBlocks C.int
-	if err := result(C.cuOccupancyMaxActiveBlocksPerMultiprocessor(&numBlocks, f, bs, dss)); err != nil {
+	if err := result(C.cuOccupancyMaxActiveBlocksPerMultiprocessor(&numBlocks, fn.fn, bs, dss)); err != nil {
 		return 0, err
 	}
 	return int(numBlocks), nil
@@ -22,11 +20,10 @@ func (fn Function) MaxActiveBlocksPerMultiProcessor(blockSize int, dynamicSmemSi
 func (fn Function) MaxActiveBlocksPerMultiProcessorWithFlags(blockSize int, dynamicSmemSize int64, flags OccupancyFlags) (int, error) {
 	bs := C.int(blockSize)
 	dss := C.size_t(dynamicSmemSize)
-	f := C.CUfunction(unsafe.Pointer(uintptr(fn)))
 	of := C.uint(flags)
 
 	var numBlocks C.int
-	if err := result(C.cuOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(&numBlocks, f, bs, dss, of)); err != nil {
+	if err := result(C.cuOccupancyMaxActiveBlocksPerMultiprocessorWithFlags(&numBlocks, fn.fn, bs, dss, of)); err != nil {
 		return 0, err
 	}
 	return int(numBlocks), nil

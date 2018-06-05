@@ -2,10 +2,11 @@ package cu
 
 // #include <cuda.h>
 import "C"
-import "unsafe"
 
-type SurfRef uintptr
+type SurfRef struct {
+	ref C.CUsurfref
+}
 
 func (s SurfRef) c() C.CUsurfref {
-	return C.CUsurfref(unsafe.Pointer(uintptr(s)))
+	return s.ref
 }

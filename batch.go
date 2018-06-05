@@ -228,7 +228,7 @@ func (ctx *BatchedContext) DoWork() {
 		addQueueLength(len(ctx.queue))
 		addBlockingCallers()
 
-		cctx := C.CUcontext(unsafe.Pointer(uintptr(ctx.CUDAContext())))
+		cctx := ctx.CUDAContext().ctx
 		ctx.results = ctx.results[:cap(ctx.results)]                         // make sure of the maximum availability for ctx.results
 		C.process(cctx, &ctx.fns[0], &ctx.results[0], C.int(len(ctx.queue))) // process the queue
 		ctx.results = ctx.results[:len(ctx.queue)]                           // then  truncate it to the len of queue for reporting purposes
@@ -316,7 +316,7 @@ func (ctx *BatchedContext) FirstError() error {
 func (ctx *BatchedContext) SetCurrent() {
 	fn := &fnargs{
 		fn:  C.fn_setCurrent,
-		ctx: C.CUcontext(unsafe.Pointer(uintptr(ctx.CUDAContext()))),
+		ctx: ctx.CUDAContext().ctx,
 	}
 	c := call{fn, false}
 	ctx.enqueue(c)
@@ -403,10 +403,9 @@ func (ctx *BatchedContext) LaunchKernel(function Function, gridDimX, gridDimY, g
 	// ctx.frees = append(ctx.frees, argv)
 	// ctx.frees = append(ctx.frees, argp)
 
-	f := C.CUfunction(unsafe.Pointer(uintptr(function)))
 	fn := &fnargs{
 		fn:             C.fn_launchKernel,
-		f:              f,
+		f:              function.fn,
 		gridDimX:       C.uint(gridDimX),
 		gridDimY:       C.uint(gridDimY),
 		gridDimZ:       C.uint(gridDimZ),
