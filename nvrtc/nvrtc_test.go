@@ -8,19 +8,19 @@ import (
 
 func TestCompile(t *testing.T) {
 	program, err := nvrtc.CreateProgram(`
-		void add(float *A, float *B, int N) {
-			int block = blockIdx.x + blockIdx.y * gridDim.x + gridDim.x * gridDim.y * blockIdx.z;
-			int index = block * (blockDim.x * blockDim.y * blockDim.z) + (threadIdx.z * (blockDim.x * blockDim.y)) + (threadIdx.y * blockDim.x) + threadIdx.x;
-			if(index >= size) return;
-
-			A[index] = A[index] + B[index];
+		extern "C" __global__
+		void saxpy(float a, float *x, float *y, float *out, size_t n) {
+			size_t tid = blockIdx.x * blockDim.x + threadIdx.x;
+			if (tid < n) {
+				out[tid] = a * x[tid] + y[tid];
+			}
 		}
-	`, `add.cu`)
+	`, `saxpy.cu`)
 	if err != nil {
 		t.Fatalf("failed to create program: %v", err)
 	}
 
-	err = program.AddNameExpression(`add`)
+	err = program.AddNameExpression(`saxpy`)
 	if err != nil {
 		t.Fatalf("failed to AddNameExpression: %v", err)
 	}
@@ -30,7 +30,7 @@ func TestCompile(t *testing.T) {
 		t.Fatalf("failed to Compile: %v", err)
 	}
 
-	loweredName, err := program.GetLoweredName(`add`)
+	loweredName, err := program.GetLoweredName(`saxpy`)
 	if err != nil {
 		t.Fatalf("failed to GetLoweredName: %v", err)
 	}
