@@ -10,7 +10,7 @@ const handwrittenRaw = `// Do not manually edit this file. It was created by the
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package cublas
+package cublas  // import "gorgonia.org/cu/blas"
 
 /*
 #cgo CFLAGS: -g -O3

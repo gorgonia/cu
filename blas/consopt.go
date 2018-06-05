@@ -1,6 +1,6 @@
 package cublas
 
-import "github.com/chewxy/cu"
+import "gorgonia.org/cu"
 
 type ConsOpt func(impl *Standard)
 

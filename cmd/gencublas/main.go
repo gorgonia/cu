@@ -16,9 +16,9 @@ import (
 	"os"
 	"path"
 	"strings"
-	"text/template"
 
 	"github.com/cznic/cc"
+	bg "github.com/gorgonia/bindgen"
 )
 
 var (
@@ -51,93 +51,17 @@ const (
 	separateFuncs = false
 )
 
-var skip = map[string]bool{
-	"cublasErrprn":    true,
-	"cublasSrotg":     true,
-	"cublasSrotmg":    true,
-	"cublasSrotm":     true,
-	"cublasDrotg":     true,
-	"cublasDrotmg":    true,
-	"cublasDrotm":     true,
-	"cublasCrotg":     true,
-	"cublasZrotg":     true,
-	"cublasCdotu_sub": true,
-	"cublasCdotc_sub": true,
-	"cublasZdotu_sub": true,
-	"cublasZdotc_sub": true,
-
-	// ATLAS extensions.
-	"cublasCsrot": true,
-	"cublasZdrot": true,
-
-	// trmm
-	"cublasStrmm": true,
-	"cublasDtrmm": true,
-	"cublasZtrmm": true,
-	"cublasCtrmm": true,
-}
-
-var cToGoType = map[string]string{
-	"int":    "int",
-	"float":  "float32",
-	"double": "float64",
-}
-
-var blasEnums = map[string]*template.Template{
-	"CUBLAS_ORDER":     template.Must(template.New("order").Parse("order")),
-	"CUBLAS_DIAG":      template.Must(template.New("diag").Parse("blas.Diag")),
-	"CUBLAS_TRANSPOSE": template.Must(template.New("trans").Parse("blas.Transpose")),
-	"CUBLAS_UPLO":      template.Must(template.New("uplo").Parse("blas.Uplo")),
-	"CUBLAS_SIDE":      template.Must(template.New("side").Parse("blas.Side")),
-}
-
-var cgoEnums = map[string]*template.Template{
-	"CUBLAS_ORDER":     template.Must(template.New("order").Parse("C.enum_CBLAS_ORDER(rowMajor)")),
-	"CUBLAS_DIAG":      template.Must(template.New("diag").Parse("diag2cublasDiag({{.}})")),
-	"CUBLAS_TRANSPOSE": template.Must(template.New("trans").Parse("trans2cublasTrans({{.}})")),
-	"CUBLAS_UPLO":      template.Must(template.New("uplo").Parse("uplo2cublasUplo({{.}})")),
-	"CUBLAS_SIDE":      template.Must(template.New("side").Parse("side2cublasSide({{.}})")),
-}
-
-var (
-	complex64Type = map[TypeKey]*template.Template{
-		{Kind: cc.FloatComplex, IsPointer: true}: template.Must(template.New("void*").Parse(
-			`{{if eq . "alpha" "beta"}}complex64{{else}}[]complex64{{end}}`,
-		))}
-
-	complex128Type = map[TypeKey]*template.Template{
-		{Kind: cc.DoubleComplex, IsPointer: true}: template.Must(template.New("void*").Parse(
-			`{{if eq . "alpha" "beta"}}complex128{{else}}[]complex128{{end}}`,
-		))}
-)
-
-var names = map[string]string{
-	"uplo":   "ul",
-	"trans":  "t",
-	"transA": "tA",
-	"transB": "tB",
-	"side":   "s",
-	"diag":   "d",
-}
-
-func shorten(n string) string {
-	s, ok := names[n]
-	if ok {
-		return s
-	}
-	return n
-}
-
-func cblasTocublas(name string) string {
-	retVal := strings.TrimPrefix(name, prefix)
-	return fmt.Sprintf("cublas%s", strings.Title(retVal))
-}
-
 func main() {
-	decls, err := Declarations(header)
+	t, err := bg.Parse(bg.Model(), header)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	decls, err := functions(t)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	var docs map[string]map[string][]*ast.Comment
 	if cribDocs {
 		docs, err = DocComments(documentation)
@@ -152,8 +76,9 @@ func main() {
 	}
 
 	var n int
-	var writtenDecl []Declaration
-	for _, d := range decls {
+	var writtenDecl []*bg.CSignature
+	for _, decl := range decls {
+		d := decl.(*bg.CSignature)
 		if !strings.HasPrefix(d.Name, prefix) || skip[d.Name] {
 			continue
 		}
@@ -199,7 +124,7 @@ func main() {
 
 }
 
-func goSignature(buf *bytes.Buffer, d Declaration, docs map[string][]*ast.Comment) {
+func goSignature(buf *bytes.Buffer, d *bg.CSignature, docs map[string][]*ast.Comment) {
 	blasName := strings.TrimPrefix(d.Name, prefix)
 	goName := UpperCaseFirst(blasName)
 
@@ -217,7 +142,7 @@ func goSignature(buf *bytes.Buffer, d Declaration, docs map[string][]*ast.Commen
 
 	parameters := d.Parameters()
 
-	var voidPtrType map[TypeKey]*template.Template
+	var voidPtrType map[bg.TypeKey]bg.Template
 	for _, p := range parameters {
 		if p.Kind() == cc.Ptr && p.Elem().Kind() == cc.FloatComplex {
 			switch {
@@ -303,7 +228,7 @@ func goSignature(buf *bytes.Buffer, d Declaration, docs map[string][]*ast.Commen
 
 }
 
-func parameterChecks(buf *bytes.Buffer, d Declaration, rules []func(*bytes.Buffer, Declaration, Parameter) bool) {
+func parameterChecks(buf *bytes.Buffer, d *bg.CSignature, rules []func(*bytes.Buffer, *bg.CSignature, bg.Parameter) bool) {
 	done := make(map[int]bool)
 	for _, p := range d.Parameters() {
 		for i, r := range rules {
@@ -315,7 +240,7 @@ func parameterChecks(buf *bytes.Buffer, d Declaration, rules []func(*bytes.Buffe
 	}
 }
 
-func cgoCall(buf *bytes.Buffer, d Declaration) {
+func cgoCall(buf *bytes.Buffer, d *bg.CSignature) {
 	// if there is a "result" param, lift it out of the call
 	var hasRet bool
 	for _, p := range d.Parameters() {
@@ -386,7 +311,7 @@ func cgoCall(buf *bytes.Buffer, d Declaration) {
 
 }
 
-var parameterCheckRules = []func(*bytes.Buffer, Declaration, Parameter) bool{
+var parameterCheckRules = []func(*bytes.Buffer, *bg.CSignature, bg.Parameter) bool{
 	trans,
 	uplo,
 	diag,
@@ -408,7 +333,7 @@ var parameterCheckRules = []func(*bytes.Buffer, Declaration, Parameter) bool{
 	noWork,
 }
 
-func amaxShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
+func amaxShape(buf *bytes.Buffer, d *bg.CSignature, p bg.Parameter) bool {
 	switch d.Name {
 	case "cublasIsamax", "cublasIdamax", "cublasIcamax", "cublasIzamax", "cublasIsamin", "cublasIdamin", "cublasIcamin", "cublasIzamin":
 	default:
@@ -429,7 +354,7 @@ func amaxShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
 	return true
 }
 
-func apShape(buf *bytes.Buffer, _ Declaration, p Parameter) bool {
+func apShape(buf *bytes.Buffer, _ *bg.CSignature, p bg.Parameter) bool {
 	n := LowerCaseFirst(p.Name())
 	if n != "ap" {
 		return false
@@ -441,7 +366,7 @@ func apShape(buf *bytes.Buffer, _ Declaration, p Parameter) bool {
 	return true
 }
 
-func diag(buf *bytes.Buffer, _ Declaration, p Parameter) bool {
+func diag(buf *bytes.Buffer, _ *bg.CSignature, p bg.Parameter) bool {
 	if p.Name() != "Diag" {
 		return false
 	}
@@ -452,7 +377,7 @@ func diag(buf *bytes.Buffer, _ Declaration, p Parameter) bool {
 	return true
 }
 
-func gemmShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
+func gemmShape(buf *bytes.Buffer, d *bg.CSignature, p bg.Parameter) bool {
 	switch d.Name {
 	case "cublasSgemm", "cublasDgemm", "cublasCgemm", "cublasZgemm":
 	default:
@@ -487,7 +412,7 @@ func gemmShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
 	return true
 }
 
-func mvShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
+func mvShape(buf *bytes.Buffer, d *bg.CSignature, p bg.Parameter) bool {
 	switch d.Name {
 	case "cublasSgbmv", "cublasDgbmv", "cublasCgbmv", "cublasZgbmv",
 		"cublasSgemv", "cublasDgemv", "cublasCgemv", "cublasZgemv":
@@ -515,7 +440,7 @@ func mvShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
 	return true
 }
 
-func noWork(buf *bytes.Buffer, d Declaration, p Parameter) bool {
+func noWork(buf *bytes.Buffer, d *bg.CSignature, p bg.Parameter) bool {
 	var hasN, hasLda, hasLdb bool
 	for _, p := range d.Parameters() {
 		switch shorten(LowerCaseFirst(p.Name())) {
@@ -549,7 +474,7 @@ func noWork(buf *bytes.Buffer, d Declaration, p Parameter) bool {
 	return true
 }
 
-func nrmSumShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
+func nrmSumShape(buf *bytes.Buffer, d *bg.CSignature, p bg.Parameter) bool {
 	switch d.Name {
 	case "cublasSnrm2", "cublasDnrm2", "cublasScnrm2", "cublasDznrm2",
 		"cublasSasum", "cublasDasum", "cublasScasum", "cublasDzasum":
@@ -571,7 +496,7 @@ func nrmSumShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
 	return true
 }
 
-func rkShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
+func rkShape(buf *bytes.Buffer, d *bg.CSignature, p bg.Parameter) bool {
 	switch d.Name {
 	case "cublasSsyrk", "cublasDsyrk", "cublasCsyrk", "cublasZsyrk",
 		"cublasSsyr2k", "cublasDsyr2k", "cublasCsyr2k", "cublasZsyr2k",
@@ -616,7 +541,7 @@ func rkShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
 	return true
 }
 
-func scalShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
+func scalShape(buf *bytes.Buffer, d *bg.CSignature, p bg.Parameter) bool {
 	switch d.Name {
 	case "cublasSscal", "cublasDscal", "cublasCscal", "cublasZscal", "cublasCsscal":
 	default:
@@ -637,7 +562,7 @@ func scalShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
 	return true
 }
 
-func shape(buf *bytes.Buffer, _ Declaration, p Parameter) bool {
+func shape(buf *bytes.Buffer, _ *bg.CSignature, p bg.Parameter) bool {
 	switch n := LowerCaseFirst(p.Name()); n {
 	case "m", "n", "k", "kL", "kU":
 		fmt.Fprintf(buf, `	if %[1]s < 0 {
@@ -649,7 +574,7 @@ func shape(buf *bytes.Buffer, _ Declaration, p Parameter) bool {
 	return false
 }
 
-func side(buf *bytes.Buffer, _ Declaration, p Parameter) bool {
+func side(buf *bytes.Buffer, _ *bg.CSignature, p bg.Parameter) bool {
 	if p.Name() != "Side" {
 		return false
 	}
@@ -660,7 +585,7 @@ func side(buf *bytes.Buffer, _ Declaration, p Parameter) bool {
 	return true
 }
 
-func sidedShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
+func sidedShape(buf *bytes.Buffer, d *bg.CSignature, p bg.Parameter) bool {
 	var hasS, hasA, hasB, hasC bool
 	for _, p := range d.Parameters() {
 		switch shorten(LowerCaseFirst(p.Name())) {
@@ -709,7 +634,7 @@ func sidedShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
 	return true
 }
 
-func trans(buf *bytes.Buffer, d Declaration, p Parameter) bool {
+func trans(buf *bytes.Buffer, d *bg.CSignature, p bg.Parameter) bool {
 	switch n := shorten(LowerCaseFirst(p.Name())); n {
 	case "t", "tA", "tB":
 		switch {
@@ -733,7 +658,7 @@ func trans(buf *bytes.Buffer, d Declaration, p Parameter) bool {
 	return false
 }
 
-func uplo(buf *bytes.Buffer, _ Declaration, p Parameter) bool {
+func uplo(buf *bytes.Buffer, _ *bg.CSignature, p bg.Parameter) bool {
 	if p.Name() != "Uplo" {
 		return false
 	}
@@ -744,7 +669,7 @@ func uplo(buf *bytes.Buffer, _ Declaration, p Parameter) bool {
 	return true
 }
 
-func vectorShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
+func vectorShape(buf *bytes.Buffer, d *bg.CSignature, p bg.Parameter) bool {
 	switch d.Name {
 	case "cublasSgbmv", "cublasDgbmv", "cublasCgbmv", "cublasZgbmv",
 		"cublasSgemv", "cublasDgemv", "cublasCgemv", "cublasZgemv",
@@ -797,7 +722,7 @@ func vectorShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
 	return true
 }
 
-func zeroInc(buf *bytes.Buffer, _ Declaration, p Parameter) bool {
+func zeroInc(buf *bytes.Buffer, _ *bg.CSignature, p bg.Parameter) bool {
 	switch n := LowerCaseFirst(p.Name()); n {
 	case "incX":
 		fmt.Fprintf(buf, `	if incX == 0 {
@@ -814,7 +739,7 @@ func zeroInc(buf *bytes.Buffer, _ Declaration, p Parameter) bool {
 	return false
 }
 
-func othersShape(buf *bytes.Buffer, d Declaration, p Parameter) bool {
+func othersShape(buf *bytes.Buffer, d *bg.CSignature, p bg.Parameter) bool {
 	switch d.Name {
 	case "cublasSgemm", "cublasDgemm", "cublasCgemm", "cublasZgemm",
 		"cublasSsyrk", "cublasDsyrk", "cublasCsyrk", "cublasZsyrk",

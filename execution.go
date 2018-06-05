@@ -5,20 +5,16 @@ import "C"
 import "unsafe"
 
 // Function represents a CUDA function
-type Function uintptr
-
-func makeFunction(fn C.CUfunction) Function {
-	return Function(uintptr(unsafe.Pointer(fn)))
+type Function struct {
+	fn C.CUfunction
 }
 
-func (fn Function) c() C.CUfunction {
-	return C.CUfunction(unsafe.Pointer(uintptr(fn)))
-}
+func (fn Function) c() C.CUfunction { return fn.fn }
 
 const pointerSize = 8 // sorry, 64 bits only.
 
-// LaunchKernel launches a CUDA function
-func (fn Function) LaunchKernel(gridDimX, gridDimY, gridDimZ int, blockDimX, blockDimY, blockDimZ int, sharedMemBytes int, stream Stream, kernelParams []unsafe.Pointer) error {
+// Launch launches a CUDA function
+func (fn Function) Launch(gridDimX, gridDimY, gridDimZ int, blockDimX, blockDimY, blockDimZ int, sharedMemBytes int, stream Stream, kernelParams []unsafe.Pointer) error {
 	// Since Go 1.6, a cgo argument cannot have a Go pointer to Go pointer,
 	// so we copy the argument values go C memory first.
 	argv := C.malloc(C.size_t(len(kernelParams) * pointerSize))
@@ -30,9 +26,8 @@ func (fn Function) LaunchKernel(gridDimX, gridDimY, gridDimZ int, blockDimX, blo
 		*((*uint64)(offset(argv, i))) = *((*uint64)(kernelParams[i])) // argv[i] = *kernelParams[i]
 	}
 
-	f := fn.c()
 	err := result(C.cuLaunchKernel(
-		f,
+		fn.fn,
 		C.uint(gridDimX),
 		C.uint(gridDimY),
 		C.uint(gridDimZ),
@@ -40,9 +35,9 @@ func (fn Function) LaunchKernel(gridDimX, gridDimY, gridDimZ int, blockDimX, blo
 		C.uint(blockDimY),
 		C.uint(blockDimZ),
 		C.uint(sharedMemBytes),
-		C.CUstream(unsafe.Pointer(uintptr(stream))),
+		stream.c(),
 		(*unsafe.Pointer)(argp),
-		(*unsafe.Pointer)(unsafe.Pointer(uintptr(0)))))
+		(*unsafe.Pointer)(nil)))
 	return err
 }
 
@@ -62,10 +57,9 @@ func (ctx *Ctx) LaunchKernel(fn Function, gridDimX, gridDimY, gridDimZ int, bloc
 		*((*uint64)(offset(argv, i))) = *((*uint64)(kernelParams[i])) // argv[i] = *kernelParams[i]
 	}
 
-	function := fn.c()
 	f := func() error {
 		return result(C.cuLaunchKernel(
-			function,
+			fn.fn,
 			C.uint(gridDimX),
 			C.uint(gridDimY),
 			C.uint(gridDimZ),
@@ -73,9 +67,9 @@ func (ctx *Ctx) LaunchKernel(fn Function, gridDimX, gridDimY, gridDimZ int, bloc
 			C.uint(blockDimY),
 			C.uint(blockDimZ),
 			C.uint(sharedMemBytes),
-			C.CUstream(unsafe.Pointer(uintptr(stream))),
+			stream.c(),
 			(*unsafe.Pointer)(argp),
-			(*unsafe.Pointer)(unsafe.Pointer(uintptr(0)))))
+			(*unsafe.Pointer)(nil)))
 	}
 
 	ctx.err = ctx.Do(f)

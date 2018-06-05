@@ -64,7 +64,7 @@ func TestBatchContext(t *testing.T) {
 		}
 
 		bctx.MemcpyHtoD(memB, unsafe.Pointer(&b[0]), size)
-		bctx.LaunchKernel(fn, 1, 1, 1, len(a), 1, 1, 0, Stream(0), args)
+		bctx.LaunchKernel(fn, 1, 1, 1, len(a), 1, 1, 0, Stream{}, args)
 		bctx.Synchronize()
 		bctx.MemcpyDtoH(unsafe.Pointer(&a[0]), memA, size)
 		bctx.MemcpyDtoH(unsafe.Pointer(&b[0]), memB, size)
@@ -94,8 +94,8 @@ loop:
 		}
 	}
 
-	Unload(mod)
-	DestroyContext(&cuctx)
+	mod.Unload()
+	cuctx.Destroy()
 }
 
 func TestLargeBatch(t *testing.T) {
@@ -161,7 +161,7 @@ func TestLargeBatch(t *testing.T) {
 			}
 
 			bctx.MemcpyHtoD(memB, unsafe.Pointer(&b[0]), size)
-			bctx.LaunchKernel(fn, 1, 1, 1, len(a), 1, 1, 0, Stream(0), args)
+			bctx.LaunchKernel(fn, 1, 1, 1, len(a), 1, 1, 0, Stream{}, args)
 			bctx.Synchronize()
 
 			if i%13 == 0 {
@@ -211,8 +211,8 @@ loop:
 	if afterFree != beforeFree {
 		t.Errorf("Before: Freemem: %v. After %v | Diff %v", beforeFree, afterFree, (beforeFree-afterFree)/1024)
 	}
-	Unload(mod)
-	DestroyContext(&cuctx)
+	mod.Unload()
+	cuctx.Destroy()
 }
 
 func BenchmarkNoBatching(bench *testing.B) {
@@ -273,8 +273,8 @@ func BenchmarkNoBatching(bench *testing.B) {
 				bench.Fatalf("Failed to copy memory from b: %v", err)
 			}
 
-			if err = fn.LaunchAndSync(100, 10, 1, 1000, 1, 1, 1, Stream(0), args); err != nil {
-				bench.Error("Launch and Sync Failed: %v", err)
+			if err = fn.LaunchAndSync(100, 10, 1, 1000, 1, 1, 1, Stream{}, args); err != nil {
+				bench.Errorf("Launch and Sync Failed: %v", err)
 			}
 
 			if err = MemcpyDtoH(unsafe.Pointer(&a[0]), memA, size); err != nil {
@@ -288,9 +288,8 @@ func BenchmarkNoBatching(bench *testing.B) {
 	}
 	MemFree(memA)
 	MemFree(memB)
-	Unload(mod)
-	DestroyContext(&ctx)
-
+	mod.Unload()
+	ctx.Destroy()
 }
 
 func BenchmarkBatching(bench *testing.B) {
@@ -354,7 +353,7 @@ func BenchmarkBatching(bench *testing.B) {
 			default:
 				bctx.MemcpyHtoD(memA, unsafe.Pointer(&a[0]), size)
 				bctx.MemcpyHtoD(memB, unsafe.Pointer(&b[0]), size)
-				bctx.LaunchKernel(fn, 100, 10, 1, 1000, 1, 1, 0, Stream(0), args)
+				bctx.LaunchKernel(fn, 100, 10, 1, 1000, 1, 1, 0, Stream{}, args)
 				bctx.Synchronize()
 				bctx.MemcpyDtoH(unsafe.Pointer(&a[0]), memA, size)
 				bctx.MemcpyDtoH(unsafe.Pointer(&b[0]), memB, size)
@@ -364,7 +363,6 @@ func BenchmarkBatching(bench *testing.B) {
 
 	MemFree(memA)
 	MemFree(memB)
-	Unload(mod)
-	DestroyContext(&cuctx)
-
+	mod.Unload()
+	cuctx.Destroy()
 }

@@ -22,9 +22,6 @@ func (mem DevicePtr) MemoryType() (typ MemoryType, err error) {
 	return
 }
 
-// Uintptr returns the pointer in form of a uintptr
-func (mem DevicePtr) Uintptr() uintptr { return uintptr(mem) }
-
 // MemSize returns the size of the memory slab in bytes. Returns 0 if errors occured
 func (mem DevicePtr) MemSize() uintptr {
 	size, _, err := mem.AddressRange()

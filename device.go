@@ -2,7 +2,10 @@ package cu
 
 //#include <cuda.h>
 import "C"
-import "fmt"
+import (
+	"fmt"
+	"unsafe"
+)
 
 // Device is the representation of a CUDA device
 type Device int
@@ -19,6 +22,7 @@ func (d Device) Name() (string, error) {
 	size := 256
 	buf := make([]byte, 256)
 	cstr := C.CString(string(buf))
+	defer C.free(unsafe.Pointer(cstr))
 	if err := result(C.cuDeviceGetName(cstr, C.int(size), C.CUdevice(d))); err != nil {
 		return "", err
 	}

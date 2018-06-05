@@ -23,7 +23,7 @@ func TestArray(t *testing.T) {
 		Format:      Float32,
 	}
 	ctx, _ := Device(0).MakeContext(SchedAuto)
-	defer DestroyContext(&ctx)
+	defer ctx.Destroy()
 
 	arr, err := Make3DArray(desc)
 	assert.Nil(err)
@@ -39,7 +39,7 @@ func TestArray(t *testing.T) {
 	assert.Equal(desc3.Height, desc.Height)
 	assert.Equal(desc3.NumChannels, desc.NumChannels)
 
-	err = DestroyArray(arr)
+	err = arr.Destroy()
 	assert.Nil(err)
 }
 
@@ -50,7 +50,7 @@ func TestMalloc(t *testing.T) {
 		return
 	}
 	ctx, _ := Device(0).MakeContext(SchedAuto)
-	defer DestroyContext(&ctx)
+	defer ctx.Destroy()
 
 	for i := 0; i < 1024; i++ {
 		pointer, err := MemAlloc(16 * 1024 * 1024)
@@ -70,7 +70,7 @@ func TestDevicePtr_AddressRange(t *testing.T) {
 		return
 	}
 	ctx, _ := Device(0).MakeContext(SchedAuto)
-	defer DestroyContext(&ctx)
+	defer ctx.Destroy()
 
 	// actual test
 
@@ -95,7 +95,7 @@ func TestMemInfo(t *testing.T) {
 		return
 	}
 	ctx, _ := Device(0).MakeContext(SchedAuto)
-	defer DestroyContext(&ctx)
+	defer ctx.Destroy()
 
 	// actual test starts
 
@@ -120,7 +120,7 @@ func TestMemcpy(t *testing.T) {
 		return
 	}
 	ctx, _ := Device(0).MakeContext(SchedAuto)
-	defer DestroyContext(&ctx)
+	defer ctx.Destroy()
 
 	// actual test starts
 
@@ -165,7 +165,7 @@ func TestMemcpyAsync(t *testing.T) {
 		return
 	}
 	ctx, _ := Device(0).MakeContext(SchedAuto)
-	defer DestroyContext(&ctx)
+	defer ctx.Destroy()
 
 	// actual test starts
 
@@ -208,7 +208,7 @@ func TestMemset(t *testing.T) {
 		return
 	}
 	ctx, _ := Device(0).MakeContext(SchedAuto)
-	defer DestroyContext(&ctx)
+	defer ctx.Destroy()
 
 	var err error
 	var dev1 DevicePtr
@@ -258,7 +258,7 @@ func BenchmarkMallocFree1B(b *testing.B) {
 		return
 	}
 	ctx, _ := Device(0).MakeContext(SchedAuto)
-	defer DestroyContext(&ctx)
+	defer ctx.Destroy()
 
 	var m DevicePtr
 	var err error
@@ -282,7 +282,7 @@ func BenchmarkMallocFree1kB(b *testing.B) {
 		return
 	}
 	ctx, _ := Device(0).MakeContext(SchedAuto)
-	defer DestroyContext(&ctx)
+	defer ctx.Destroy()
 
 	var m DevicePtr
 	var err error
@@ -307,7 +307,7 @@ func BenchmarkMallocFree1MB(b *testing.B) {
 		return
 	}
 	ctx, _ := Device(0).MakeContext(SchedAuto)
-	defer DestroyContext(&ctx)
+	defer ctx.Destroy()
 
 	var m DevicePtr
 	var err error
@@ -338,7 +338,7 @@ func BenchmarkMemcpy(b *testing.B) {
 	if ctx, err = Device(0).MakeContext(SchedAuto); err != nil {
 		b.Fatal(err)
 	}
-	defer DestroyContext(&ctx)
+	defer ctx.Destroy()
 
 	b.StopTimer()
 	N := int64(32 * 1024 * 1024)

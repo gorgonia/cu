@@ -9,71 +9,36 @@ import (
 	"go/parser"
 	"go/token"
 	"log"
-	"sort"
+	"strings"
 	"text/template"
-	"unsafe"
 
 	"github.com/cznic/cc"
 	"github.com/cznic/xc"
+	bg "github.com/gorgonia/bindgen"
 )
 
-func model() *cc.Model {
-	p := int(unsafe.Sizeof(uintptr(0)))
-	i := int(unsafe.Sizeof(int(0)))
-	return &cc.Model{
-		Items: map[cc.Kind]cc.ModelItem{
-			cc.Ptr:               {Size: p, Align: p, StructAlign: p},
-			cc.UintPtr:           {Size: p, Align: p, StructAlign: p},
-			cc.Void:              {Size: 0, Align: 1, StructAlign: 1},
-			cc.Char:              {Size: 1, Align: 1, StructAlign: 1},
-			cc.SChar:             {Size: 1, Align: 1, StructAlign: 1},
-			cc.UChar:             {Size: 1, Align: 1, StructAlign: 1},
-			cc.Short:             {Size: 2, Align: 2, StructAlign: 2},
-			cc.UShort:            {Size: 2, Align: 2, StructAlign: 2},
-			cc.Int:               {Size: 4, Align: 4, StructAlign: 4},
-			cc.UInt:              {Size: 4, Align: 4, StructAlign: 4},
-			cc.Long:              {Size: i, Align: i, StructAlign: i},
-			cc.ULong:             {Size: i, Align: i, StructAlign: i},
-			cc.LongLong:          {Size: 8, Align: 8, StructAlign: 8},
-			cc.ULongLong:         {Size: 8, Align: 8, StructAlign: 8},
-			cc.Float:             {Size: 4, Align: 4, StructAlign: 4},
-			cc.Double:            {Size: 8, Align: 8, StructAlign: 8},
-			cc.LongDouble:        {Size: 8, Align: 8, StructAlign: 8},
-			cc.Bool:              {Size: 1, Align: 1, StructAlign: 1},
-			cc.FloatComplex:      {Size: 8, Align: 8, StructAlign: 8},
-			cc.DoubleComplex:     {Size: 16, Align: 16, StructAlign: 16},
-			cc.LongDoubleComplex: {Size: 16, Align: 16, StructAlign: 16},
-		},
-	}
-}
+var goTypes = map[bg.TypeKey]bg.Template{
+	{Kind: cc.Undefined}: bg.Pure("<undefined>"),
+	{Kind: cc.Int}:       bg.Pure("int"),
+	{Kind: cc.Float}:     bg.Pure("float32"),
+	{Kind: cc.Float, IsPointer: true}: bg.Pure(template.Must(template.New("[]float32").Parse(
+		`{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}float32{{else}}[]float32{{end}}`))),
 
-// TypeKey is a terse C type description.
-type TypeKey struct {
-	IsPointer bool
-	Kind      cc.Kind
-}
+	{Kind: cc.Double}: bg.Pure("float64"),
+	{Kind: cc.Double, IsPointer: true}: bg.Pure(template.Must(template.New("[]float64").Parse(
+		`{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}float64{{else}}[]float64{{end}}`))),
+	{Kind: cc.Bool}:          bg.Pure("bool"),
+	{Kind: cc.FloatComplex}:  bg.Pure("complex64"),
+	{Kind: cc.DoubleComplex}: bg.Pure("complex128"),
 
-var goTypes = map[TypeKey]*template.Template{
-	{Kind: cc.Undefined}: template.Must(template.New("<undefined>").Parse("<undefined>")),
-	{Kind: cc.Int}:       template.Must(template.New("int").Parse("int")),
-	{Kind: cc.Float}:     template.Must(template.New("float32").Parse("float32")),
-	{Kind: cc.Float, IsPointer: true}: template.Must(template.New("[]float32").Parse(
-		`{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}float32{{else}}[]float32{{end}}`)),
-	{Kind: cc.Double}: template.Must(template.New("float64").Parse("float64")),
-	{Kind: cc.Double, IsPointer: true}: template.Must(template.New("[]float64").Parse(
-		`{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}float64{{else}}[]float64{{end}}`)),
-	{Kind: cc.Bool}:          template.Must(template.New("bool").Parse("bool")),
-	{Kind: cc.FloatComplex}:  template.Must(template.New("complex64").Parse("complex64")),
-	{Kind: cc.DoubleComplex}: template.Must(template.New("complex128").Parse("complex128")),
-
-	{Kind: cc.FloatComplex, IsPointer: true}: template.Must(template.New("cuComplex*").Parse(
+	{Kind: cc.FloatComplex, IsPointer: true}: bg.Pure(template.Must(template.New("cuComplex*").Parse(
 		`{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}complex64{{else}}[]complex64{{end}}`,
-	)),
-	{Kind: cc.DoubleComplex, IsPointer: true}: template.Must(template.New("cuDoubleComplex*").Parse(
+	))),
+	{Kind: cc.DoubleComplex, IsPointer: true}: bg.Pure(template.Must(template.New("cuDoubleComplex*").Parse(
 		`{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}complex128{{else}}[]complex128{{end}}`,
-	)),
-	{Kind: cc.Int, IsPointer: true}: template.Must(template.New("int*").Parse(
-		`{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}int{{else}}[]int{{end}}`)),
+	))),
+	{Kind: cc.Int, IsPointer: true}: bg.Pure(template.Must(template.New("int*").Parse(
+		`{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}int{{else}}[]int{{end}}`))),
 }
 
 // GoTypeFor returns a string representation of the given type using a mapping in
@@ -87,7 +52,7 @@ var goTypes = map[TypeKey]*template.Template{
 //  {Kind: cc.Bool}:                    "bool",
 //  {Kind: cc.FloatComplex}:            "complex64",
 //  {Kind: cc.DoubleComplex}:           "complex128",
-func GoTypeFor(typ cc.Type, name string, types ...map[TypeKey]*template.Template) string {
+func GoTypeFor(typ cc.Type, name string, types ...map[bg.TypeKey]bg.Template) string {
 	if typ == nil {
 		return "<nil>"
 	}
@@ -98,7 +63,7 @@ func GoTypeFor(typ cc.Type, name string, types ...map[TypeKey]*template.Template
 	}
 	var buf bytes.Buffer
 	for _, t := range types {
-		if s, ok := t[TypeKey{Kind: k, IsPointer: isPtr}]; ok {
+		if s, ok := t[bg.TypeKey{Kind: k, IsPointer: isPtr}]; ok {
 			err := s.Execute(&buf, name)
 			if err != nil {
 				panic(err)
@@ -106,7 +71,7 @@ func GoTypeFor(typ cc.Type, name string, types ...map[TypeKey]*template.Template
 			return buf.String()
 		}
 	}
-	s, ok := goTypes[TypeKey{Kind: k, IsPointer: isPtr}]
+	s, ok := goTypes[bg.TypeKey{Kind: k, IsPointer: isPtr}]
 	if ok {
 		err := s.Execute(&buf, name)
 		if err != nil {
@@ -115,13 +80,13 @@ func GoTypeFor(typ cc.Type, name string, types ...map[TypeKey]*template.Template
 		return buf.String()
 	}
 	log.Printf("%v", typ.Tag())
-	panic(fmt.Sprintf("unknown type key: %v %+v", typ, TypeKey{Kind: k, IsPointer: isPtr}))
+	panic(fmt.Sprintf("unknown type key: %v %+v", typ, bg.TypeKey{Kind: k, IsPointer: isPtr}))
 }
 
 // GoTypeForEnum returns a string representation of the given enum type using a mapping
 // in types. GoTypeForEnum will panic if no type mapping is found after searching the
 // user-provided types mappings or the type is not an enum.
-func GoTypeForEnum(typ cc.Type, name string, types ...map[string]*template.Template) string {
+func GoTypeForEnum(typ cc.Type, name string, types ...map[string]bg.Template) string {
 	if typ == nil {
 		return "<nil>"
 	}
@@ -146,37 +111,37 @@ func GoTypeForEnum(typ cc.Type, name string, types ...map[string]*template.Templ
 	panic(fmt.Sprintf("unknown type: %+v", typ))
 }
 
-var cgoTypes = map[TypeKey]*template.Template{
-	{Kind: cc.Void, IsPointer: true}: template.Must(template.New("void*").Parse("unsafe.Pointer(&{{.}}[0])")),
+var cgoTypes = map[bg.TypeKey]bg.Template{
+	{Kind: cc.Void, IsPointer: true}: bg.Pure(template.Must(template.New("void*").Parse("unsafe.Pointer(&{{.}}[0])"))),
 
-	{Kind: cc.Int}: template.Must(template.New("int").Parse("C.int({{.}})")),
+	{Kind: cc.Int}: bg.Pure(template.Must(template.New("int").Parse("C.int({{.}})"))),
 
-	{Kind: cc.Float}:  template.Must(template.New("float").Parse("C.float({{.}})")),
-	{Kind: cc.Double}: template.Must(template.New("double").Parse("C.double({{.}})")),
+	{Kind: cc.Float}:  bg.Pure(template.Must((template.New("float").Parse("C.float({{.}})")))),
+	{Kind: cc.Double}: bg.Pure(template.Must((template.New("double").Parse("C.double({{.}})")))),
 
-	{Kind: cc.Float, IsPointer: true}: template.Must(template.New("float*").Parse(
-		`(*C.float)(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}})`)),
-	{Kind: cc.Double, IsPointer: true}: template.Must(template.New("double*").Parse(
-		`(*C.double)(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}})`)),
+	{Kind: cc.Float, IsPointer: true}: bg.Pure(template.Must(template.New("float*").Parse(
+		`(*C.float)(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}})`))),
+	{Kind: cc.Double, IsPointer: true}: bg.Pure(template.Must(template.New("double*").Parse(
+		`(*C.double)(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}})`))),
 
-	{Kind: cc.Bool}: template.Must(template.New("bool").Parse("C.bool({{.}})")),
+	{Kind: cc.Bool}: bg.Pure(template.Must((template.New("bool").Parse("C.bool({{.}})")))),
 
-	{Kind: cc.FloatComplex}: template.Must(template.New("floatcomplex").Parse(
-		`*(*C.cuComplex)(unsafe.Pointer({{.}}))`)),
-	{Kind: cc.DoubleComplex}: template.Must(template.New("doublecomplex").Parse(
-		`*(*C.cuDoubleComplex)(unsafe.Pointer({{.}}))`)),
+	{Kind: cc.FloatComplex}: bg.Pure(template.Must(template.New("floatcomplex").Parse(
+		`*(*C.cuComplex)(unsafe.Pointer({{.}}))`))),
+	{Kind: cc.DoubleComplex}: bg.Pure(template.Must(template.New("doublecomplex").Parse(
+		`*(*C.cuDoubleComplex)(unsafe.Pointer({{.}}))`))),
 
-	{Kind: cc.FloatComplex, IsPointer: true}: template.Must(template.New("floatcomplex*").Parse(
-		`(*C.cuComplex)(unsafe.Pointer(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}}))`)),
-	{Kind: cc.DoubleComplex, IsPointer: true}: template.Must(template.New("doublecomplex*").Parse(
-		`(*C.cuDoubleComplex)(unsafe.Pointer(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}}))`)),
+	{Kind: cc.FloatComplex, IsPointer: true}: bg.Pure(template.Must(template.New("floatcomplex*").Parse(
+		`(*C.cuComplex)(unsafe.Pointer(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}}))`))),
+	{Kind: cc.DoubleComplex, IsPointer: true}: bg.Pure(template.Must(template.New("doublecomplex*").Parse(
+		`(*C.cuDoubleComplex)(unsafe.Pointer(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}}))`))),
 
 	// from main.go
-	{Kind: cc.Void, IsPointer: true}: template.Must(template.New("void*").Parse(
+	{Kind: cc.Void, IsPointer: true}: bg.Pure(template.Must(template.New("void*").Parse(
 		`unsafe.Pointer(&{{.}}{{if eq . "alpha" "beta"}}{{else}}[0]{{end}})`,
-	)),
-	{Kind: cc.Int, IsPointer: true}: template.Must(template.New("int*").Parse(
-		`(*C.int)(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}})`)),
+	))),
+	{Kind: cc.Int, IsPointer: true}: bg.Pure(template.Must(template.New("int*").Parse(
+		`(*C.int)(&{{.}}{{if eq . "alpha" "beta" "cScalar" "sScalar" "result" "retVal"}}{{else}}[0]{{end}})`))),
 }
 
 // CgoConversionFor returns a string representation of the given type using a mapping in
@@ -193,7 +158,7 @@ var cgoTypes = map[TypeKey]*template.Template{
 //  {Kind: cc.DoubleComplex}:                  "unsafe.Pointer(&{{.}})",
 //  {Kind: cc.FloatComplex, IsPointer: true}:  "unsafe.Pointer(&{{.}}[0])",
 //  {Kind: cc.DoubleComplex, IsPointer: true}: "unsafe.Pointer(&{{.}}[0])",
-func CgoConversionFor(name string, typ cc.Type, types ...map[TypeKey]*template.Template) string {
+func CgoConversionFor(name string, typ cc.Type, types ...map[bg.TypeKey]bg.Template) string {
 	if typ == nil {
 		return "<nil>"
 	}
@@ -203,7 +168,7 @@ func CgoConversionFor(name string, typ cc.Type, types ...map[TypeKey]*template.T
 		k = typ.Element().Kind()
 	}
 	for _, t := range types {
-		if s, ok := t[TypeKey{Kind: k, IsPointer: isPtr}]; ok {
+		if s, ok := t[bg.TypeKey{Kind: k, IsPointer: isPtr}]; ok {
 			var buf bytes.Buffer
 			err := s.Execute(&buf, name)
 			if err != nil {
@@ -212,7 +177,7 @@ func CgoConversionFor(name string, typ cc.Type, types ...map[TypeKey]*template.T
 			return buf.String()
 		}
 	}
-	s, ok := cgoTypes[TypeKey{Kind: k, IsPointer: isPtr}]
+	s, ok := cgoTypes[bg.TypeKey{Kind: k, IsPointer: isPtr}]
 	if ok {
 		var buf bytes.Buffer
 		err := s.Execute(&buf, name)
@@ -221,13 +186,13 @@ func CgoConversionFor(name string, typ cc.Type, types ...map[TypeKey]*template.T
 		}
 		return buf.String()
 	}
-	panic(fmt.Sprintf("unknown type key: %+v", TypeKey{Kind: k, IsPointer: isPtr}))
+	panic(fmt.Sprintf("unknown type key: %+v", bg.TypeKey{Kind: k, IsPointer: isPtr}))
 }
 
 // CgoConversionForEnum returns a string representation of the given enum type using a mapping
 // in types. GoTypeForEnum will panic if no type mapping is found after searching the
 // user-provided types mappings or the type is not an enum.
-func CgoConversionForEnum(name string, typ cc.Type, types ...map[string]*template.Template) string {
+func CgoConversionForEnum(name string, typ cc.Type, types ...map[string]bg.Template) string {
 	if typ == nil {
 		return "<nil>"
 	}
@@ -307,126 +272,26 @@ func DocComments(path string) (docs map[string]map[string][]*ast.Comment, err er
 	return docs, nil
 }
 
-// Declaration is a description of a C function declaration.
-type Declaration struct {
-	Pos         token.Pos
-	Name        string
-	Return      cc.Type
-	CParameters []cc.Parameter
-	Variadic    bool
+// functions say we only want functions declared
+func functions(t *cc.TranslationUnit) ([]bg.Declaration, error) {
+	filter := func(d *cc.Declarator) bool {
+		if d.Type.Kind() != cc.Function {
+			return false
+		}
+		return true
+	}
+	return bg.Get(t, filter)
 }
 
-// Position returns the token position of the declaration.
-func (d *Declaration) Position() token.Position { return xc.FileSet.Position(d.Pos) }
-
-// Parameter is a C function parameter.
-type Parameter struct{ Parameter cc.Parameter }
-
-// Name returns the name of the parameter.
-func (p *Parameter) Name() string { return string(xc.Dict.S(p.Parameter.Name)) }
-
-// Type returns the C type of the parameter.
-func (p *Parameter) Type() cc.Type { return p.Parameter.Type }
-
-// Kind returns the C kind of the parameter.
-func (p *Parameter) Kind() cc.Kind { return p.Parameter.Type.Kind() }
-
-// Elem returns the pointer type of a pointer parameter or the element type of an
-// array parameter.
-func (p *Parameter) Elem() cc.Type { return p.Parameter.Type.Element() }
-
-// Parameters returns the declaration's CParameters converted to a []Parameter.
-func (d *Declaration) Parameters() []Parameter {
-	p := make([]Parameter, len(d.CParameters))
-	for i, c := range d.CParameters {
-		p[i] = Parameter{c}
+func shorten(n string) string {
+	s, ok := names[n]
+	if ok {
+		return s
 	}
-	return p
+	return n
 }
 
-// Declarations returns the C function declarations in the givel set of file paths.
-func Declarations(paths ...string) ([]Declaration, error) {
-	predefined, includePaths, sysIncludePaths, err := cc.HostConfig()
-	if err != nil {
-		return nil, fmt.Errorf("binding: failed to get host config: %v", err)
-	}
-
-	t, err := cc.Parse(
-		predefined+`
-#define __const const
-#define __attribute__(...)
-#define __extension__
-#define __inline
-#define __restrict
-unsigned __builtin_bswap32 (unsigned x);
-unsigned long long __builtin_bswap64 (unsigned long long x);
-`,
-		paths,
-		model(),
-		cc.IncludePaths(includePaths),
-		cc.SysIncludePaths(sysIncludePaths),
-	)
-	if err != nil {
-		return nil, fmt.Errorf("binding: failed to parse %q: %v", paths, err)
-	}
-
-	var decls []Declaration
-	for ; t != nil; t = t.TranslationUnit {
-		if t.ExternalDeclaration.Case != 1 /* Declaration */ {
-			continue
-		}
-
-		d := t.ExternalDeclaration.Declaration
-		if d.Case != 0 {
-			// Other case is 1: StaticAssertDeclaration.
-			continue
-		}
-
-		init := d.InitDeclaratorListOpt
-		if init == nil {
-			continue
-		}
-		idl := init.InitDeclaratorList
-		if idl.InitDeclaratorList != nil {
-			// We do not want comma-separated lists.
-			continue
-		}
-		id := idl.InitDeclarator
-		if id.Case != 0 {
-			// We do not want assignments.
-			continue
-		}
-
-		declarator := id.Declarator
-		if declarator.Type.Kind() != cc.Function {
-			// We want only functions.
-			continue
-		}
-		params, variadic := declarator.Type.Parameters()
-		name, _ := declarator.Identifier()
-		decls = append(decls, Declaration{
-			Pos:         declarator.Pos(),
-			Name:        string(xc.Dict.S(name)),
-			Return:      declarator.Type.Result(),
-			CParameters: params,
-			Variadic:    variadic,
-		})
-	}
-
-	sort.Sort(byPosition(decls))
-
-	return decls, nil
+func cblasTocublas(name string) string {
+	retVal := strings.TrimPrefix(name, prefix)
+	return fmt.Sprintf("cublas%s", strings.Title(retVal))
 }
-
-type byPosition []Declaration
-
-func (d byPosition) Len() int { return len(d) }
-func (d byPosition) Less(i, j int) bool {
-	iPos := d[i].Position()
-	jPos := d[j].Position()
-	if iPos.Filename == jPos.Filename {
-		return iPos.Line < jPos.Line
-	}
-	return iPos.Filename < jPos.Filename
-}
-func (d byPosition) Swap(i, j int) { d[i], d[j] = d[j], d[i] }

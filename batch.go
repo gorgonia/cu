@@ -228,7 +228,7 @@ func (ctx *BatchedContext) DoWork() {
 		addQueueLength(len(ctx.queue))
 		addBlockingCallers()
 
-		cctx := C.CUcontext(unsafe.Pointer(uintptr(ctx.CUDAContext())))
+		cctx := ctx.CUDAContext().ctx
 		ctx.results = ctx.results[:cap(ctx.results)]                         // make sure of the maximum availability for ctx.results
 		C.process(cctx, &ctx.fns[0], &ctx.results[0], C.int(len(ctx.queue))) // process the queue
 		ctx.results = ctx.results[:len(ctx.queue)]                           // then  truncate it to the len of queue for reporting purposes
@@ -266,13 +266,13 @@ func (ctx *BatchedContext) DoWork() {
 // Run manages the running of the BatchedContext. Because it's expected to run in a goroutine, an error channel is to be passed in
 func (ctx *BatchedContext) Run(errChan chan error) error {
 	runtime.LockOSThread()
+	defer runtime.UnlockOSThread()
 	for {
 		select {
 		case <-ctx.workAvailable:
 			ctx.DoWork()
 			if err := ctx.Errors(); err != nil {
 				if errChan == nil {
-					runtime.UnlockOSThread()
 					return err
 				}
 				errChan <- err
@@ -282,8 +282,6 @@ func (ctx *BatchedContext) Run(errChan chan error) error {
 			ctx.ErrChan() <- w()
 		}
 	}
-	runtime.UnlockOSThread()
-	return nil
 }
 
 // Cleanup is the cleanup function. It cleans up all the ancilliary allocations that has happened for all the batched calls.
@@ -316,7 +314,7 @@ func (ctx *BatchedContext) FirstError() error {
 func (ctx *BatchedContext) SetCurrent() {
 	fn := &fnargs{
 		fn:  C.fn_setCurrent,
-		ctx: C.CUcontext(unsafe.Pointer(uintptr(ctx.CUDAContext()))),
+		ctx: ctx.CUDAContext().ctx,
 	}
 	c := call{fn, false}
 	ctx.enqueue(c)
@@ -403,10 +401,9 @@ func (ctx *BatchedContext) LaunchKernel(function Function, gridDimX, gridDimY, g
 	// ctx.frees = append(ctx.frees, argv)
 	// ctx.frees = append(ctx.frees, argp)
 
-	f := C.CUfunction(unsafe.Pointer(uintptr(function)))
 	fn := &fnargs{
 		fn:             C.fn_launchKernel,
-		f:              f,
+		f:              function.fn,
 		gridDimX:       C.uint(gridDimX),
 		gridDimY:       C.uint(gridDimY),
 		gridDimZ:       C.uint(gridDimZ),
@@ -414,9 +411,9 @@ func (ctx *BatchedContext) LaunchKernel(function Function, gridDimX, gridDimY, g
 		blockDimY:      C.uint(blockDimY),
 		blockDimZ:      C.uint(blockDimZ),
 		sharedMemBytes: C.uint(sharedMemBytes),
-		stream:         C.CUstream(unsafe.Pointer(uintptr(stream))),
+		stream:         stream.c(),
 		kernelParams:   (*unsafe.Pointer)(argp),
-		extra:          (*unsafe.Pointer)(unsafe.Pointer(uintptr(0))),
+		extra:          (*unsafe.Pointer)(nil),
 	}
 	c := call{fn, false}
 	ctx.enqueue(c)
