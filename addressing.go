@@ -81,7 +81,7 @@ func (d DevicePtr) MemAdvise(count int64, advice MemAdvice, dev Device) error {
 func (d DevicePtr) MemPrefetchAsync(count int64, dst Device, hStream Stream) error {
 	devPtr := C.CUdeviceptr(d)
 	cc := C.size_t(count)
-	str := C.CUstream(unsafe.Pointer(uintptr(hStream)))
+	str := hStream.s
 	dv := C.CUdevice(dst)
 	return result(C.cuMemPrefetchAsync(devPtr, cc, dv, str))
 }

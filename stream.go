@@ -3,27 +3,25 @@ package cu
 // #include <cuda.h>
 import "C"
 import (
-	"unsafe"
-
 	"github.com/pkg/errors"
 )
 
 // Stream represents a CUDA stream.
-type Stream uintptr
+type Stream struct {
+	s C.CUstream
+}
 
-func makeStream(s C.CUstream) Stream { return Stream(uintptr(unsafe.Pointer(s))) }
-func (s Stream) c() C.CUstream       { return C.CUstream(unsafe.Pointer(uintptr(s))) }
+func makeStream(s C.CUstream) Stream { return Stream{s} }
+func (s Stream) c() C.CUstream       { return s.s }
 
 // C is the exported version of the c method
 func (s Stream) C() C.CUstream { return s.c() }
 
 // MakeStream creates a stream. The flags determines the behaviors of the stream.
 func MakeStream(flags StreamFlags) (Stream, error) {
-	var s C.CUstream
-	if err := result(C.cuStreamCreate(&s, C.uint(flags))); err != nil {
-		return 0, err
-	}
-	return makeStream(s), nil
+	var s Stream
+	err := result(C.cuStreamCreate(&s.s, C.uint(flags)))
+	return s, err
 }
 
 // MakeStreamWithPriority creates a stream with the given priority. The flags determines the behaviors of the stream.
@@ -35,52 +33,41 @@ func MakeStream(flags StreamFlags) (Stream, error) {
 // If the specified priority is outside the numerical range returned by `StreamPriorityRange`,
 // it will automatically be clamped to the lowest or the highest number in the range.
 func MakeStreamWithPriority(priority int, flags StreamFlags) (Stream, error) {
-	var s C.CUstream
-	if err := result(C.cuStreamCreateWithPriority(&s, C.uint(flags), C.int(priority))); err != nil {
-		return 0, err
-	}
-	return makeStream(s), nil
+	var s Stream
+	err := result(C.cuStreamCreateWithPriority(&s.s, C.uint(flags), C.int(priority)))
+	return s, err
 }
 
 // DestroyStream destroys the stream specified by hStream.
 //
 // In case the device is still doing work in the stream hStream when DestroyStrea() is called,
 // the function will return immediately and the resources associated with hStream will be released automatically once the device has completed all work in hStream.
-func DestroyStream(hStream *Stream) error {
-	stream := *hStream
-	s := stream.c()
-	*hStream = 0
-	return result(C.cuStreamDestroy(s))
+func (hStream *Stream) Destroy() error {
+	err := result(C.cuStreamDestroy(hStream.s))
+	*hStream = Stream{}
+	return err
 }
 
 func (ctx *Ctx) MakeStream(flags StreamFlags) (stream Stream, err error) {
-	var s C.CUstream
+	var s Stream
 
-	f := func() error { return result(C.cuStreamCreate(&s, C.uint(flags))) }
+	f := func() error { return result(C.cuStreamCreate(&s.s, C.uint(flags))) }
 	if err = ctx.Do(f); err != nil {
-		err = errors.Wrap(err, "MakeStream")
-		return
+		return s, errors.Wrap(err, "MakeStream")
 	}
-	stream = makeStream(s)
-	return
+	return s, nil
 }
 
-func (ctx *Ctx) MakeStreamWithPriority(priority int, flags StreamFlags) (stream Stream, err error) {
-	var s C.CUstream
-
-	f := func() error { return result(C.cuStreamCreateWithPriority(&s, C.uint(flags), C.int(priority))) }
-	if err = ctx.Do(f); err != nil {
-		err = errors.Wrap(err, "MakeStream With Priority")
-		return
+func (ctx *Ctx) MakeStreamWithPriority(priority int, flags StreamFlags) (Stream, error) {
+	var s Stream
+	f := func() error { return result(C.cuStreamCreateWithPriority(&s.s, C.uint(flags), C.int(priority))) }
+	if err := ctx.Do(f); err != nil {
+		return s, errors.Wrap(err, "MakeStream With Priority")
 	}
-	stream = makeStream(s)
-	return
+	return s, nil
 }
 
 func (ctx *Ctx) DestroyStream(hStream *Stream) {
-	stream := *hStream
-	s := stream.c()
-
-	f := func() error { return result(C.cuStreamDestroy(s)) }
+	f := func() error { return result(C.cuStreamDestroy(hStream.s)) }
 	ctx.err = ctx.Do(f)
 }

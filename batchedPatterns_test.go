@@ -101,7 +101,7 @@ func TestLaunchAndSync(t *testing.T) {
 		unsafe.Pointer(&size),
 	}
 
-	if err = fn.LaunchAndSync(1, 1, 1, len(a), 1, 1, 1, Stream(0), args); err != nil {
+	if err = fn.LaunchAndSync(1, 1, 1, len(a), 1, 1, 1, Stream{}, args); err != nil {
 		t.Errorf("Launch and Sync Failed: %v", err)
 	}
 

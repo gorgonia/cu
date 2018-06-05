@@ -173,7 +173,7 @@ func TestMultipleContextSingleHostThread(t *testing.T) {
 		unsafe.Pointer(&size),
 	}
 
-	if err = fn0.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream(0), args); err != nil {
+	if err = fn0.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream{}, args); err != nil {
 		t.Errorf("Failed to launcj add32: %v", err)
 	}
 
@@ -204,7 +204,7 @@ func TestMultipleContextSingleHostThread(t *testing.T) {
 		unsafe.Pointer(&size),
 	}
 
-	if err = fn1.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream(0), args); err != nil {
+	if err = fn1.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream{}, args); err != nil {
 		t.Errorf("Failed to launcj add32: %v", err)
 	}
 
@@ -221,7 +221,7 @@ func TestMultipleContextSingleHostThread(t *testing.T) {
 		unsafe.Pointer(&size),
 	}
 
-	if err = fn0.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream(0), args); err == nil {
+	if err = fn0.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream{}, args); err == nil {
 		t.Errorf("Expected error when launching a kernel defined in a different context")
 	}
 	t.Log(err)
@@ -230,7 +230,7 @@ func TestMultipleContextSingleHostThread(t *testing.T) {
 	if err = SetCurrentContext(ctx0); err != nil {
 		t.Errorf("Failed to swtch to ctx0 %v", err)
 	}
-	if err = fn0.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream(0), args); err != nil {
+	if err = fn0.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream{}, args); err != nil {
 		t.Errorf("fn0 errored while using memory declared in ctx1: %v", err)
 	}
 	t.Log(err)

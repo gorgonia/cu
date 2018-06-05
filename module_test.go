@@ -53,7 +53,7 @@ func TestModule(t *testing.T) {
 	grid := DivUp(N, block)
 	shmem := 0
 	args := []unsafe.Pointer{unsafe.Pointer(&A), unsafe.Pointer(&value), unsafe.Pointer(&n)}
-	if err = f.LaunchKernel(grid, 1, 1, block, 1, 1, shmem, 0, args); err != nil {
+	if err = f.LaunchKernel(grid, 1, 1, block, 1, 1, shmem, Stream{}, args); err != nil {
 		t.Fatal(err)
 	}
 

@@ -413,7 +413,7 @@ func (ctx *BatchedContext) LaunchKernel(function Function, gridDimX, gridDimY, g
 		blockDimY:      C.uint(blockDimY),
 		blockDimZ:      C.uint(blockDimZ),
 		sharedMemBytes: C.uint(sharedMemBytes),
-		stream:         C.CUstream(unsafe.Pointer(uintptr(stream))),
+		stream:         stream.c(),
 		kernelParams:   (*unsafe.Pointer)(argp),
 		extra:          (*unsafe.Pointer)(unsafe.Pointer(uintptr(0))),
 	}
