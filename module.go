@@ -37,6 +37,26 @@ func LoadData(image string) (Module, error) {
 	return mod, err
 }
 
+// LoadDataEx loads a module from a input string.
+func LoadDataEx(image string, options ...JITOption) (Module, error) {
+	var mod Module
+	cstr := C.CString(image)
+	defer C.free(unsafe.Pointer(cstr))
+
+	argcount, args, argvals := encodeArguments(options)
+	err := result(C.cuModuleLoadDataEx(&mod.mod, unsafe.Pointer(cstr), argcount, args, argvals))
+	return mod, err
+}
+
+// LoadFatBinary loads a module from a input string.
+func LoadFatBinary(image string) (Module, error) {
+	var mod Module
+	cstr := C.CString(image)
+	defer C.free(unsafe.Pointer(cstr))
+	err := result(C.cuModuleLoadFatBinary(&mod.mod, unsafe.Pointer(cstr)))
+	return mod, err
+}
+
 // Function returns a pointer to the function in the module by the name. If it's not found, the error NotFound is returned
 func (m Module) Function(name string) (Function, error) {
 	var fn Function
