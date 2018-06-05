@@ -11,6 +11,8 @@ type Stream struct {
 	s C.CUstream
 }
 
+var NoStream = Stream{}
+
 func makeStream(s C.CUstream) Stream { return Stream{s} }
 func (s Stream) c() C.CUstream       { return s.s }
 
