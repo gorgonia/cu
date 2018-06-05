@@ -196,11 +196,17 @@ func NewLink(options ...JITOption) (*LinkState, error) {
 }
 
 func (link *LinkState) encodeArguments(options []JITOption) (C.uint, *C.CUjit_option, *unsafe.Pointer) {
+	if len(options) > 0 {
+		link.keepalive = append(link.keepalive, options)
+	}
+	return encodeArguments(options)
+}
+
+func encodeArguments(options []JITOption) (C.uint, *C.CUjit_option, *unsafe.Pointer) {
 	if len(options) == 0 {
 		return 0, nil, nil
 	}
 
-	link.keepalive = append(link.keepalive, options)
 	result := []C.CUjit_option{}
 	values := []uintptr{}
 	for _, option := range options {
