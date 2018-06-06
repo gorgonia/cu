@@ -41,6 +41,20 @@ Memory    :	4233297920 bytes
 Compute   : 5.2
 ```
 
+## Windows ##
+
+To setup CUDA in Windows:
+
+1. Install CUDA Toolkit
+2. Add `%CUDA_PATH%/bin` to your `%PATH%` environment variable (running `nvcc` from console should work)
+3. Make a symlink `mklink /D C:\cuda "c:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"` (alternatively, install CUDA toolkit to `C:\cuda\`)
+
+To setup the compiler:
+
+1. Install MSYS2 (see https://www.msys2.org/)
+2. In `c:\msys64\msys2_shell.cmd` uncomment the line with `set MSYS2_PATH_TYPE=inherit` (this makes Windows PATH variable visible)
+3. Install `go` in MSYS2 (64 bit) with `pacman -S go`
+
 # Progress #
 The work to fully represent the CUDA Driver API is a work in progress. At the moment, it is not complete. However, most of the API that are required for GPGPU purposes are complete. None of the texture, surface and graphics related APIs are handled yet. Please feel free to send a pull request.
 
