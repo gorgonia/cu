@@ -18,6 +18,7 @@ type Context interface {
 	Do(fn func() error) error
 	Work() <-chan func() error
 	ErrChan() chan<- error
+	Close() error // Close closes all resources associated with the context
 
 	// actual methods
 	Address(hTexRef TexRef) (pdptr DevicePtr, err error)

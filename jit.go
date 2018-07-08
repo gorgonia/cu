@@ -131,10 +131,10 @@ func jitBooleanOption(b bool) uintptr {
 type JITTargetOption uint64
 
 const (
-	JITTarget10 JITTargetOption = C.CU_TARGET_COMPUTE_10
-	JITTarget11 JITTargetOption = C.CU_TARGET_COMPUTE_11
-	JITTarget12 JITTargetOption = C.CU_TARGET_COMPUTE_12
-	JITTarget13 JITTargetOption = C.CU_TARGET_COMPUTE_13
+	// JITTarget10 JITTargetOption = C.CU_TARGET_COMPUTE_10
+	// JITTarget11 JITTargetOption = C.CU_TARGET_COMPUTE_11
+	// JITTarget12 JITTargetOption = C.CU_TARGET_COMPUTE_12
+	// JITTarget13 JITTargetOption = C.CU_TARGET_COMPUTE_13
 	JITTarget20 JITTargetOption = C.CU_TARGET_COMPUTE_20
 	JITTarget21 JITTargetOption = C.CU_TARGET_COMPUTE_21
 	JITTarget30 JITTargetOption = C.CU_TARGET_COMPUTE_30

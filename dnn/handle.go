@@ -18,6 +18,8 @@ type Memory interface {
 // Context represents the context in which cuDNN operations are performed in.
 //
 // Internally, the Context holds a cudnnHandle_t
+//
+// Once the context has been finished, do remember to call `Close` on the context.
 type Context struct {
 	internal C.cudnnHandle_t
 }
@@ -33,4 +35,18 @@ func NewContext() (retVal *Context) {
 	return retVal
 }
 
-func destroyContext(obj *Context) { C.cudnnDestroy(obj.internal) }
+//  Close destroys the underlying context.
+func (ctx *Context) Close() error {
+	var empty C.cudnnHandle_t
+	if ctx.internal == empty {
+		return nil
+	}
+
+	if err := result(C.cudnnDestroy(ctx.internal)); err != nil {
+		return err
+	}
+	ctx.internal = empty
+	return nil
+}
+
+func destroyContext(obj *Context) { obj.Close() }
