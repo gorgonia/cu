@@ -36,7 +36,7 @@ const (
 
 func init() {
 	gopath := os.Getenv("GOPATH")
-	cublasLoc := path.Join(gopath, "src/gorgonia.org/cu/cublas")
+	cublasLoc := path.Join(gopath, "src/gorgonia.org/cu/blas")
 	gonumLoc := path.Join(gopath, "src/github.com/gonum/blas")
 	documentation = path.Join(gonumLoc, "/native")
 	target = path.Join(cublasLoc, "blas.go")
@@ -388,27 +388,27 @@ func gemmShape(buf *bytes.Buffer, d *bg.CSignature, p bg.Parameter) bool {
 		return false // Come back later.
 	}
 
-	fmt.Fprint(buf, `	var rowA, colA, rowB, colB int
-	if tA == blas.NoTrans {
-		rowA, colA = m, k
-	} else {
-		rowA, colA = k, m
-	}
-	if tB == blas.NoTrans {
-		rowB, colB = k, n
-	} else {
-		rowB, colB = n, k
-	}
-	if lda*(rowA-1)+colA > len(a) || lda < max(1, colA) {
-		panic("blas: index of a out of range")
-	}
-	if ldb*(rowB-1)+colB > len(b) || ldb < max(1, colB) {
-		panic("blas: index of b out of range")
-	}
-	if ldc*(m-1)+n > len(c) || ldc < max(1, n) {
-		panic("blas: index of c out of range")
-	}
-`)
+	// 	fmt.Fprint(buf, `	var rowA, colA, rowB, colB int
+	// 	if tA == blas.NoTrans {
+	// 		rowA, colA = m, k
+	// 	} else {
+	// 		rowA, colA = k, m
+	// 	}
+	// 	if tB == blas.NoTrans {
+	// 		rowB, colB = k, n
+	// 	} else {
+	// 		rowB, colB = n, k
+	// 	}
+	// 	if lda*(rowA-1)+colA > len(a) || lda < max(1, colA) {
+	// 		panic("blas: index of a out of range")
+	// 	}
+	// 	if ldb*(rowB-1)+colB > len(b) || ldb < max(1, colB) {
+	// 		panic("blas: index of b out of range")
+	// 	}
+	// 	if ldc*(m-1)+n > len(c) || ldc < max(1, n) {
+	// 		panic("blas: index of c out of range")
+	// 	}
+	// `)
 	return true
 }
 
@@ -424,19 +424,19 @@ func mvShape(buf *bytes.Buffer, d *bg.CSignature, p bg.Parameter) bool {
 		return false // Come back later.
 	}
 
-	fmt.Fprint(buf, `	var lenX, lenY int
-	if tA == blas.NoTrans {
-		lenX, lenY = n, m
-	} else {
-		lenX, lenY = m, n
-	}
-	if (incX > 0 && (lenX-1)*incX >= len(x)) || (incX < 0 && (1-lenX)*incX >= len(x)) {
-		panic("blas: x index out of range")
-	}
-	if (incY > 0 && (lenY-1)*incY >= len(y)) || (incY < 0 && (1-lenY)*incY >= len(y)) {
-		panic("blas: y index out of range")
-	}
-`)
+	// 	fmt.Fprint(buf, `	var lenX, lenY int
+	// 	if tA == blas.NoTrans {
+	// 		lenX, lenY = n, m
+	// 	} else {
+	// 		lenX, lenY = m, n
+	// 	}
+	// 	if (incX > 0 && (lenX-1)*incX >= len(x)) || (incX < 0 && (1-lenX)*incX >= len(x)) {
+	// 		panic("blas: x index out of range")
+	// 	}
+	// 	if (incY > 0 && (lenY-1)*incY >= len(y)) || (incY < 0 && (1-lenY)*incY >= len(y)) {
+	// 		panic("blas: y index out of range")
+	// 	}
+	// `)
 	return true
 }
 
@@ -760,28 +760,28 @@ func othersShape(buf *bytes.Buffer, d *bg.CSignature, p bg.Parameter) bool {
 		return false // Come back later.
 	}
 
-	switch {
-	case has["kL"] && has["kU"]:
-		fmt.Fprintf(buf, `	if lda*(m-1)+kL+kU+1 > len(a) || lda < kL+kU+1 {
-		panic("blas: index of a out of range")
-	}
-`)
-	case has["m"]:
-		fmt.Fprintf(buf, `	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
-`)
-	case has["k"]:
-		fmt.Fprintf(buf, `	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
-	}
-`)
-	default:
-		fmt.Fprintf(buf, `	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
-`)
-	}
+	// switch {
+	// 	case has["kL"] && has["kU"]:
+	// 		fmt.Fprintf(buf, `	if lda*(m-1)+kL+kU+1 > len(a) || lda < kL+kU+1 {
+	// 		panic("blas: index of a out of range")
+	// 	}
+	// `)
+	// 	case has["m"]:
+	// 		fmt.Fprintf(buf, `	if lda*(m-1)+n > len(a) || lda < max(1, n) {
+	// 		panic("blas: index of a out of range")
+	// 	}
+	// `)
+	// 	case has["k"]:
+	// 		fmt.Fprintf(buf, `	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
+	// 		panic("blas: index of a out of range")
+	// 	}
+	// `)
+	// 	default:
+	// 		fmt.Fprintf(buf, `	if lda*(n-1)+n > len(a) || lda < max(1, n) {
+	// 		panic("blas: index of a out of range")
+	// 	}
+	// `)
+	// }
 
 	return true
 }

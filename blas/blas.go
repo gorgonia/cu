@@ -1376,21 +1376,6 @@ func (impl *Standard) Sgemv(tA blas.Transpose, m, n int, alpha float32, a []floa
 	if incY == 0 {
 		panic("blas: zero y index increment")
 	}
-	var lenX, lenY int
-	if tA == blas.NoTrans {
-		lenX, lenY = n, m
-	} else {
-		lenX, lenY = m, n
-	}
-	if (incX > 0 && (lenX-1)*incX >= len(x)) || (incX < 0 && (1-lenX)*incX >= len(x)) {
-		panic("blas: x index out of range")
-	}
-	if (incY > 0 && (lenY-1)*incY >= len(y)) || (incY < 0 && (1-lenY)*incY >= len(y)) {
-		panic("blas: y index out of range")
-	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasSgemv(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), C.int(m), C.int(n), (*C.float)(&alpha), (*C.float)(&a[0]), C.int(lda), (*C.float)(&x[0]), C.int(incX), (*C.float)(&beta), (*C.float)(&y[0]), C.int(incY)))
 }
 
@@ -1419,21 +1404,6 @@ func (impl *Standard) Dgemv(tA blas.Transpose, m, n int, alpha float64, a []floa
 	if incY == 0 {
 		panic("blas: zero y index increment")
 	}
-	var lenX, lenY int
-	if tA == blas.NoTrans {
-		lenX, lenY = n, m
-	} else {
-		lenX, lenY = m, n
-	}
-	if (incX > 0 && (lenX-1)*incX >= len(x)) || (incX < 0 && (1-lenX)*incX >= len(x)) {
-		panic("blas: x index out of range")
-	}
-	if (incY > 0 && (lenY-1)*incY >= len(y)) || (incY < 0 && (1-lenY)*incY >= len(y)) {
-		panic("blas: y index out of range")
-	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasDgemv(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), C.int(m), C.int(n), (*C.double)(&alpha), (*C.double)(&a[0]), C.int(lda), (*C.double)(&x[0]), C.int(incX), (*C.double)(&beta), (*C.double)(&y[0]), C.int(incY)))
 }
 
@@ -1458,21 +1428,6 @@ func (impl *Standard) Cgemv(tA blas.Transpose, m, n int, alpha complex64, a []co
 	if incY == 0 {
 		panic("blas: zero y index increment")
 	}
-	var lenX, lenY int
-	if tA == blas.NoTrans {
-		lenX, lenY = n, m
-	} else {
-		lenX, lenY = m, n
-	}
-	if (incX > 0 && (lenX-1)*incX >= len(x)) || (incX < 0 && (1-lenX)*incX >= len(x)) {
-		panic("blas: x index out of range")
-	}
-	if (incY > 0 && (lenY-1)*incY >= len(y)) || (incY < 0 && (1-lenY)*incY >= len(y)) {
-		panic("blas: y index out of range")
-	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasCgemv(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), C.int(m), C.int(n), (*C.cuComplex)(unsafe.Pointer(&alpha)), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuComplex)(unsafe.Pointer(&beta)), (*C.cuComplex)(unsafe.Pointer(&y[0])), C.int(incY)))
 }
 
@@ -1496,21 +1451,6 @@ func (impl *Standard) Zgemv(tA blas.Transpose, m, n int, alpha complex128, a []c
 	}
 	if incY == 0 {
 		panic("blas: zero y index increment")
-	}
-	var lenX, lenY int
-	if tA == blas.NoTrans {
-		lenX, lenY = n, m
-	} else {
-		lenX, lenY = m, n
-	}
-	if (incX > 0 && (lenX-1)*incX >= len(x)) || (incX < 0 && (1-lenX)*incX >= len(x)) {
-		panic("blas: x index out of range")
-	}
-	if (incY > 0 && (lenY-1)*incY >= len(y)) || (incY < 0 && (1-lenY)*incY >= len(y)) {
-		panic("blas: y index out of range")
-	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasZgemv(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), C.int(m), C.int(n), (*C.cuDoubleComplex)(unsafe.Pointer(&alpha)), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuDoubleComplex)(unsafe.Pointer(&beta)), (*C.cuDoubleComplex)(unsafe.Pointer(&y[0])), C.int(incY)))
 }
@@ -1542,21 +1482,6 @@ func (impl *Standard) Sgbmv(tA blas.Transpose, m, n, kl, ku int, alpha float32, 
 	if incY == 0 {
 		panic("blas: zero y index increment")
 	}
-	var lenX, lenY int
-	if tA == blas.NoTrans {
-		lenX, lenY = n, m
-	} else {
-		lenX, lenY = m, n
-	}
-	if (incX > 0 && (lenX-1)*incX >= len(x)) || (incX < 0 && (1-lenX)*incX >= len(x)) {
-		panic("blas: x index out of range")
-	}
-	if (incY > 0 && (lenY-1)*incY >= len(y)) || (incY < 0 && (1-lenY)*incY >= len(y)) {
-		panic("blas: y index out of range")
-	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasSgbmv(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), C.int(m), C.int(n), C.int(kl), C.int(ku), (*C.float)(&alpha), (*C.float)(&a[0]), C.int(lda), (*C.float)(&x[0]), C.int(incX), (*C.float)(&beta), (*C.float)(&y[0]), C.int(incY)))
 }
 
@@ -1587,21 +1512,6 @@ func (impl *Standard) Dgbmv(tA blas.Transpose, m, n, kl, ku int, alpha float64, 
 	if incY == 0 {
 		panic("blas: zero y index increment")
 	}
-	var lenX, lenY int
-	if tA == blas.NoTrans {
-		lenX, lenY = n, m
-	} else {
-		lenX, lenY = m, n
-	}
-	if (incX > 0 && (lenX-1)*incX >= len(x)) || (incX < 0 && (1-lenX)*incX >= len(x)) {
-		panic("blas: x index out of range")
-	}
-	if (incY > 0 && (lenY-1)*incY >= len(y)) || (incY < 0 && (1-lenY)*incY >= len(y)) {
-		panic("blas: y index out of range")
-	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasDgbmv(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), C.int(m), C.int(n), C.int(kl), C.int(ku), (*C.double)(&alpha), (*C.double)(&a[0]), C.int(lda), (*C.double)(&x[0]), C.int(incX), (*C.double)(&beta), (*C.double)(&y[0]), C.int(incY)))
 }
 
@@ -1626,21 +1536,6 @@ func (impl *Standard) Cgbmv(tA blas.Transpose, m, n, kl, ku int, alpha complex64
 	if incY == 0 {
 		panic("blas: zero y index increment")
 	}
-	var lenX, lenY int
-	if tA == blas.NoTrans {
-		lenX, lenY = n, m
-	} else {
-		lenX, lenY = m, n
-	}
-	if (incX > 0 && (lenX-1)*incX >= len(x)) || (incX < 0 && (1-lenX)*incX >= len(x)) {
-		panic("blas: x index out of range")
-	}
-	if (incY > 0 && (lenY-1)*incY >= len(y)) || (incY < 0 && (1-lenY)*incY >= len(y)) {
-		panic("blas: y index out of range")
-	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasCgbmv(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), C.int(m), C.int(n), C.int(kl), C.int(ku), (*C.cuComplex)(unsafe.Pointer(&alpha)), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuComplex)(unsafe.Pointer(&beta)), (*C.cuComplex)(unsafe.Pointer(&y[0])), C.int(incY)))
 }
 
@@ -1664,21 +1559,6 @@ func (impl *Standard) Zgbmv(tA blas.Transpose, m, n, kl, ku int, alpha complex12
 	}
 	if incY == 0 {
 		panic("blas: zero y index increment")
-	}
-	var lenX, lenY int
-	if tA == blas.NoTrans {
-		lenX, lenY = n, m
-	} else {
-		lenX, lenY = m, n
-	}
-	if (incX > 0 && (lenX-1)*incX >= len(x)) || (incX < 0 && (1-lenX)*incX >= len(x)) {
-		panic("blas: x index out of range")
-	}
-	if (incY > 0 && (lenY-1)*incY >= len(y)) || (incY < 0 && (1-lenY)*incY >= len(y)) {
-		panic("blas: y index out of range")
-	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasZgbmv(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), C.int(m), C.int(n), C.int(kl), C.int(ku), (*C.cuDoubleComplex)(unsafe.Pointer(&alpha)), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuDoubleComplex)(unsafe.Pointer(&beta)), (*C.cuDoubleComplex)(unsafe.Pointer(&y[0])), C.int(incY)))
 }
@@ -1705,9 +1585,6 @@ func (impl *Standard) Strmv(ul blas.Uplo, tA blas.Transpose, d blas.Diag, n int,
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasStrmv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(tA), diag2cublasDiag(d), C.int(n), (*C.float)(&a[0]), C.int(lda), (*C.float)(&x[0]), C.int(incX)))
 }
 
@@ -1733,9 +1610,6 @@ func (impl *Standard) Dtrmv(ul blas.Uplo, tA blas.Transpose, d blas.Diag, n int,
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasDtrmv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(tA), diag2cublasDiag(d), C.int(n), (*C.double)(&a[0]), C.int(lda), (*C.double)(&x[0]), C.int(incX)))
 }
 
@@ -1757,9 +1631,6 @@ func (impl *Standard) Ctrmv(ul blas.Uplo, tA blas.Transpose, d blas.Diag, n int,
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasCtrmv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(tA), diag2cublasDiag(d), C.int(n), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX)))
 }
 
@@ -1780,9 +1651,6 @@ func (impl *Standard) Ztrmv(ul blas.Uplo, tA blas.Transpose, d blas.Diag, n int,
 	}
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
-	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasZtrmv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(tA), diag2cublasDiag(d), C.int(n), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX)))
 }
@@ -1812,9 +1680,6 @@ func (impl *Standard) Stbmv(ul blas.Uplo, tA blas.Transpose, d blas.Diag, n, k i
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasStbmv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(tA), diag2cublasDiag(d), C.int(n), C.int(k), (*C.float)(&a[0]), C.int(lda), (*C.float)(&x[0]), C.int(incX)))
 }
 
@@ -1843,9 +1708,6 @@ func (impl *Standard) Dtbmv(ul blas.Uplo, tA blas.Transpose, d blas.Diag, n, k i
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasDtbmv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(tA), diag2cublasDiag(d), C.int(n), C.int(k), (*C.double)(&a[0]), C.int(lda), (*C.double)(&x[0]), C.int(incX)))
 }
 
@@ -1870,9 +1732,6 @@ func (impl *Standard) Ctbmv(ul blas.Uplo, tA blas.Transpose, d blas.Diag, n, k i
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasCtbmv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(tA), diag2cublasDiag(d), C.int(n), C.int(k), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX)))
 }
 
@@ -1896,9 +1755,6 @@ func (impl *Standard) Ztbmv(ul blas.Uplo, tA blas.Transpose, d blas.Diag, n, k i
 	}
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
-	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasZtbmv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(tA), diag2cublasDiag(d), C.int(n), C.int(k), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX)))
 }
@@ -2034,9 +1890,6 @@ func (impl *Standard) Strsv(ul blas.Uplo, tA blas.Transpose, d blas.Diag, n int,
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasStrsv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(tA), diag2cublasDiag(d), C.int(n), (*C.float)(&a[0]), C.int(lda), (*C.float)(&x[0]), C.int(incX)))
 }
 
@@ -2067,9 +1920,6 @@ func (impl *Standard) Dtrsv(ul blas.Uplo, tA blas.Transpose, d blas.Diag, n int,
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasDtrsv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(tA), diag2cublasDiag(d), C.int(n), (*C.double)(&a[0]), C.int(lda), (*C.double)(&x[0]), C.int(incX)))
 }
 
@@ -2091,9 +1941,6 @@ func (impl *Standard) Ctrsv(ul blas.Uplo, tA blas.Transpose, d blas.Diag, n int,
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasCtrsv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(tA), diag2cublasDiag(d), C.int(n), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX)))
 }
 
@@ -2114,9 +1961,6 @@ func (impl *Standard) Ztrsv(ul blas.Uplo, tA blas.Transpose, d blas.Diag, n int,
 	}
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
-	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasZtrsv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(tA), diag2cublasDiag(d), C.int(n), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX)))
 }
@@ -2265,9 +2109,6 @@ func (impl *Standard) Stbsv(ul blas.Uplo, tA blas.Transpose, d blas.Diag, n, k i
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasStbsv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(tA), diag2cublasDiag(d), C.int(n), C.int(k), (*C.float)(&a[0]), C.int(lda), (*C.float)(&x[0]), C.int(incX)))
 }
 
@@ -2301,9 +2142,6 @@ func (impl *Standard) Dtbsv(ul blas.Uplo, tA blas.Transpose, d blas.Diag, n, k i
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasDtbsv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(tA), diag2cublasDiag(d), C.int(n), C.int(k), (*C.double)(&a[0]), C.int(lda), (*C.double)(&x[0]), C.int(incX)))
 }
 
@@ -2328,9 +2166,6 @@ func (impl *Standard) Ctbsv(ul blas.Uplo, tA blas.Transpose, d blas.Diag, n, k i
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasCtbsv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(tA), diag2cublasDiag(d), C.int(n), C.int(k), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX)))
 }
 
@@ -2354,9 +2189,6 @@ func (impl *Standard) Ztbsv(ul blas.Uplo, tA blas.Transpose, d blas.Diag, n, k i
 	}
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
-	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasZtbsv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(tA), diag2cublasDiag(d), C.int(n), C.int(k), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX)))
 }
@@ -2386,9 +2218,6 @@ func (impl *Standard) Ssymv(ul blas.Uplo, n int, alpha float32, a []float32, lda
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasSsymv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.float)(&alpha), (*C.float)(&a[0]), C.int(lda), (*C.float)(&x[0]), C.int(incX), (*C.float)(&beta), (*C.float)(&y[0]), C.int(incY)))
 }
 
@@ -2417,9 +2246,6 @@ func (impl *Standard) Dsymv(ul blas.Uplo, n int, alpha float64, a []float64, lda
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasDsymv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.double)(&alpha), (*C.double)(&a[0]), C.int(lda), (*C.double)(&x[0]), C.int(incX), (*C.double)(&beta), (*C.double)(&y[0]), C.int(incY)))
 }
 
@@ -2443,9 +2269,6 @@ func (impl *Standard) Csymv(ul blas.Uplo, n int, alpha complex64, a []complex64,
 	}
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
-	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasCsymv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.cuComplex)(unsafe.Pointer(&alpha)), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuComplex)(unsafe.Pointer(&beta)), (*C.cuComplex)(unsafe.Pointer(&y[0])), C.int(incY)))
 }
@@ -2471,9 +2294,6 @@ func (impl *Standard) Zsymv(ul blas.Uplo, n int, alpha complex128, a []complex12
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasZsymv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.cuDoubleComplex)(unsafe.Pointer(&alpha)), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuDoubleComplex)(unsafe.Pointer(&beta)), (*C.cuDoubleComplex)(unsafe.Pointer(&y[0])), C.int(incY)))
 }
 
@@ -2498,9 +2318,6 @@ func (impl *Standard) Chemv(ul blas.Uplo, n int, alpha complex64, a []complex64,
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasChemv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.cuComplex)(unsafe.Pointer(&alpha)), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuComplex)(unsafe.Pointer(&beta)), (*C.cuComplex)(unsafe.Pointer(&y[0])), C.int(incY)))
 }
 
@@ -2524,9 +2341,6 @@ func (impl *Standard) Zhemv(ul blas.Uplo, n int, alpha complex128, a []complex12
 	}
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
-	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasZhemv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.cuDoubleComplex)(unsafe.Pointer(&alpha)), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuDoubleComplex)(unsafe.Pointer(&beta)), (*C.cuDoubleComplex)(unsafe.Pointer(&y[0])), C.int(incY)))
 }
@@ -2559,9 +2373,6 @@ func (impl *Standard) Ssbmv(ul blas.Uplo, n, k int, alpha float32, a []float32, 
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
 	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasSsbmv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), C.int(k), (*C.float)(&alpha), (*C.float)(&a[0]), C.int(lda), (*C.float)(&x[0]), C.int(incX), (*C.float)(&beta), (*C.float)(&y[0]), C.int(incY)))
 }
 
@@ -2593,9 +2404,6 @@ func (impl *Standard) Dsbmv(ul blas.Uplo, n, k int, alpha float64, a []float64, 
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
 	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasDsbmv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), C.int(k), (*C.double)(&alpha), (*C.double)(&a[0]), C.int(lda), (*C.double)(&x[0]), C.int(incX), (*C.double)(&beta), (*C.double)(&y[0]), C.int(incY)))
 }
 
@@ -2623,9 +2431,6 @@ func (impl *Standard) Chbmv(ul blas.Uplo, n, k int, alpha complex64, a []complex
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
 	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasChbmv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), C.int(k), (*C.cuComplex)(unsafe.Pointer(&alpha)), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuComplex)(unsafe.Pointer(&beta)), (*C.cuComplex)(unsafe.Pointer(&y[0])), C.int(incY)))
 }
 
@@ -2652,9 +2457,6 @@ func (impl *Standard) Zhbmv(ul blas.Uplo, n, k int, alpha complex128, a []comple
 	}
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
-	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasZhbmv(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), C.int(k), (*C.cuDoubleComplex)(unsafe.Pointer(&alpha)), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuDoubleComplex)(unsafe.Pointer(&beta)), (*C.cuDoubleComplex)(unsafe.Pointer(&y[0])), C.int(incY)))
 }
@@ -2802,9 +2604,6 @@ func (impl *Standard) Sger(m, n int, alpha float32, x []float32, incX int, y []f
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
 	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasSger(C.cublasHandle_t(impl.h), C.int(m), C.int(n), (*C.float)(&alpha), (*C.float)(&x[0]), C.int(incX), (*C.float)(&y[0]), C.int(incY), (*C.float)(&a[0]), C.int(lda)))
 }
 
@@ -2835,9 +2634,6 @@ func (impl *Standard) Dger(m, n int, alpha float64, x []float64, incX int, y []f
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
 	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasDger(C.cublasHandle_t(impl.h), C.int(m), C.int(n), (*C.double)(&alpha), (*C.double)(&x[0]), C.int(incX), (*C.double)(&y[0]), C.int(incY), (*C.double)(&a[0]), C.int(lda)))
 }
 
@@ -2864,9 +2660,6 @@ func (impl *Standard) Cgeru(m, n int, alpha complex64, x []complex64, incX int, 
 	}
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
-	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasCgeru(C.cublasHandle_t(impl.h), C.int(m), C.int(n), (*C.cuComplex)(unsafe.Pointer(&alpha)), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuComplex)(unsafe.Pointer(&y[0])), C.int(incY), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda)))
 }
@@ -2895,9 +2688,6 @@ func (impl *Standard) Cgerc(m, n int, alpha complex64, x []complex64, incX int, 
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
 	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasCgerc(C.cublasHandle_t(impl.h), C.int(m), C.int(n), (*C.cuComplex)(unsafe.Pointer(&alpha)), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuComplex)(unsafe.Pointer(&y[0])), C.int(incY), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda)))
 }
 
@@ -2924,9 +2714,6 @@ func (impl *Standard) Zgeru(m, n int, alpha complex128, x []complex128, incX int
 	}
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
-	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasZgeru(C.cublasHandle_t(impl.h), C.int(m), C.int(n), (*C.cuDoubleComplex)(unsafe.Pointer(&alpha)), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuDoubleComplex)(unsafe.Pointer(&y[0])), C.int(incY), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda)))
 }
@@ -2955,9 +2742,6 @@ func (impl *Standard) Zgerc(m, n int, alpha complex128, x []complex128, incX int
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
 	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasZgerc(C.cublasHandle_t(impl.h), C.int(m), C.int(n), (*C.cuDoubleComplex)(unsafe.Pointer(&alpha)), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuDoubleComplex)(unsafe.Pointer(&y[0])), C.int(incY), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda)))
 }
 
@@ -2978,9 +2762,6 @@ func (impl *Standard) Ssyr(ul blas.Uplo, n int, alpha float32, x []float32, incX
 	}
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
-	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasSsyr(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.float)(&alpha), (*C.float)(&x[0]), C.int(incX), (*C.float)(&a[0]), C.int(lda)))
 }
@@ -3003,9 +2784,6 @@ func (impl *Standard) Dsyr(ul blas.Uplo, n int, alpha float64, x []float64, incX
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasDsyr(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.double)(&alpha), (*C.double)(&x[0]), C.int(incX), (*C.double)(&a[0]), C.int(lda)))
 }
 
@@ -3023,9 +2801,6 @@ func (impl *Standard) Csyr(ul blas.Uplo, n int, alpha complex64, x []complex64, 
 	}
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
-	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasCsyr(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.cuComplex)(unsafe.Pointer(&alpha)), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda)))
 }
@@ -3045,9 +2820,6 @@ func (impl *Standard) Zsyr(ul blas.Uplo, n int, alpha complex128, x []complex128
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasZsyr(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.cuDoubleComplex)(unsafe.Pointer(&alpha)), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda)))
 }
 
@@ -3066,9 +2838,6 @@ func (impl *Standard) Cher(ul blas.Uplo, n int, alpha float32, x []complex64, in
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasCher(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.float)(&alpha), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda)))
 }
 
@@ -3086,9 +2855,6 @@ func (impl *Standard) Zher(ul blas.Uplo, n int, alpha float64, x []complex128, i
 	}
 	if (incX > 0 && (n-1)*incX >= len(x)) || (incX < 0 && (1-n)*incX >= len(x)) {
 		panic("blas: x index out of range")
-	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasZher(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.double)(&alpha), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda)))
 }
@@ -3209,9 +2975,6 @@ func (impl *Standard) Ssyr2(ul blas.Uplo, n int, alpha float32, x []float32, inc
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasSsyr2(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.float)(&alpha), (*C.float)(&x[0]), C.int(incX), (*C.float)(&y[0]), C.int(incY), (*C.float)(&a[0]), C.int(lda)))
 }
 
@@ -3239,9 +3002,6 @@ func (impl *Standard) Dsyr2(ul blas.Uplo, n int, alpha float64, x []float64, inc
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasDsyr2(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.double)(&alpha), (*C.double)(&x[0]), C.int(incX), (*C.double)(&y[0]), C.int(incY), (*C.double)(&a[0]), C.int(lda)))
 }
 
@@ -3265,9 +3025,6 @@ func (impl *Standard) Csyr2(ul blas.Uplo, n int, alpha complex64, x []complex64,
 	}
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
-	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasCsyr2(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.cuComplex)(unsafe.Pointer(&alpha)), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuComplex)(unsafe.Pointer(&y[0])), C.int(incY), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda)))
 }
@@ -3293,9 +3050,6 @@ func (impl *Standard) Zsyr2(ul blas.Uplo, n int, alpha complex128, x []complex12
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasZsyr2(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.cuDoubleComplex)(unsafe.Pointer(&alpha)), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuDoubleComplex)(unsafe.Pointer(&y[0])), C.int(incY), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda)))
 }
 
@@ -3320,9 +3074,6 @@ func (impl *Standard) Cher2(ul blas.Uplo, n int, alpha complex64, x []complex64,
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasCher2(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.cuComplex)(unsafe.Pointer(&alpha)), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuComplex)(unsafe.Pointer(&y[0])), C.int(incY), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda)))
 }
 
@@ -3346,9 +3097,6 @@ func (impl *Standard) Zher2(ul blas.Uplo, n int, alpha complex128, x []complex12
 	}
 	if (incY > 0 && (n-1)*incY >= len(y)) || (incY < 0 && (1-n)*incY >= len(y)) {
 		panic("blas: y index out of range")
-	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasZher2(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.cuDoubleComplex)(unsafe.Pointer(&alpha)), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuDoubleComplex)(unsafe.Pointer(&y[0])), C.int(incY), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda)))
 }
@@ -3494,26 +3242,6 @@ func (impl *Standard) Sgemm(tA, tB blas.Transpose, m, n, k int, alpha float32, a
 	if k < 0 {
 		panic("blas: k < 0")
 	}
-	var rowA, colA, rowB, colB int
-	if tA == blas.NoTrans {
-		rowA, colA = m, k
-	} else {
-		rowA, colA = k, m
-	}
-	if tB == blas.NoTrans {
-		rowB, colB = k, n
-	} else {
-		rowB, colB = n, k
-	}
-	if lda*(rowA-1)+colA > len(a) || lda < max(1, colA) {
-		panic("blas: index of a out of range")
-	}
-	if ldb*(rowB-1)+colB > len(b) || ldb < max(1, colB) {
-		panic("blas: index of b out of range")
-	}
-	if ldc*(m-1)+n > len(c) || ldc < max(1, n) {
-		panic("blas: index of c out of range")
-	}
 	impl.e = status(C.cublasSgemm(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), trans2cublasTrans(tB), C.int(m), C.int(n), C.int(k), (*C.float)(&alpha), (*C.float)(&a[0]), C.int(lda), (*C.float)(&b[0]), C.int(ldb), (*C.float)(&beta), (*C.float)(&c[0]), C.int(ldc)))
 }
 
@@ -3542,26 +3270,6 @@ func (impl *Standard) Dgemm(tA, tB blas.Transpose, m, n, k int, alpha float64, a
 	if k < 0 {
 		panic("blas: k < 0")
 	}
-	var rowA, colA, rowB, colB int
-	if tA == blas.NoTrans {
-		rowA, colA = m, k
-	} else {
-		rowA, colA = k, m
-	}
-	if tB == blas.NoTrans {
-		rowB, colB = k, n
-	} else {
-		rowB, colB = n, k
-	}
-	if lda*(rowA-1)+colA > len(a) || lda < max(1, colA) {
-		panic("blas: index of a out of range")
-	}
-	if ldb*(rowB-1)+colB > len(b) || ldb < max(1, colB) {
-		panic("blas: index of b out of range")
-	}
-	if ldc*(m-1)+n > len(c) || ldc < max(1, n) {
-		panic("blas: index of c out of range")
-	}
 	impl.e = status(C.cublasDgemm(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), trans2cublasTrans(tB), C.int(m), C.int(n), C.int(k), (*C.double)(&alpha), (*C.double)(&a[0]), C.int(lda), (*C.double)(&b[0]), C.int(ldb), (*C.double)(&beta), (*C.double)(&c[0]), C.int(ldc)))
 }
 
@@ -3585,26 +3293,6 @@ func (impl *Standard) Cgemm(tA, tB blas.Transpose, m, n, k int, alpha complex64,
 	}
 	if k < 0 {
 		panic("blas: k < 0")
-	}
-	var rowA, colA, rowB, colB int
-	if tA == blas.NoTrans {
-		rowA, colA = m, k
-	} else {
-		rowA, colA = k, m
-	}
-	if tB == blas.NoTrans {
-		rowB, colB = k, n
-	} else {
-		rowB, colB = n, k
-	}
-	if lda*(rowA-1)+colA > len(a) || lda < max(1, colA) {
-		panic("blas: index of a out of range")
-	}
-	if ldb*(rowB-1)+colB > len(b) || ldb < max(1, colB) {
-		panic("blas: index of b out of range")
-	}
-	if ldc*(m-1)+n > len(c) || ldc < max(1, n) {
-		panic("blas: index of c out of range")
 	}
 	impl.e = status(C.cublasCgemm(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), trans2cublasTrans(tB), C.int(m), C.int(n), C.int(k), (*C.cuComplex)(unsafe.Pointer(&alpha)), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuComplex)(unsafe.Pointer(&b[0])), C.int(ldb), (*C.cuComplex)(unsafe.Pointer(&beta)), (*C.cuComplex)(unsafe.Pointer(&c[0])), C.int(ldc)))
 }
@@ -3630,9 +3318,6 @@ func (impl *Standard) Cgemm3m(tA, tB blas.Transpose, m, n, k int, alpha complex6
 	if k < 0 {
 		panic("blas: k < 0")
 	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasCgemm3m(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), trans2cublasTrans(tB), C.int(m), C.int(n), C.int(k), (*C.cuComplex)(unsafe.Pointer(&alpha)), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuComplex)(unsafe.Pointer(&b[0])), C.int(ldb), (*C.cuComplex)(unsafe.Pointer(&beta)), (*C.cuComplex)(unsafe.Pointer(&c[0])), C.int(ldc)))
 }
 
@@ -3657,26 +3342,6 @@ func (impl *Standard) Zgemm(tA, tB blas.Transpose, m, n, k int, alpha complex128
 	if k < 0 {
 		panic("blas: k < 0")
 	}
-	var rowA, colA, rowB, colB int
-	if tA == blas.NoTrans {
-		rowA, colA = m, k
-	} else {
-		rowA, colA = k, m
-	}
-	if tB == blas.NoTrans {
-		rowB, colB = k, n
-	} else {
-		rowB, colB = n, k
-	}
-	if lda*(rowA-1)+colA > len(a) || lda < max(1, colA) {
-		panic("blas: index of a out of range")
-	}
-	if ldb*(rowB-1)+colB > len(b) || ldb < max(1, colB) {
-		panic("blas: index of b out of range")
-	}
-	if ldc*(m-1)+n > len(c) || ldc < max(1, n) {
-		panic("blas: index of c out of range")
-	}
 	impl.e = status(C.cublasZgemm(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), trans2cublasTrans(tB), C.int(m), C.int(n), C.int(k), (*C.cuDoubleComplex)(unsafe.Pointer(&alpha)), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuDoubleComplex)(unsafe.Pointer(&b[0])), C.int(ldb), (*C.cuDoubleComplex)(unsafe.Pointer(&beta)), (*C.cuDoubleComplex)(unsafe.Pointer(&c[0])), C.int(ldc)))
 }
 
@@ -3700,9 +3365,6 @@ func (impl *Standard) Zgemm3m(tA, tB blas.Transpose, m, n, k int, alpha complex1
 	}
 	if k < 0 {
 		panic("blas: k < 0")
-	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasZgemm3m(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), trans2cublasTrans(tB), C.int(m), C.int(n), C.int(k), (*C.cuDoubleComplex)(unsafe.Pointer(&alpha)), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuDoubleComplex)(unsafe.Pointer(&b[0])), C.int(ldb), (*C.cuDoubleComplex)(unsafe.Pointer(&beta)), (*C.cuDoubleComplex)(unsafe.Pointer(&c[0])), C.int(ldc)))
 }
@@ -4116,9 +3778,6 @@ func (impl *Standard) Ssyrkx(ul blas.Uplo, t blas.Transpose, n, k int, alpha flo
 	if k < 0 {
 		panic("blas: k < 0")
 	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasSsyrkx(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(t), C.int(n), C.int(k), (*C.float)(&alpha), (*C.float)(&a[0]), C.int(lda), (*C.float)(&b[0]), C.int(ldb), (*C.float)(&beta), (*C.float)(&c[0]), C.int(ldc)))
 }
 
@@ -4136,9 +3795,6 @@ func (impl *Standard) Dsyrkx(ul blas.Uplo, t blas.Transpose, n, k int, alpha flo
 	}
 	if k < 0 {
 		panic("blas: k < 0")
-	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasDsyrkx(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(t), C.int(n), C.int(k), (*C.double)(&alpha), (*C.double)(&a[0]), C.int(lda), (*C.double)(&b[0]), C.int(ldb), (*C.double)(&beta), (*C.double)(&c[0]), C.int(ldc)))
 }
@@ -4158,9 +3814,6 @@ func (impl *Standard) Csyrkx(ul blas.Uplo, t blas.Transpose, n, k int, alpha com
 	if k < 0 {
 		panic("blas: k < 0")
 	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasCsyrkx(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(t), C.int(n), C.int(k), (*C.cuComplex)(unsafe.Pointer(&alpha)), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuComplex)(unsafe.Pointer(&b[0])), C.int(ldb), (*C.cuComplex)(unsafe.Pointer(&beta)), (*C.cuComplex)(unsafe.Pointer(&c[0])), C.int(ldc)))
 }
 
@@ -4178,9 +3831,6 @@ func (impl *Standard) Zsyrkx(ul blas.Uplo, t blas.Transpose, n, k int, alpha com
 	}
 	if k < 0 {
 		panic("blas: k < 0")
-	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasZsyrkx(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(t), C.int(n), C.int(k), (*C.cuDoubleComplex)(unsafe.Pointer(&alpha)), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuDoubleComplex)(unsafe.Pointer(&b[0])), C.int(ldb), (*C.cuDoubleComplex)(unsafe.Pointer(&beta)), (*C.cuDoubleComplex)(unsafe.Pointer(&c[0])), C.int(ldc)))
 }
@@ -4200,9 +3850,6 @@ func (impl *Standard) Cherkx(ul blas.Uplo, t blas.Transpose, n, k int, alpha com
 	if k < 0 {
 		panic("blas: k < 0")
 	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasCherkx(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(t), C.int(n), C.int(k), (*C.cuComplex)(unsafe.Pointer(&alpha)), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuComplex)(unsafe.Pointer(&b[0])), C.int(ldb), (*C.float)(&beta), (*C.cuComplex)(unsafe.Pointer(&c[0])), C.int(ldc)))
 }
 
@@ -4220,9 +3867,6 @@ func (impl *Standard) Zherkx(ul blas.Uplo, t blas.Transpose, n, k int, alpha com
 	}
 	if k < 0 {
 		panic("blas: k < 0")
-	}
-	if lda*(n-1)+k+1 > len(a) || lda < k+1 {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasZherkx(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), trans2cublasTrans(t), C.int(n), C.int(k), (*C.cuDoubleComplex)(unsafe.Pointer(&alpha)), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuDoubleComplex)(unsafe.Pointer(&b[0])), C.int(ldb), (*C.double)(&beta), (*C.cuDoubleComplex)(unsafe.Pointer(&c[0])), C.int(ldc)))
 }
@@ -4579,9 +4223,6 @@ func (impl *Standard) Sgeam(tA, tB blas.Transpose, m, n int, alpha float32, a []
 	if n < 0 {
 		panic("blas: n < 0")
 	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasSgeam(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), trans2cublasTrans(tB), C.int(m), C.int(n), (*C.float)(&alpha), (*C.float)(&a[0]), C.int(lda), (*C.float)(&beta), (*C.float)(&b[0]), C.int(ldb), (*C.float)(&c[0]), C.int(ldc)))
 }
 
@@ -4602,9 +4243,6 @@ func (impl *Standard) Dgeam(tA, tB blas.Transpose, m, n int, alpha float64, a []
 	}
 	if n < 0 {
 		panic("blas: n < 0")
-	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasDgeam(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), trans2cublasTrans(tB), C.int(m), C.int(n), (*C.double)(&alpha), (*C.double)(&a[0]), C.int(lda), (*C.double)(&beta), (*C.double)(&b[0]), C.int(ldb), (*C.double)(&c[0]), C.int(ldc)))
 }
@@ -4627,9 +4265,6 @@ func (impl *Standard) Cgeam(tA, tB blas.Transpose, m, n int, alpha complex64, a 
 	if n < 0 {
 		panic("blas: n < 0")
 	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasCgeam(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), trans2cublasTrans(tB), C.int(m), C.int(n), (*C.cuComplex)(unsafe.Pointer(&alpha)), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuComplex)(unsafe.Pointer(&beta)), (*C.cuComplex)(unsafe.Pointer(&b[0])), C.int(ldb), (*C.cuComplex)(unsafe.Pointer(&c[0])), C.int(ldc)))
 }
 
@@ -4650,9 +4285,6 @@ func (impl *Standard) Zgeam(tA, tB blas.Transpose, m, n int, alpha complex128, a
 	}
 	if n < 0 {
 		panic("blas: n < 0")
-	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasZgeam(C.cublasHandle_t(impl.h), trans2cublasTrans(tA), trans2cublasTrans(tB), C.int(m), C.int(n), (*C.cuDoubleComplex)(unsafe.Pointer(&alpha)), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuDoubleComplex)(unsafe.Pointer(&beta)), (*C.cuDoubleComplex)(unsafe.Pointer(&b[0])), C.int(ldb), (*C.cuDoubleComplex)(unsafe.Pointer(&c[0])), C.int(ldc)))
 }
@@ -4675,9 +4307,6 @@ func (impl *Standard) Sdgmm(mode blas.Side, m, n int, a []float32, lda int, x []
 	if (incX > 0 && (m-1)*incX >= len(x)) || (incX < 0 && (1-m)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasSdgmm(C.cublasHandle_t(impl.h), side2cublasSide(mode), C.int(m), C.int(n), (*C.float)(&a[0]), C.int(lda), (*C.float)(&x[0]), C.int(incX), (*C.float)(&c[0]), C.int(ldc)))
 }
 
@@ -4698,9 +4327,6 @@ func (impl *Standard) Ddgmm(mode blas.Side, m, n int, a []float64, lda int, x []
 	}
 	if (incX > 0 && (m-1)*incX >= len(x)) || (incX < 0 && (1-m)*incX >= len(x)) {
 		panic("blas: x index out of range")
-	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasDdgmm(C.cublasHandle_t(impl.h), side2cublasSide(mode), C.int(m), C.int(n), (*C.double)(&a[0]), C.int(lda), (*C.double)(&x[0]), C.int(incX), (*C.double)(&c[0]), C.int(ldc)))
 }
@@ -4723,9 +4349,6 @@ func (impl *Standard) Cdgmm(mode blas.Side, m, n int, a []complex64, lda int, x 
 	if (incX > 0 && (m-1)*incX >= len(x)) || (incX < 0 && (1-m)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasCdgmm(C.cublasHandle_t(impl.h), side2cublasSide(mode), C.int(m), C.int(n), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuComplex)(unsafe.Pointer(&c[0])), C.int(ldc)))
 }
 
@@ -4747,9 +4370,6 @@ func (impl *Standard) Zdgmm(mode blas.Side, m, n int, a []complex128, lda int, x
 	if (incX > 0 && (m-1)*incX >= len(x)) || (incX < 0 && (1-m)*incX >= len(x)) {
 		panic("blas: x index out of range")
 	}
-	if lda*(m-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasZdgmm(C.cublasHandle_t(impl.h), side2cublasSide(mode), C.int(m), C.int(n), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuDoubleComplex)(unsafe.Pointer(&x[0])), C.int(incX), (*C.cuDoubleComplex)(unsafe.Pointer(&c[0])), C.int(ldc)))
 }
 
@@ -4761,9 +4381,6 @@ func (impl *Standard) Stpttr(ul blas.Uplo, n int, aP, a []float32, lda int) {
 
 	if n < 0 {
 		panic("blas: n < 0")
-	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasStpttr(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.float)(&aP[0]), (*C.float)(&a[0]), C.int(lda)))
 }
@@ -4777,9 +4394,6 @@ func (impl *Standard) Dtpttr(ul blas.Uplo, n int, aP, a []float64, lda int) {
 	if n < 0 {
 		panic("blas: n < 0")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasDtpttr(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.double)(&aP[0]), (*C.double)(&a[0]), C.int(lda)))
 }
 
@@ -4791,9 +4405,6 @@ func (impl *Standard) Ctpttr(ul blas.Uplo, n int, aP, a []complex64, lda int) {
 
 	if n < 0 {
 		panic("blas: n < 0")
-	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasCtpttr(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.cuComplex)(unsafe.Pointer(&aP[0])), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda)))
 }
@@ -4807,9 +4418,6 @@ func (impl *Standard) Ztpttr(ul blas.Uplo, n int, aP, a []complex128, lda int) {
 	if n < 0 {
 		panic("blas: n < 0")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasZtpttr(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.cuDoubleComplex)(unsafe.Pointer(&aP[0])), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda)))
 }
 
@@ -4821,9 +4429,6 @@ func (impl *Standard) Strttp(ul blas.Uplo, n int, a []float32, lda int, aP []flo
 
 	if n < 0 {
 		panic("blas: n < 0")
-	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasStrttp(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.float)(&a[0]), C.int(lda), (*C.float)(&aP[0])))
 }
@@ -4837,9 +4442,6 @@ func (impl *Standard) Dtrttp(ul blas.Uplo, n int, a []float64, lda int, aP []flo
 	if n < 0 {
 		panic("blas: n < 0")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasDtrttp(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.double)(&a[0]), C.int(lda), (*C.double)(&aP[0])))
 }
 
@@ -4852,9 +4454,6 @@ func (impl *Standard) Ctrttp(ul blas.Uplo, n int, a []complex64, lda int, aP []c
 	if n < 0 {
 		panic("blas: n < 0")
 	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
-	}
 	impl.e = status(C.cublasCtrttp(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.cuComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuComplex)(unsafe.Pointer(&aP[0]))))
 }
 
@@ -4866,9 +4465,6 @@ func (impl *Standard) Ztrttp(ul blas.Uplo, n int, a []complex128, lda int, aP []
 
 	if n < 0 {
 		panic("blas: n < 0")
-	}
-	if lda*(n-1)+n > len(a) || lda < max(1, n) {
-		panic("blas: index of a out of range")
 	}
 	impl.e = status(C.cublasZtrttp(C.cublasHandle_t(impl.h), uplo2cublasUplo(ul), C.int(n), (*C.cuDoubleComplex)(unsafe.Pointer(&a[0])), C.int(lda), (*C.cuDoubleComplex)(unsafe.Pointer(&aP[0]))))
 }

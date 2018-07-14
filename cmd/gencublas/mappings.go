@@ -1,9 +1,10 @@
 package main
 
 import (
-	"html/template"
+	"text/template"
 
 	"github.com/cznic/cc"
+	bg "github.com/gorgonia/bindgen"
 )
 
 var skip = map[string]bool{
