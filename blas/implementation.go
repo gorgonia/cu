@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"github.com/gonum/blas"
+	"github.com/pkg/errors"
 	"gorgonia.org/cu"
 )
 
@@ -59,8 +60,21 @@ func NewStandardImplementation(opts ...ConsOpt) *Standard {
 	return impl
 }
 
+func (impl *Standard) Init(opts ...ConsOpt) error {
+	var handle C.cublasHandle_t
+	if err := status(C.cublasCreate(&handle)); err != nil {
+		return errors.Wrapf(err, "Failed to initialize Standard implementation of CUBLAS")
+	}
+	impl.h = handle
+
+	for _, opt := range opts {
+		opt(impl)
+	}
+	return nil
+}
+
 func (impl *Standard) Err() error { return impl.e }
 
-func finalizeImpl(impl *Standard) {
-	C.cublasDestroy(impl.h)
-}
+func (impl *Standard) Close() error { return status(C.cublasDestroy(impl.h)) }
+
+func finalizeImpl(impl *Standard) { impl.Close() }
