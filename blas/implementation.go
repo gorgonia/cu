@@ -30,7 +30,7 @@ type BLAS interface {
 // By default it assumes that the data is in  RowMajor, DESPITE the fact that cuBLAS
 // takes ColMajor only. This is done for the ease of use of developers writing in Go.
 //
-// Use NewStandardImplementation to create a new BLAS handler.
+// Use New to create a new BLAS handler.
 // Use the various ConsOpts to set the options
 type Standard struct {
 	h C.cublasHandle_t
@@ -42,7 +42,7 @@ type Standard struct {
 	dataOnDev bool
 }
 
-func NewStandardImplementation(opts ...ConsOpt) *Standard {
+func New(opts ...ConsOpt) *Standard {
 	var handle C.cublasHandle_t
 	if err := status(C.cublasCreate(&handle)); err != nil {
 		panic(err)

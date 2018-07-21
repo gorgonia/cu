@@ -146,6 +146,8 @@ type BatchedContext struct {
 	retVal  chan DevicePtr
 
 	// sync.Mutex
+
+	initialized bool
 }
 
 // NewBatchedContext creates a batched CUDA context.
@@ -161,8 +163,11 @@ func NewBatchedContext(c Context, d Device) *BatchedContext {
 		results:       make([]C.CUresult, workBufLen),
 		frees:         make([]unsafe.Pointer, 0, 2*workBufLen),
 		retVal:        make(chan DevicePtr),
+		initialized:   true,
 	}
 }
+
+func (ctx *BatchedContext) IsInitialized() bool { return ctx.initialized }
 
 // enqueue puts a CUDA call into the queue (which is the `work` channel).
 //
@@ -294,6 +299,12 @@ func (ctx *BatchedContext) Cleanup() {
 		ctx.frees[i] = nil
 	}
 	ctx.frees = ctx.frees[:0]
+}
+
+// Close closes the batched context
+func (ctx *BatchedContext) Close() error {
+	ctx.initialized = false
+	return ctx.Context.Close()
 }
 
 // Errors returns any errors that may have occured during a batch processing
