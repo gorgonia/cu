@@ -79,7 +79,29 @@ func newContext(c CUContext) *Ctx {
 	logf("Created %p", ctx)
 	runtime.SetFinalizer(ctx, finalizeCtx)
 	return ctx
+}
 
+// Close destroys the CUDA context and associated resources that has been created. Additionally, all channels of communications will be closed.
+func (ctx *Ctx) Close() error {
+	logf("Closing Ctx %v", ctx)
+	var empty C.CUcontext
+	if ctx.CUContext.ctx == empty {
+		return nil
+	}
+
+	if ctx.errChan != nil {
+		close(ctx.errChan)
+		ctx.errChan = nil
+	}
+
+	if ctx.work != nil {
+		close(ctx.work)
+		ctx.work = nil
+	}
+
+	err := result(C.cuCtxDestroy(C.CUcontext(unsafe.Pointer(ctx.CUContext.ctx))))
+	ctx.CUContext.ctx = empty
+	return err
 }
 
 func (ctx *Ctx) Do(fn func() error) error {
@@ -154,20 +176,7 @@ func (ctx *Ctx) Run(errChan chan error) error {
 
 func finalizeCtx(ctx *Ctx) {
 	logf("Finalizing %p", ctx)
-	if ctx.CUContext == 0 {
-		close(ctx.errChan)
-		close(ctx.work)
-		return
-	}
-
-	f := func() error {
-		return result(C.cuCtxDestroy(C.CUcontext(unsafe.Pointer(&ctx.CUContext))))
-	}
-	if err := ctx.Do(f); err != nil {
-		panic(err)
-	}
-	close(ctx.errChan)
-	close(ctx.work)
+	ctx.Close()
 }
 
 /* Manually Written Methods */
