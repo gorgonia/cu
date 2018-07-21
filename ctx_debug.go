@@ -83,7 +83,8 @@ func newContext(c CUContext) *Ctx {
 
 // Close destroys the CUDA context and associated resources that has been created. Additionally, all channels of communications will be closed.
 func (ctx *Ctx) Close() error {
-	logf("Closing Ctx %v", ctx)
+	logf("Closing Ctx %v | ", ctx)
+	logCaller("Ctx.Close")
 	var empty C.CUcontext
 	if ctx.CUContext.ctx == empty {
 		return nil
@@ -91,22 +92,23 @@ func (ctx *Ctx) Close() error {
 
 	if ctx.errChan != nil {
 		close(ctx.errChan)
-		ctx.errChan = nil
 	}
 
 	if ctx.work != nil {
 		close(ctx.work)
-		ctx.work = nil
 	}
 
 	err := result(C.cuCtxDestroy(C.CUcontext(unsafe.Pointer(ctx.CUContext.ctx))))
 	ctx.CUContext.ctx = empty
+	ctx.errChan = nil
+	ctx.work = nil
 	return err
 }
 
 func (ctx *Ctx) Do(fn func() error) error {
 	ctx.work <- fn
-	return <-ctx.errChan
+	err := <-ctx.errChan
+	return err
 }
 
 // CUDAContext returns the CUDA Context
@@ -119,7 +121,7 @@ func (ctx *Ctx) Error() error { return ctx.err }
 func (ctx *Ctx) Work() <-chan func() error { return ctx.work }
 
 // ErrChan returns the internal error channel used
-func (ctx *Ctx) ErrChan() chan<- error { return ctx.errChan }
+func (ctx *Ctx) ErrChan() chan error { return ctx.errChan }
 
 // Run locks the goroutine to the OS thread and ties the CUDA context to the OS thread. For most cases, this would suffice
 //

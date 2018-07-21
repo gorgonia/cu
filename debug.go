@@ -13,7 +13,7 @@ import (
 
 var tc uint32
 
-const DEBUG = false
+const DEBUG = true
 
 var _logger_ = log.New(os.Stderr, "", 0)
 var replacement = "\n"

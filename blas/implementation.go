@@ -3,7 +3,7 @@ package cublas
 // #include <cublas_v2.h>
 import "C"
 import (
-	"runtime"
+	"sync"
 
 	"github.com/gonum/blas"
 	"github.com/pkg/errors"
@@ -40,6 +40,8 @@ type Standard struct {
 
 	cu.Context
 	dataOnDev bool
+
+	sync.Mutex
 }
 
 func New(opts ...ConsOpt) *Standard {
@@ -56,11 +58,13 @@ func New(opts ...ConsOpt) *Standard {
 		opt(impl)
 	}
 
-	runtime.SetFinalizer(impl, finalizeImpl)
 	return impl
 }
 
 func (impl *Standard) Init(opts ...ConsOpt) error {
+	impl.Lock()
+	defer impl.Unlock()
+
 	var handle C.cublasHandle_t
 	if err := status(C.cublasCreate(&handle)); err != nil {
 		return errors.Wrapf(err, "Failed to initialize Standard implementation of CUBLAS")
@@ -75,6 +79,18 @@ func (impl *Standard) Init(opts ...ConsOpt) error {
 
 func (impl *Standard) Err() error { return impl.e }
 
-func (impl *Standard) Close() error { return status(C.cublasDestroy(impl.h)) }
+func (impl *Standard) Close() error {
+	impl.Lock()
+	defer impl.Unlock()
 
-func finalizeImpl(impl *Standard) { impl.Close() }
+	var empty C.cublasHandle_t
+	if impl.h == empty {
+		return nil
+	}
+	if err := status(C.cublasDestroy(impl.h)); err != nil {
+		return err
+	}
+	impl.h = empty
+	impl.Context = nil
+	return nil
+}

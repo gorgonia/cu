@@ -118,7 +118,7 @@ func (ctx *Ctx) Error() error { return ctx.err }
 func (ctx *Ctx) Work() <-chan func() error { return ctx.work }
 
 // ErrChan returns the internal error channel used
-func (ctx *Ctx) ErrChan() chan<- error { return ctx.errChan }
+func (ctx *Ctx) ErrChan() chan error { return ctx.errChan }
 
 // Run locks the goroutine to the OS thread and ties the CUDA context to the OS thread. For most cases, this would suffice
 //

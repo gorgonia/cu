@@ -3,7 +3,6 @@ package cudnn
 // #include <cudnn_v7.h>
 import "C"
 import (
-	"runtime"
 	"unsafe"
 )
 
@@ -31,7 +30,6 @@ func NewContext() (retVal *Context) {
 		panic(err)
 	}
 	retVal = &Context{internal}
-	runtime.SetFinalizer(retVal, destroyContext)
 	return retVal
 }
 
@@ -48,5 +46,3 @@ func (ctx *Context) Close() error {
 	ctx.internal = empty
 	return nil
 }
-
-func destroyContext(obj *Context) { obj.Close() }
