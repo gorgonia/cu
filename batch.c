@@ -131,7 +131,7 @@ void process(CUcontext ctx, uintptr_t* args, CUresult* retVal, int count){
 
 		retVal[i] = ret;
 	}
-	fprintf(stderr, "DONE %d\n", count );
+	// fprintf(stderr, "DONE %d\n", count );
 }
 
 // CUresult batchMalloc(uintptr_t* args, CUdeviceptr* ptrs, int count){
