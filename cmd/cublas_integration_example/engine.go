@@ -17,7 +17,7 @@ type Engine struct {
 
 func newEngine() *Engine {
 	ctx := cu.NewContext(cu.Device(0), cu.SchedAuto)
-	blas := cublas.NewStandardImplementation(cublas.WithContext(ctx))
+	blas := cublas.New(cublas.WithContext(ctx))
 	return &Engine{
 		ctx:      ctx,
 		Standard: blas,
