@@ -6,7 +6,7 @@ import (
 	"testing"
 	"unsafe"
 
-	"github.com/gonum/blas"
+	"gonum.org/v1/gonum/blas"
 	"gorgonia.org/cu"
 )
 
