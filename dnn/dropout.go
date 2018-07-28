@@ -4,7 +4,12 @@ package cudnn
 
 // #include <cudnn_v7.h>
 import "C"
-import "runtime"
+import (
+	"runtime"
+	"unsafe"
+
+	"github.com/pkg/errors"
+)
 
 // Dropout is a representation of cudnnDropoutDescriptor_t.
 //
@@ -23,6 +28,7 @@ type Dropout struct {
 	states           Memory
 	stateSizeInBytes uintptr
 	seed             uint64
+	reqStateSize     uintptr
 }
 
 // NewDropout creates a Dropout descriptor. It is not usable by default because some additional stateful information needs to be passed in
@@ -54,7 +60,14 @@ func (d *Dropout) Use(ctx *Context, states Memory, stateSizeInBytes uintptr, see
 	d.states = states
 	d.stateSizeInBytes = stateSizeInBytes
 	d.seed = seed
-	return result(C.cudnnSetDropoutDescriptor(d.internal, d.handle.internal, C.float(d.dropout), d.states.Pointer(), C.size_t(d.stateSizeInBytes), C.ulonglong(d.seed)))
+	var minSize C.size_t
+	if err := result(C.cudnnDropoutGetStatesSize(ctx.internal, &minSize)); err != nil {
+		return errors.Wrapf(err, "Unable to get minimum state size")
+	}
+	if uintptr(minSize) > d.stateSizeInBytes {
+		d.stateSizeInBytes = uintptr(minSize)
+	}
+	return result(C.cudnnSetDropoutDescriptor(d.internal, d.handle.internal, C.float(d.dropout), unsafe.Pointer(d.states.Uintptr()), C.size_t(d.stateSizeInBytes), C.ulonglong(d.seed)))
 }
 
 // IsReady indicates if the dropout operator is ready to be used
@@ -82,4 +95,21 @@ func (d *Dropout) StateSizeInBytes() uintptr { return d.stateSizeInBytes }
 // Seed returns the internal seed.
 func (d *Dropout) Seed() uint64 { return d.seed }
 
-func destroyDropout(obj *Dropout) { C.cudnnDestroyDropoutDescriptor(obj.internal) }
+func (d *Dropout) States() Memory { return d.states }
+
+func (d *Dropout) RequiredStateSize(ctx *Context) (uintptr, error) {
+	if d.reqStateSize > 0 {
+		return d.reqStateSize, nil
+	}
+
+	var minSize C.size_t
+	if err := result(C.cudnnDropoutGetStatesSize(ctx.internal, &minSize)); err != nil {
+		return 0, errors.Wrapf(err, "Unable to get minimum state size")
+	}
+
+	d.reqStateSize = uintptr(minSize)
+	return d.reqStateSize, nil
+}
+
+// BUG(anyone): the memory for the scratch space isn't freed. This could potentially lead to some issues
+func destroyDropout(obj *Dropout) { obj.Reset(); C.cudnnDestroyDropoutDescriptor(obj.internal) }
