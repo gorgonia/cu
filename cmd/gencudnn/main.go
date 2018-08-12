@@ -51,7 +51,7 @@ func goimports(filename string) error {
 }
 
 func main() {
-	pkg := parsePkg(false)
+	// pkg := parsePkg(false)
 
 	// Step 0: run parse.py to get more sanity about inputs and outputs
 	// Step 1: Explore
@@ -66,6 +66,7 @@ func main() {
 
 	// Step 3: generate enums, then edit the file in the dnn package.
 	// generateEnums()
+	generateEnumStrings()
 	// generateStubs(false, pkg) // true/false indicates debug mode
 
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
@@ -74,10 +75,10 @@ func main() {
 	// generateFunctions(pkg)
 
 	// report things that aren't done yet
-	pkg = parsePkg(true)
-	reportPotentialNils(pkg)
-	reportUnconvertedFns(pkg, hdrfile, functions)
-	reportUnconvertedTypes(pkg, hdrfile, otherTypes, enums)
+	// pkg = parsePkg(true)
+	// reportPotentialNils(pkg)
+	// reportUnconvertedFns(pkg, hdrfile, functions)
+	// reportUnconvertedTypes(pkg, hdrfile, otherTypes, enums)
 
 }
 
@@ -164,7 +165,7 @@ func generateEnums() {
 		if isIgnored(e.Name) {
 			continue
 		}
-		fmt.Fprintf(buf, "//go:generate stringer -type=%v \n\ntype %v int\nconst (\n", enumMappings[e.Name], enumMappings[e.Name])
+		fmt.Fprintf(buf, "type %v int\nconst (\n", enumMappings[e.Name], enumMappings[e.Name])
 
 		var names []string
 		for _, a := range e.Type.EnumeratorList() {
@@ -181,6 +182,46 @@ func generateEnums() {
 		}
 		fmt.Fprintf(buf, ")\n// C returns the C representation of %v\n", enumMappings[e.Name])
 		fmt.Fprintf(buf, "func (e %v) C() C.%v { return C.%v(e) }\n", enumMappings[e.Name], e.Name, e.Name)
+	}
+	buf.Close()
+	if err := goimports(fullpath); err != nil {
+		log.Printf("Failed to Goimports %q: %v", fullpath, err)
+	}
+}
+
+func generateEnumStrings() {
+	fullpath := path.Join(pkgloc, "generated_enums_strings.go")
+	buf, err := os.OpenFile(fullpath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	handleErr(err)
+	fmt.Fprintln(buf, pkghdr)
+
+	t, err := bindgen.Parse(model, hdrfile)
+	handleErr(err)
+
+	decls, err := bindgen.Get(t, enums)
+	handleErr(err)
+
+	for _, d := range decls {
+		e := d.(*bindgen.Enum)
+		if isIgnored(e.Name) {
+			continue
+		}
+		fmt.Fprintf(buf, "var _%vNames = map[%v]string{\n", enumMappings[e.Name], enumMappings[e.Name])
+
+		var names []string
+		for _, a := range e.Type.EnumeratorList() {
+			cname := string(a.DefTok.S())
+			names = append(names, cname)
+		}
+
+		lcp := bindgen.LongestCommonPrefix(names...)
+
+		for _, a := range e.Type.EnumeratorList() {
+			cname := string(a.DefTok.S())
+			enumName := processEnumName(lcp, cname)
+			fmt.Fprintf(buf, "%v : %q,\n", enumName, enumName)
+		}
+		fmt.Fprintf(buf, "}\n func (e %v) String() string {return _%vNames[e]}\n", enumMappings[e.Name], enumMappings[e.Name])
 	}
 	buf.Close()
 	if err := goimports(fullpath); err != nil {
