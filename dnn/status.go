@@ -1,6 +1,6 @@
 package cudnn
 
-// #include <cudnn_v7.h>
+// #include <cudnn.h>
 import "C"
 
 type cudnnStatus int

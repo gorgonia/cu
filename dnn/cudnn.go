@@ -45,6 +45,6 @@ func ints2CIntPtr(a []int) (cPtr *C.int, managed interface{}) {
 		}
 		return (*C.int)(unsafe.Pointer(&b[0])), b
 	default:
-		panic(fmt.Sprintf("UNHANDLED: cintsize: %v gointsize: %v"))
+		panic(fmt.Sprintf("UNHANDLED: cintsize: %v gointsize: %v", cintsize, gointsize))
 	}
 }
