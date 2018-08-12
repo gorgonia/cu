@@ -17,6 +17,12 @@ func TestCUContext(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	maj, _, err := d.ComputeCapability()
+	if err != nil {
+		t.Error(err)
+	}
+
 	version, err := ctx.APIVersion()
 	if err != nil {
 		t.Error(err)
@@ -48,32 +54,33 @@ func TestCUContext(t *testing.T) {
 		t.Error(err)
 	}
 
-	// shared conf
-	if err := SetSharedMemConfig(EightByteBankSize); err != nil {
-		t.Fatal(err)
-	}
+	if maj >= 3 {
+		// shared conf
+		if err := SetSharedMemConfig(EightByteBankSize); err != nil {
+			t.Fatal(err)
+		}
 
-	sharedConf, err := SharedMemConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
+		sharedConf, err := SharedMemConfig()
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	if sharedConf != EightByteBankSize {
-		t.Error("Expected sharedMemConf to be EightByteBankSize")
-	}
+		if sharedConf != EightByteBankSize {
+			t.Error("Expected sharedMemConf to be EightByteBankSize")
+		}
 
-	// cache config
-	if err = SetCurrentCacheConfig(PreferEqual); err != nil {
-		t.Fatal(err)
-	}
+		// cache config
+		if err = SetCurrentCacheConfig(PreferEqual); err != nil {
+			t.Fatal(err)
+		}
 
-	cacheconf, err := CurrentCacheConfig()
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if cacheconf != PreferEqual {
-		t.Error("expected cache config to be PreferEqual")
+		cacheconf, err := CurrentCacheConfig()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if cacheconf != PreferEqual {
+			t.Error("expected cache config to be PreferEqual")
+		}
 	}
 
 	// push pop
@@ -110,11 +117,11 @@ func TestCUContext(t *testing.T) {
 	}
 
 	// finally we destroy the context
-	if err = DestroyContext(&ctx); err != nil {
+	if err = ctx.Destroy(); err != nil {
 		t.Error(err)
 	}
 
-	if ctx != 0 {
+	if (ctx != CUContext{}) {
 		t.Error("expected ctx to be set to 0")
 	}
 }
@@ -173,7 +180,7 @@ func TestMultipleContextSingleHostThread(t *testing.T) {
 		unsafe.Pointer(&size),
 	}
 
-	if err = fn0.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream(0), args); err != nil {
+	if err = fn0.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream{}, args); err != nil {
 		t.Errorf("Failed to launcj add32: %v", err)
 	}
 
@@ -204,7 +211,7 @@ func TestMultipleContextSingleHostThread(t *testing.T) {
 		unsafe.Pointer(&size),
 	}
 
-	if err = fn1.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream(0), args); err != nil {
+	if err = fn1.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream{}, args); err != nil {
 		t.Errorf("Failed to launcj add32: %v", err)
 	}
 
@@ -221,7 +228,7 @@ func TestMultipleContextSingleHostThread(t *testing.T) {
 		unsafe.Pointer(&size),
 	}
 
-	if err = fn0.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream(0), args); err == nil {
+	if err = fn0.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream{}, args); err == nil {
 		t.Errorf("Expected error when launching a kernel defined in a different context")
 	}
 	t.Log(err)
@@ -230,7 +237,7 @@ func TestMultipleContextSingleHostThread(t *testing.T) {
 	if err = SetCurrentContext(ctx0); err != nil {
 		t.Errorf("Failed to swtch to ctx0 %v", err)
 	}
-	if err = fn0.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream(0), args); err != nil {
+	if err = fn0.LaunchAndSync(1, 1, 1, len(data), 1, 1, 0, Stream{}, args); err != nil {
 		t.Errorf("fn0 errored while using memory declared in ctx1: %v", err)
 	}
 	t.Log(err)

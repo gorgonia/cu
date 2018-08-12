@@ -1,52 +1,77 @@
 package main
 
 import (
-	"io"
 	"strings"
+
+	"github.com/cznic/cc"
+	"github.com/gorgonia/bindgen"
 )
 
-func Parse(input io.Reader) (retVal []*CSignature) {
-	l := NewLexer("parse", input)
-	go l.Run()
+func Parse() (retVal []*CSignature) {
+	t, err := bindgen.Parse(bindgen.Model(), "cuda.h")
+	if err != nil {
+		panic(err)
+	}
 
-	var sig *CSignature
-	for lex := range l.Output {
-		switch lex.t {
-		case RetType:
-			if sig != nil {
-				sig.Fix()
-				retVal = append(retVal, sig)
-			}
-			sig = new(CSignature)
-			continue
-		case FunctionName:
-			sig.Name = lex.v
-		case Parameter:
-			p := NewParam(splitParameter(lex.v))
-			sig.Params = append(sig.Params, p)
-		}
+	decls, err := functions(t)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, d := range decls {
+		retVal = append(retVal, decl2csig(d.(*bindgen.CSignature)))
 	}
 	return
 }
 
-func splitParameter(s string) (name, t string, isPtr bool) {
-	s = strings.TrimPrefix(s, "const ")
-	splits := strings.Split(s, " ")
-	name = splits[len(splits)-1]
-	if renamed, ok := renames[name]; ok {
-		name = renamed
+func functions(t *cc.TranslationUnit) ([]bindgen.Declaration, error) {
+	filter := func(decl *cc.Declarator) bool {
+		name := bindgen.NameOf(decl)
+		if !strings.HasPrefix(name, "cu") {
+			return false
+		}
+		if _, ok := ignoredFunctions[name]; ok {
+			return false
+		}
+		if decl.Type.Kind() == cc.Function {
+			return true
+		}
+		return false
 	}
-	if len(splits) > 2 {
-		t = strings.Join(splits[:len(splits)-1], " ")
-	} else {
-		t = splits[0]
+	return bindgen.Get(t, filter)
+}
+
+func decl2csig(d *bindgen.CSignature) *CSignature {
+	retVal := new(CSignature)
+	retVal.Name = d.Name
+	var params []*Param
+	for _, p := range d.Parameters() {
+		params = append(params, bgparam2param(p))
 	}
-	if isPtr = strings.HasSuffix(t, "*"); isPtr {
-		t = t[:len(t)-1]
+	retVal.Params = params
+	return retVal
+}
+
+// bgparam2cparam transforms bindgen parameter to *Param
+func bgparam2param(p bindgen.Parameter) *Param {
+	name := p.Name()
+	typ := cleanType(p.Type())
+	isPtr := bindgen.IsPointer(p.Type())
+	return NewParam(name, typ, isPtr)
+}
+
+func cleanType(t cc.Type) string {
+	typ := t.String()
+	if td := bindgen.TypeDefOf(t); td != "" {
+		typ = td
 	}
 
-	if fixed, ok := ctypesFix[t]; ok {
-		t = fixed
+	if bindgen.IsConstType(t) {
+		typ = strings.TrimPrefix(typ, "const ")
 	}
-	return
+
+	if bindgen.IsPointer(t) {
+		typ = strings.TrimSuffix(typ, "*")
+	}
+	return typ
 }

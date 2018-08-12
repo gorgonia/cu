@@ -6,17 +6,17 @@ import (
 	"testing"
 	"unsafe"
 
-	"github.com/gonum/blas"
+	"gonum.org/v1/gonum/blas"
 	"gorgonia.org/cu"
 )
 
-func TestMultihreadedCalls(t *testing.T) {
+func TestMultithreadedCalls(t *testing.T) {
 	dev, err := testSetup()
 	if err != nil {
 		t.Fatal(err)
 	}
 	ctx := cu.NewContext(dev, cu.SchedAuto)
-	impl := NewStandardImplementation(WithContext(ctx))
+	impl := New(WithContext(ctx))
 
 	// (20, 20) matrix of float32
 	mem0, err := ctx.MemAlloc(400 * 4)

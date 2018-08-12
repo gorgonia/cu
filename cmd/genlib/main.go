@@ -5,7 +5,6 @@ import (
 	"os"
 	"os/exec"
 	"path"
-	"strings"
 )
 
 var pkgloc string
@@ -41,8 +40,9 @@ func generateContextFile(gss []*GoSignature) {
 }
 
 func main() {
-	input := strings.NewReader(src)
-	sigs := Parse(input)
+	// input := strings.NewReader(src)
+	// sigs := Parse(input)
+	sigs := Parse()
 
 	var gss []*GoSignature
 	sigs = filterCSigs(sigs)
@@ -51,8 +51,8 @@ func main() {
 		gss = append(gss, gs)
 	}
 
-	// generateAPIFile(gss)
-	// generateContextFile(gss)
+	generateAPIFile(gss)
+	generateContextFile(gss)
 
 	var err error
 	filename := apiFile

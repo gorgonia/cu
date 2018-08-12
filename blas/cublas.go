@@ -2,7 +2,7 @@ package cublas
 
 // #include <cublas_v2.h>
 import "C"
-import "github.com/gonum/blas"
+import "gonum.org/v1/gonum/blas"
 
 // Order is used to specify the matrix storage format. We still interact with
 // an API that allows client calls to specify order, so this is here to document that fact.
