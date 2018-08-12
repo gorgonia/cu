@@ -60,13 +60,7 @@ func (d *Dropout) Use(ctx *Context, states Memory, stateSizeInBytes uintptr, see
 	d.states = states
 	d.stateSizeInBytes = stateSizeInBytes
 	d.seed = seed
-	var minSize C.size_t
-	if err := result(C.cudnnDropoutGetStatesSize(ctx.internal, &minSize)); err != nil {
-		return errors.Wrapf(err, "Unable to get minimum state size")
-	}
-	if uintptr(minSize) > d.stateSizeInBytes {
-		d.stateSizeInBytes = uintptr(minSize)
-	}
+
 	return result(C.cudnnSetDropoutDescriptor(d.internal, d.handle.internal, C.float(d.dropout), unsafe.Pointer(d.states.Uintptr()), C.size_t(d.stateSizeInBytes), C.ulonglong(d.seed)))
 }
 

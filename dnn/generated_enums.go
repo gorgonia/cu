@@ -5,6 +5,8 @@ package cudnn
 // #include <cudnn_v7.h>
 import "C"
 
+//go:generate stringer -type=ErrQueryMode
+
 type ErrQueryMode int
 
 const (
@@ -15,6 +17,8 @@ const (
 
 // C returns the C representation of ErrQueryMode
 func (e ErrQueryMode) C() C.cudnnErrQueryMode_t { return C.cudnnErrQueryMode_t(e) }
+
+//go:generate stringer -type=DataType
 
 type DataType int
 
@@ -30,6 +34,8 @@ const (
 // C returns the C representation of DataType
 func (e DataType) C() C.cudnnDataType_t { return C.cudnnDataType_t(e) }
 
+//go:generate stringer -type=MathType
+
 type MathType int
 
 const (
@@ -39,6 +45,8 @@ const (
 
 // C returns the C representation of MathType
 func (e MathType) C() C.cudnnMathType_t { return C.cudnnMathType_t(e) }
+
+//go:generate stringer -type=NanPropagation
 
 type NanPropagation int
 
@@ -50,6 +58,8 @@ const (
 // C returns the C representation of NanPropagation
 func (e NanPropagation) C() C.cudnnNanPropagation_t { return C.cudnnNanPropagation_t(e) }
 
+//go:generate stringer -type=Determinism
+
 type Determinism int
 
 const (
@@ -59,6 +69,8 @@ const (
 
 // C returns the C representation of Determinism
 func (e Determinism) C() C.cudnnDeterminism_t { return C.cudnnDeterminism_t(e) }
+
+//go:generate stringer -type=TensorFormat
 
 type TensorFormat int
 
@@ -70,6 +82,8 @@ const (
 
 // C returns the C representation of TensorFormat
 func (e TensorFormat) C() C.cudnnTensorFormat_t { return C.cudnnTensorFormat_t(e) }
+
+//go:generate stringer -type=OpTensorOp
 
 type OpTensorOp int
 
@@ -84,6 +98,8 @@ const (
 
 // C returns the C representation of OpTensorOp
 func (e OpTensorOp) C() C.cudnnOpTensorOp_t { return C.cudnnOpTensorOp_t(e) }
+
+//go:generate stringer -type=ReduceTensorOp
 
 type ReduceTensorOp int
 
@@ -102,6 +118,8 @@ const (
 // C returns the C representation of ReduceTensorOp
 func (e ReduceTensorOp) C() C.cudnnReduceTensorOp_t { return C.cudnnReduceTensorOp_t(e) }
 
+//go:generate stringer -type=ReduceTensorIndices
+
 type ReduceTensorIndices int
 
 const (
@@ -111,6 +129,8 @@ const (
 
 // C returns the C representation of ReduceTensorIndices
 func (e ReduceTensorIndices) C() C.cudnnReduceTensorIndices_t { return C.cudnnReduceTensorIndices_t(e) }
+
+//go:generate stringer -type=IndicesType
 
 type IndicesType int
 
@@ -124,6 +144,8 @@ const (
 // C returns the C representation of IndicesType
 func (e IndicesType) C() C.cudnnIndicesType_t { return C.cudnnIndicesType_t(e) }
 
+//go:generate stringer -type=SoftmaxAlgorithm
+
 type SoftmaxAlgorithm int
 
 const (
@@ -135,6 +157,8 @@ const (
 // C returns the C representation of SoftmaxAlgorithm
 func (e SoftmaxAlgorithm) C() C.cudnnSoftmaxAlgorithm_t { return C.cudnnSoftmaxAlgorithm_t(e) }
 
+//go:generate stringer -type=SoftmaxMode
+
 type SoftmaxMode int
 
 const (
@@ -144,6 +168,8 @@ const (
 
 // C returns the C representation of SoftmaxMode
 func (e SoftmaxMode) C() C.cudnnSoftmaxMode_t { return C.cudnnSoftmaxMode_t(e) }
+
+//go:generate stringer -type=PoolingMode
 
 type PoolingMode int
 
@@ -156,6 +182,8 @@ const (
 
 // C returns the C representation of PoolingMode
 func (e PoolingMode) C() C.cudnnPoolingMode_t { return C.cudnnPoolingMode_t(e) }
+
+//go:generate stringer -type=ActivationMode
 
 type ActivationMode int
 
@@ -170,6 +198,8 @@ const (
 // C returns the C representation of ActivationMode
 func (e ActivationMode) C() C.cudnnActivationMode_t { return C.cudnnActivationMode_t(e) }
 
+//go:generate stringer -type=LRNMode
+
 type LRNMode int
 
 const (
@@ -179,6 +209,8 @@ const (
 // C returns the C representation of LRNMode
 func (e LRNMode) C() C.cudnnLRNMode_t { return C.cudnnLRNMode_t(e) }
 
+//go:generate stringer -type=DivNormMode
+
 type DivNormMode int
 
 const (
@@ -187,6 +219,8 @@ const (
 
 // C returns the C representation of DivNormMode
 func (e DivNormMode) C() C.cudnnDivNormMode_t { return C.cudnnDivNormMode_t(e) }
+
+//go:generate stringer -type=BatchNormMode
 
 type BatchNormMode int
 
@@ -199,6 +233,8 @@ const (
 // C returns the C representation of BatchNormMode
 func (e BatchNormMode) C() C.cudnnBatchNormMode_t { return C.cudnnBatchNormMode_t(e) }
 
+//go:generate stringer -type=SamplerType
+
 type SamplerType int
 
 const (
@@ -207,6 +243,8 @@ const (
 
 // C returns the C representation of SamplerType
 func (e SamplerType) C() C.cudnnSamplerType_t { return C.cudnnSamplerType_t(e) }
+
+//go:generate stringer -type=RNNMode
 
 type RNNMode int
 
@@ -220,6 +258,8 @@ const (
 // C returns the C representation of RNNMode
 func (e RNNMode) C() C.cudnnRNNMode_t { return C.cudnnRNNMode_t(e) }
 
+//go:generate stringer -type=DirectionMode
+
 type DirectionMode int
 
 const (
@@ -229,6 +269,8 @@ const (
 
 // C returns the C representation of DirectionMode
 func (e DirectionMode) C() C.cudnnDirectionMode_t { return C.cudnnDirectionMode_t(e) }
+
+//go:generate stringer -type=RNNInputMode
 
 type RNNInputMode int
 
@@ -240,6 +282,8 @@ const (
 // C returns the C representation of RNNInputMode
 func (e RNNInputMode) C() C.cudnnRNNInputMode_t { return C.cudnnRNNInputMode_t(e) }
 
+//go:generate stringer -type=RNNAlgo
+
 type RNNAlgo int
 
 const (
@@ -250,6 +294,8 @@ const (
 
 // C returns the C representation of RNNAlgo
 func (e RNNAlgo) C() C.cudnnRNNAlgo_t { return C.cudnnRNNAlgo_t(e) }
+
+//go:generate stringer -type=CTCLossAlgo
 
 type CTCLossAlgo int
 

@@ -164,7 +164,7 @@ func generateEnums() {
 		if isIgnored(e.Name) {
 			continue
 		}
-		fmt.Fprintf(buf, "type %v int\nconst (\n", enumMappings[e.Name])
+		fmt.Fprintf(buf, "//go:generate stringer -type=%v \n\ntype %v int\nconst (\n", enumMappings[e.Name], enumMappings[e.Name])
 
 		var names []string
 		for _, a := range e.Type.EnumeratorList() {
