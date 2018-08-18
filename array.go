@@ -38,9 +38,9 @@ type Array3Desc struct {
 
 func (desc Array3Desc) c() *C.CUDA_ARRAY3D_DESCRIPTOR {
 	return &C.CUDA_ARRAY3D_DESCRIPTOR{
-		Width:       C.ulong(desc.Width),
-		Height:      C.ulong(desc.Height),
-		Depth:       C.ulong(desc.Depth),
+		Width:       C.size_t(desc.Width),
+		Height:      C.size_t(desc.Height),
+		Depth:       C.size_t(desc.Depth),
 		Format:      C.CUarray_format(desc.Format),
 		NumChannels: C.uint(desc.NumChannels),
 		Flags:       C.uint(desc.Flags),
@@ -70,8 +70,8 @@ type ArrayDesc struct {
 
 func (desc ArrayDesc) c() *C.CUDA_ARRAY_DESCRIPTOR {
 	return &C.CUDA_ARRAY_DESCRIPTOR{
-		Width:       C.ulong(desc.Width),
-		Height:      C.ulong(desc.Height),
+		Width:       C.size_t(desc.Width),
+		Height:      C.size_t(desc.Height),
 		Format:      C.CUarray_format(desc.Format),
 		NumChannels: C.uint(desc.NumChannels),
 	}
