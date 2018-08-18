@@ -93,12 +93,12 @@ func explore(file string, things ...bindgen.FilterFunc) {
 func reportPotentialNils(pkg *PkgState) {
 	nils := pkg.checkNils()
 	if len(nils) > 0 {
-		fmt.Printf("These functions have a *T return value, but a possible null exception error might happen\n")
+		fmt.Printf("## Potential Nils ##\nThese functions have a `*T` return value, but a possible null exception error might happen\n\n")
 		for _, n := range nils {
-			fmt.Printf("\t%q\n", n)
+			fmt.Printf("* `%v`\n", n)
 		}
 	}
-
+	fmt.Println()
 }
 
 // find unused/unconverted functions
@@ -117,12 +117,13 @@ func reportUnconvertedFns(pkg *PkgState, file string, things ...bindgen.FilterFu
 		}
 
 	}
-	fmt.Printf("Unconverted C functions:\n")
+	fmt.Printf("## Unconverted C Functions ##\n\n")
 	for k := range allFuncs {
 		if _, ok := used[k]; !ok {
-			fmt.Printf("\t%q\n", k)
+			fmt.Printf("* `%v`\n", k)
 		}
 	}
+	fmt.Println()
 }
 
 func reportUnconvertedTypes(pkg *PkgState, file string, things ...bindgen.FilterFunc) {
@@ -140,13 +141,13 @@ func reportUnconvertedTypes(pkg *PkgState, file string, things ...bindgen.Filter
 		}
 	}
 
-	fmt.Printf("Unconverted/Unused C Types: \n")
+	fmt.Printf("## Unconverted/Unused C Types ##\n\n")
 	for k := range allTypes {
 		if _, ok := used[k]; !ok {
-			fmt.Printf("\t%q\n", k)
+			fmt.Printf("* `%v`\n", k)
 		}
 	}
-
+	fmt.Println()
 }
 
 func generateEnums() {
