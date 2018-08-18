@@ -51,7 +51,8 @@ func goimports(filename string) error {
 }
 
 func main() {
-	pkg := parsePkg(false)
+	var pkg *PkgState
+	// pkg = parsePkg(false)
 
 	// Step 0: run parse.py to get more sanity about inputs and outputs
 	// Step 1: Explore
@@ -72,7 +73,7 @@ func main() {
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
 
 	// step 5:
-	generateFunctions(pkg)
+	// generateFunctions(pkg)
 
 	// report things that aren't done yet
 	pkg = parsePkg(true)
