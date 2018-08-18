@@ -16,6 +16,23 @@ func (dr *Dropout) RestoreDropoutDescriptor(handle *Context, dropout float32, st
 	return result(C.cudnnRestoreDropoutDescriptor(dr.internal, handle.internal, C.float(dropout), states.Pointer(), C.size_t(stateSizeInBytes), C.ulonglong(seed)))
 }
 
+// Derives a secondary tensor descriptor for BatchNormalization scale, invVariance, bnBias, bnScale subtensors from the layer's x data descriptor. Use the tensor descriptor produced by this function as the bnScaleBiasMeanVarDesc and bnScaleBiasDiffDesc parameters in Spatial and Per-Activation Batch Normalization forward and backward functions. Resulting dimensions will be 1xC(x1)x1x1 for BATCHNORM_MODE_SPATIAL and 1xC(xD)xHxW for BATCHNORM_MODE_PER_ACTIVATION (parentheses for 5D). For HALF input data type the resulting tensor descriptor will have a FLOAT type. For other data types it will have the same type as the input data.
+func (te *TensorDescriptor) DeriveBNTensorDescriptor(mode BatchNormMode) (derivedBnDesc *TensorDescriptor, err error) {
+	// TODO: xDesc cudnnTensorDescriptor_t
+	// call cudnnDeriveBNTensorDescriptor
+	err = result(C.cudnnDeriveBNTensorDescriptor(te.internal, xDesc.internal, mode.C()))
+	return
+}
+
+// DropoutGetReserveSpaceSize is used to query the amount of reserve needed to run dropout with the input dimensions given by xDesc. The same reserve space is expected to be passed to cudnnDropoutForward and cudnnDropoutBackward, and its contents is expected to remain unchanged between cudnnDropoutForward and cudnnDropoutBackward calls.
+func (te *TensorDescriptor) DropoutGetReserveSpaceSize() (sizeInBytes uintptr, err error) {
+	var sizeInBytesC C.size_t
+	// call cudnnDropoutGetReserveSpaceSize
+	err = result(C.cudnnDropoutGetReserveSpaceSize(te.internal, &sizeInBytesC))
+	sizeInBytes = uintptr(sizeInBytesC)
+	return
+}
+
 // TransformTensor copies the scaled data from one tensor to another tensor with a different layout. Those descriptors need to have the same dimensions but not necessarily the same strides. The input and output tensors must not overlap in any way (i.e., tensors cannot be transformed in place). TransformTensor can be used to convert a tensor with an unsupported format to a supported one.
 func (co *Context) TransformTensor(alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
 	// DOUBLECHECK: "cudnnTransformTensor" returns Memory type in Parameter 6
@@ -534,8 +551,10 @@ func (co *Context) LRNCrossChannelBackward(normDesc *LRN, lrnMode LRNMode, alpha
 	default:
 		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
 	}
+	// TODO: dxDesc cudnnTensorDescriptor_t
 	// call cudnnLRNCrossChannelBackward
-	return result(C.cudnnLRNCrossChannelBackward(co.internal, normDesc.internal, lrnMode.C(), alphaC, yDesc.internal, y.Pointer(), dyDesc.internal, dy.Pointer(), xDesc.internal, x.Pointer(), betaC, dxDesc.internal, dx.Pointer()))
+	err = result(C.cudnnLRNCrossChannelBackward(co.internal, normDesc.internal, lrnMode.C(), alphaC, yDesc.internal, y.Pointer(), dyDesc.internal, dy.Pointer(), xDesc.internal, x.Pointer(), betaC, dxDesc.internal, dx.Pointer()))
+	return
 }
 
 // DivisiveNormalizationForward performs the forward spatial DivisiveNormalization layer computation. It divides every value in a layer by the standard deviation of it's spatial neighbors as described in `What is the Best Multi-Stage Architecture for Object Recognition`, Jarrett 2009, Local Contrast Normalization Layer section. Note that Divisive Normalization only implements the x/max(c, sigma_x) portion of the computation, where sigma_x is the variance over the spatial neighborhood of x. The full LCN (Local Contrastive Normalization) computation can be implemented as a two-step process:
@@ -634,9 +653,34 @@ func (co *Context) BatchNormalizationForwardInference(mode BatchNormMode, alpha 
 }
 
 // BatchNormalizationBackward performs the backward BatchNormalization layer computation.
-func (co *Context) BatchNormalizationBackward(mode BatchNormMode, alphaDataDiff Memory, betaDataDiff Memory, alphaParamDiff Memory, betaParamDiff Memory, xDesc *TensorDescriptor, x Memory, dyDesc *TensorDescriptor, dy Memory, dxDesc *TensorDescriptor, dx Memory, dBnScaleBiasDesc *TensorDescriptor, bnScale Memory, dBnScaleResult Memory, dBnBiasResult Memory, epsilon float64, savedMean Memory, savedInvVariance Memory) error {
+func (co *Context) BatchNormalizationBackward(mode BatchNormMode, alphaDataDiff float64, betaDataDiff float64, alphaParamDiff float64, betaParamDiff float64, xDesc *TensorDescriptor, x Memory, dyDesc *TensorDescriptor, dy Memory, dxDesc *TensorDescriptor, dx Memory, dBnScaleBiasDesc *TensorDescriptor, bnScale Memory, dBnScaleResult Memory, dBnBiasResult Memory, epsilon float64, savedMean Memory, savedInvVariance Memory) error {
+	var alphaDataDiffC, betaDataDiffC, alphaParamDiffC, betaParamDiffC unsafe.Pointer
+	switch xDesc.dataType {
+	case Float, Half:
+		var alphaDataDiffF, betaDataDiffF, alphaParamDiffF, betaParamDiffF C.float
+		alphaDataDiffF = C.float(float32(alphaDataDiff))
+		betaDataDiffF = C.float(float32(betaDataDiff))
+		alphaParamDiffF = C.float(float32(alphaParamDiff))
+		betaParamDiffF = C.float(float32(betaParamDiff))
+		alphaDataDiffC = unsafe.Pointer(&alphaDataDiffF)
+		betaDataDiffC = unsafe.Pointer(&betaDataDiffF)
+		alphaParamDiffC = unsafe.Pointer(&alphaParamDiffF)
+		betaParamDiffC = unsafe.Pointer(&betaParamDiffF)
+	case Double:
+		var alphaDataDiffF, betaDataDiffF, alphaParamDiffF, betaParamDiffF C.double
+		alphaDataDiffF = C.double(alphaDataDiff)
+		betaDataDiffF = C.double(betaDataDiff)
+		alphaParamDiffF = C.double(alphaParamDiff)
+		betaParamDiffF = C.double(betaParamDiff)
+		alphaDataDiffC = unsafe.Pointer(&alphaDataDiffF)
+		betaDataDiffC = unsafe.Pointer(&betaDataDiffF)
+		alphaParamDiffC = unsafe.Pointer(&alphaParamDiffF)
+		betaParamDiffC = unsafe.Pointer(&betaParamDiffF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
+	}
 	// call cudnnBatchNormalizationBackward
-	return result(C.cudnnBatchNormalizationBackward(co.internal, mode.C(), alphaDataDiff.Pointer(), betaDataDiff.Pointer(), alphaParamDiff.Pointer(), betaParamDiff.Pointer(), xDesc.internal, x.Pointer(), dyDesc.internal, dy.Pointer(), dxDesc.internal, dx.Pointer(), dBnScaleBiasDesc.internal, bnScale.Pointer(), dBnScaleResult.Pointer(), dBnBiasResult.Pointer(), C.double(epsilon), savedMean.Pointer(), savedInvVariance.Pointer()))
+	return result(C.cudnnBatchNormalizationBackward(co.internal, mode.C(), alphaDataDiffC, betaDataDiffC, alphaParamDiffC, betaParamDiffC, xDesc.internal, x.Pointer(), dyDesc.internal, dy.Pointer(), dxDesc.internal, dx.Pointer(), dBnScaleBiasDesc.internal, bnScale.Pointer(), dBnScaleResult.Pointer(), dBnBiasResult.Pointer(), C.double(epsilon), savedMean.Pointer(), savedInvVariance.Pointer()))
 }
 
 // SpatialTfGridGeneratorForward generates a grid of coordinates in the input tensor corresponding to each pixel from the output tensor.

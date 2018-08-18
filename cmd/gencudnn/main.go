@@ -51,7 +51,7 @@ func goimports(filename string) error {
 }
 
 func main() {
-	// pkg := parsePkg(false)
+	pkg := parsePkg(false)
 
 	// Step 0: run parse.py to get more sanity about inputs and outputs
 	// Step 1: Explore
@@ -66,19 +66,19 @@ func main() {
 
 	// Step 3: generate enums, then edit the file in the dnn package.
 	// generateEnums()
-	generateEnumStrings()
+	// generateEnumStrings()
 	// generateStubs(false, pkg) // true/false indicates debug mode
 
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
 
 	// step 5:
-	// generateFunctions(pkg)
+	generateFunctions(pkg)
 
 	// report things that aren't done yet
-	// pkg = parsePkg(true)
-	// reportPotentialNils(pkg)
-	// reportUnconvertedFns(pkg, hdrfile, functions)
-	// reportUnconvertedTypes(pkg, hdrfile, otherTypes, enums)
+	pkg = parsePkg(true)
+	reportPotentialNils(pkg)
+	reportUnconvertedFns(pkg, hdrfile, functions)
+	reportUnconvertedTypes(pkg, hdrfile, otherTypes, enums)
 
 }
 

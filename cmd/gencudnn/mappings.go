@@ -360,6 +360,7 @@ func init() {
 		"cudnnDivisiveNormalizationBackward":      {10: "beta", 3: "alpha"},
 		"cudnnBatchNormalizationForwardTraining":  {3: "beta", 2: "alpha"},
 		"cudnnBatchNormalizationForwardInference": {3: "beta", 2: "alpha"},
+		"cudnnBatchNormalizationBackward":         {5: "betaParamDiff", 4: "alphaParamDiff", 3: "betaDataDiff", 2: "alphaDataDiff"},
 		"cudnnSpatialTfSamplerForward":            {6: "beta", 2: "alpha"},
 		"cudnnSpatialTfSamplerBackward":           {5: "beta", 2: "alpha"},
 	}

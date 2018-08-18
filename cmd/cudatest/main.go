@@ -1,3 +1,4 @@
+// cudatest tests the existence of CUDA by running a simple Go program that uses CUDA.
 package main
 
 import (
@@ -22,5 +23,4 @@ func main() {
 		fmt.Printf("Memory    :\t%v bytes\n", mem)
 		fmt.Printf("Compute   : \t%d.%d\n", maj, min)
 	}
-
 }
