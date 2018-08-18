@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os/exec"
+	"sort"
 	"strings"
 
 	"os"
@@ -63,7 +64,7 @@ func main() {
 	// Step 2: generate mappings for this package, then edit them manually
 	// 	Specifically, the `ignored` map is edited - things that will be manually written are not removed from the list
 	//	Some enum map names may also be changed
-	// generateMappings(true)
+	generateMappings(true)
 
 	// Step 3: generate enums, then edit the file in the dnn package.
 	// generateEnums()
@@ -117,8 +118,13 @@ func reportUnconvertedFns(pkg *PkgState, file string, things ...bindgen.FilterFu
 		}
 
 	}
-	fmt.Printf("## Unconverted C Functions ##\n\n")
+	keys := make([]string, 0, len(allFuncs))
 	for k := range allFuncs {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	fmt.Printf("## Unconverted C Functions ##\n\n")
+	for _, k := range keys {
 		if _, ok := used[k]; !ok {
 			fmt.Printf("* `%v`\n", k)
 		}
@@ -140,9 +146,13 @@ func reportUnconvertedTypes(pkg *PkgState, file string, things ...bindgen.Filter
 			allTypes[name] = struct{}{}
 		}
 	}
-
-	fmt.Printf("## Unconverted/Unused C Types ##\n\n")
+	keys := make([]string, 0, len(allTypes))
 	for k := range allTypes {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	fmt.Printf("## Unconverted/Unused C Types ##\n\n")
+	for _, k := range keys {
 		if _, ok := used[k]; !ok {
 			fmt.Printf("* `%v`\n", k)
 		}
