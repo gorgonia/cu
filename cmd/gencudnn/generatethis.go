@@ -40,7 +40,6 @@ func generateMappings(appendCurrent bool) {
 		fmt.Fprintln(buf, initfn)
 		bindgen.GenNameMap(buf, t, "fnNameMap", processNameBasic, functions, true)
 		bindgen.GenNameMap(buf, t, "enumMappings", processNameBasic, enums, true)
-		generateAlphaBeta(buf, t)
 
 		generateCRUD(buf, t, "create")
 		generateCRUD(buf, t, "set")
@@ -48,6 +47,7 @@ func generateMappings(appendCurrent bool) {
 		generateCRUD(buf, t, "methods")
 		fmt.Fprintln(buf, "}\n")
 	}
+	generateAlphaBeta(buf, t)
 	fmt.Fprintln(buf, initfn)
 	fmt.Fprintln(buf, "}\n")
 }

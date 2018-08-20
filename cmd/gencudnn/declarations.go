@@ -57,6 +57,7 @@ var ctypes2GoTypes = map[string]string{
 
 var alphaBetaParams = []string{
 	"alpha", "alpha1", "alpha2", "alpha3", "beta", "beta1",
+	"alphaDataDiff", "alphaParamDiff", "betaDataDiff", "betaParamDiff",
 }
 
 var builtins = map[string]string{

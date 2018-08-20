@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os/exec"
+	"sort"
 	"strings"
 
 	"os"
@@ -51,7 +52,8 @@ func goimports(filename string) error {
 }
 
 func main() {
-	// pkg := parsePkg(false)
+	var pkg *PkgState
+	// pkg = parsePkg(false)
 
 	// Step 0: run parse.py to get more sanity about inputs and outputs
 	// Step 1: Explore
@@ -62,11 +64,11 @@ func main() {
 	// Step 2: generate mappings for this package, then edit them manually
 	// 	Specifically, the `ignored` map is edited - things that will be manually written are not removed from the list
 	//	Some enum map names may also be changed
-	// generateMappings(true)
+	generateMappings(true)
 
 	// Step 3: generate enums, then edit the file in the dnn package.
 	// generateEnums()
-	generateEnumStrings()
+	// generateEnumStrings()
 	// generateStubs(false, pkg) // true/false indicates debug mode
 
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
@@ -75,10 +77,10 @@ func main() {
 	// generateFunctions(pkg)
 
 	// report things that aren't done yet
-	// pkg = parsePkg(true)
-	// reportPotentialNils(pkg)
-	// reportUnconvertedFns(pkg, hdrfile, functions)
-	// reportUnconvertedTypes(pkg, hdrfile, otherTypes, enums)
+	pkg = parsePkg(true)
+	reportPotentialNils(pkg)
+	reportUnconvertedFns(pkg, hdrfile, functions)
+	reportUnconvertedTypes(pkg, hdrfile, otherTypes, enums)
 
 }
 
@@ -92,12 +94,12 @@ func explore(file string, things ...bindgen.FilterFunc) {
 func reportPotentialNils(pkg *PkgState) {
 	nils := pkg.checkNils()
 	if len(nils) > 0 {
-		fmt.Printf("These functions have a *T return value, but a possible null exception error might happen\n")
+		fmt.Printf("## Potential Nils ##\nThese functions have a `*T` return value, but a possible null exception error might happen\n\n")
 		for _, n := range nils {
-			fmt.Printf("\t%q\n", n)
+			fmt.Printf("* `%v`\n", n)
 		}
 	}
-
+	fmt.Println()
 }
 
 // find unused/unconverted functions
@@ -116,12 +118,18 @@ func reportUnconvertedFns(pkg *PkgState, file string, things ...bindgen.FilterFu
 		}
 
 	}
-	fmt.Printf("Unconverted C functions:\n")
+	keys := make([]string, 0, len(allFuncs))
 	for k := range allFuncs {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	fmt.Printf("## Unconverted C Functions ##\n\n")
+	for _, k := range keys {
 		if _, ok := used[k]; !ok {
-			fmt.Printf("\t%q\n", k)
+			fmt.Printf("* `%v`\n", k)
 		}
 	}
+	fmt.Println()
 }
 
 func reportUnconvertedTypes(pkg *PkgState, file string, things ...bindgen.FilterFunc) {
@@ -138,14 +146,18 @@ func reportUnconvertedTypes(pkg *PkgState, file string, things ...bindgen.Filter
 			allTypes[name] = struct{}{}
 		}
 	}
-
-	fmt.Printf("Unconverted/Unused C Types: \n")
+	keys := make([]string, 0, len(allTypes))
 	for k := range allTypes {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	fmt.Printf("## Unconverted/Unused C Types ##\n\n")
+	for _, k := range keys {
 		if _, ok := used[k]; !ok {
-			fmt.Printf("\t%q\n", k)
+			fmt.Printf("* `%v`\n", k)
 		}
 	}
-
+	fmt.Println()
 }
 
 func generateEnums() {
