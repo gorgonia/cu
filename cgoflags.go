@@ -13,6 +13,7 @@ package cu
 //#cgo linux LDFLAGS:-L/usr/local/cuda-6.0/lib64 -L/usr/local/cuda-6.0/lib
 //#cgo linux LDFLAGS:-L/usr/local/cuda-5.5/lib64 -L/usr/local/cuda-5.5/lib
 //#cgo linux LDFLAGS:-L/usr/local/cuda-5.0/lib64 -L/usr/local/cuda-5.0/lib
+//#cgo linux CFLAGS: -I/usr/local/cuda-10.2/include/
 //#cgo linux CFLAGS: -I/usr/local/cuda-10.1/include/
 //#cgo linux CFLAGS: -I/usr/local/cuda-6.0/include/
 //#cgo linux CFLAGS: -I/usr/local/cuda-5.5/include/
