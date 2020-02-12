@@ -1,16 +1,16 @@
-#include <cudnn_v7.h>
+#include <cudnn.h>
 
 cudnnStatus_t gocudnnNewConvolution(cudnnConvolutionDescriptor_t *retVal,
-	cudnnMathType_t mathType, const int groupCount, 
+	cudnnMathType_t mathType, const int groupCount,
 	const int size, const int* padding,
-	const int* filterStrides, 
+	const int* filterStrides,
 	const int* dilation,
 	cudnnConvolutionMode_t convolutionMode, cudnnDataType_t dataType) {
 
 	cudnnStatus_t status ;
 	status = cudnnCreateConvolutionDescriptor(retVal);
 	if (status != CUDNN_STATUS_SUCCESS) {
-		return status; 
+		return status;
 	}
 
 	status = cudnnSetConvolutionMathType(*retVal, mathType);
@@ -18,7 +18,7 @@ cudnnStatus_t gocudnnNewConvolution(cudnnConvolutionDescriptor_t *retVal,
 		return status;
 	}
 
-	status = cudnnSetConvolutionGroupCount(*retVal, groupCount); 
+	status = cudnnSetConvolutionGroupCount(*retVal, groupCount);
 	if (status != CUDNN_STATUS_SUCCESS) {
 		return status;
 	}
@@ -26,7 +26,7 @@ cudnnStatus_t gocudnnNewConvolution(cudnnConvolutionDescriptor_t *retVal,
 	int padH;
 	int padW;
 	int u;
-	int v; 
+	int v;
 	int dilationH;
 	int dilationW;
 	switch (size) {
@@ -39,12 +39,12 @@ cudnnStatus_t gocudnnNewConvolution(cudnnConvolutionDescriptor_t *retVal,
 		u = filterStrides[0];
 		v = filterStrides[1];
 		dilationH = dilation[0];
-		dilationW = dilation[1]; 
+		dilationW = dilation[1];
 
-		status = cudnnSetConvolution2dDescriptor(*retVal, 
-			padH, padW, 
-			u, v, 
-			dilationH, dilationW, 
+		status = cudnnSetConvolution2dDescriptor(*retVal,
+			padH, padW,
+			u, v,
+			dilationH, dilationW,
 			convolutionMode, dataType);
 		break;
 	default:
