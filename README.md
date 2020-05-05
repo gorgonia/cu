@@ -18,7 +18,7 @@ This package mostly depends on built-in packages. There are two external depende
 * [errors](https://github.com/pkg/errors), which is licenced under a [MIT-like](https://github.com/pkg/errors/blob/master/LICENSE) licence. This package is used for wrapping errors and providing a debug trail.
 * [assert](https://github.com/stretchr/testify), which is licenced under a [MIT-like](https://github.com/stretchr/testify/blob/master/LICENSE) licence. This package is used for quick and easy testing.
 
-However, package `cu` DOES depend on one major external dependency: CUDA. Specifically, it requires the CUDA driver. Thankfully nvidia has made this rather simple - everything that is required can be installed with one click: [CUDA Toolkit 8.0](https://developer.nvidia.com/cuda-toolkit)
+However, package `cu` DOES depend on one major external dependency: CUDA. Specifically, it requires the CUDA driver. Thankfully nvidia has made this rather simple - everything that is required can be installed with one click: [CUDA Toolkit](https://developer.nvidia.com/cuda-toolkit).
 
 
 To verify that this library works, install and run the `cudatest` program, which accompanies this package:
@@ -31,14 +31,15 @@ cudatest
 You should see something like this if successful:
 
 ```
-CUDA version: 8000
+CUDA version: 10020
 CUDA devices: 1
+
 Device 0
 ========
-Name      :	"GeForce GTX 960"
-Clock Rate:	1177500 kHz
-Memory    :	4233297920 bytes
-Compute   : 5.2
+Name      :	"TITAN RTX"
+Clock Rate:	1770000 kHz
+Memory    :	25393561600 bytes
+Compute   : 	7.5
 ```
 
 ## Windows ##
@@ -54,6 +55,31 @@ To setup the compiler:
 1. Install MSYS2 (see https://www.msys2.org/)
 2. In `c:\msys64\msys2_shell.cmd` uncomment the line with `set MSYS2_PATH_TYPE=inherit` (this makes Windows PATH variable visible)
 3. Install `go` in MSYS2 (64 bit) with `pacman -S go`
+
+## FAQ ##
+
+Here is a common list of problems that you may encounter.
+
+### ld: cannot find -lcuda (Linux) ###
+
+Checklist:
+
+* [ ] Installed CUDA and applied the relevant [post-installation steps](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html#post-installation-actions)?
+* [ ] Checked that the sample programs in the CUDA install all works?
+* [ ] Checked the output of `ld -lcuda --verbose`?
+* [ ] Checked that there is a `libcuda.so` in the given search paths?
+* [ ] Checked that the permissions on `libcuda.so` is correct?
+
+**Note**, depending on how you install CUDA on Linux, sometimes the `.so` file is not properly linked. For example: in CUDA 10.2 on Ubuntu, the default `.deb` installation installs the shared object file to `/usr/lib/x86_64-linux-gnu/libcuda.so.1`. However `ld` searches only for `libcuda.so`. So the solution is to symlink `libcuda.so.1` to `libcuda.so`, like so:
+
+```
+sudo ln -s /PATH/TO/libcuda.so.1 /PATH/TO/libcuda.so
+```
+
+Be careful when using `ln`. This author spent several hours being tripped up by permissions issues.
+
+
+
 
 # Progress #
 The work to fully represent the CUDA Driver API is a work in progress. At the moment, it is not complete. However, most of the API that are required for GPGPU purposes are complete. None of the texture, surface and graphics related APIs are handled yet. Please feel free to send a pull request.
