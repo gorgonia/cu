@@ -10,12 +10,14 @@ import (
 var pkgloc string
 var apiFile string
 var ctxFile string
+var resultFile string
 
 func init() {
 	gopath := os.Getenv("GOPATH")
 	pkgloc = path.Join(gopath, "src/gorgonia.org/cu")
 	apiFile = path.Join(pkgloc, "api.go")
 	ctxFile = path.Join(pkgloc, "ctx_api.go")
+	resultFile = path.Join(pkgloc, "result.go")
 }
 
 func generateAPIFile(gss []*GoSignature) {
@@ -39,31 +41,45 @@ func generateContextFile(gss []*GoSignature) {
 	generateContextAPI(g, gss)
 }
 
+func generateResultFile() {
+	g, err := os.Create(resultFile)
+	if err != nil {
+		panic(err)
+	}
+	defer g.Close()
+
+	g.WriteString(resultHeader)
+	generateResultEnums(g)
+}
+
 func main() {
 	// input := strings.NewReader(src)
 	// sigs := Parse(input)
-	sigs := Parse()
+	//sigs := Parse()
 
-	var gss []*GoSignature
-	sigs = filterCSigs(sigs)
-	for _, sig := range sigs {
-		gs := sig.GoSig()
-		gss = append(gss, gs)
-	}
+	//var gss []*GoSignature
+	//sigs = filterCSigs(sigs)
+	//for _, sig := range sigs {
+	//		gs := sig.GoSig()
+	//	gss = append(gss, gs)
+	//}
 
-	generateAPIFile(gss)
-	generateContextFile(gss)
+	generateResultFile()
+	//generateAPIFile(gss)
+	//generateContextFile(gss)
 
 	var err error
-	filename := apiFile
-	cmd := exec.Command("goimports", "-w", filename)
-	if err = cmd.Run(); err != nil {
-		log.Fatalf("Go imports failed with %v for %q", err, filename)
+	files := []string{
+		apiFile,
+		ctxFile,
+		resultFile,
 	}
 
-	filename = ctxFile
-	cmd = exec.Command("goimports", "-w", filename)
-	if err = cmd.Run(); err != nil {
-		log.Fatalf("Go imports failed with %v for %q", err, filename)
+	for _, filename := range files {
+		cmd := exec.Command("goimports", "-w", filename)
+		if err = cmd.Run(); err != nil {
+			log.Printf("Go imports failed with %v for %q", err, filename)
+		}
 	}
+
 }
