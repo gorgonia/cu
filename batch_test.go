@@ -293,6 +293,10 @@ func BenchmarkNoBatching(bench *testing.B) {
 				bench.Fatalf("Failed to copy memory to b: %v", err)
 			}
 		}
+		// useful for checking results
+		// if i == 0 {
+		// 	bench.Logf("%v", a[:10])
+		// }
 	}
 	MemFree(memA)
 	MemFree(memB)
@@ -354,12 +358,9 @@ func BenchmarkBatching(bench *testing.B) {
 	// ACTUAL BENCHMARK STARTS HERE
 	workAvailable := bctx.WorkAvailable()
 	for i := 0; i < bench.N; i++ {
-
 		for j := 0; j < 100; j++ {
-			select {
-			case <-workAvailable:
-				bctx.DoWork()
-			default:
+			done := make(chan struct{}, 1)
+			go func(done chan struct{}) {
 				bctx.MemcpyHtoD(memA, unsafe.Pointer(&a[0]), size)
 				bctx.MemcpyHtoD(memB, unsafe.Pointer(&b[0]), size)
 				bctx.LaunchKernel(fn, 100, 10, 1, 1000, 1, 1, 0, Stream{}, args)
@@ -367,12 +368,29 @@ func BenchmarkBatching(bench *testing.B) {
 				bctx.MemcpyDtoH(unsafe.Pointer(&a[0]), memA, size)
 				bctx.MemcpyDtoH(unsafe.Pointer(&b[0]), memB, size)
 				bctx.Signal()
+				done <- struct{}{}
+			}(done)
+
+		work:
+			for {
+				select {
+				case <-workAvailable:
+					bctx.DoWork()
+				case <-done:
+					break work
+				}
 			}
+
 		}
 
 		if err := bctx.Errors(); err != nil {
 			bench.Fatalf("Failed with errors in benchmark %d. Error: %v", i, err)
 		}
+
+		// useful for checking results
+		// if i == 0 {
+		// 	bench.Logf("%v", a[:10])
+		// }
 	}
 	MemFree(memA)
 	MemFree(memB)
