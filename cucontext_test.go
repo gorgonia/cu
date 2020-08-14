@@ -55,8 +55,22 @@ func TestCUContext(t *testing.T) {
 	}
 
 	if maj >= 3 {
+		defaultSharedConf, err := SharedMemConfig()
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var newBankSize SharedConfig
+
+		for _, c := range []SharedConfig{FourByteBankSize, EightByteBankSize} {
+			if c != defaultSharedConf {
+				newBankSize = c
+				break
+			}
+		}
+
 		// shared conf
-		if err := SetSharedMemConfig(EightByteBankSize); err != nil {
+		if err := SetSharedMemConfig(newBankSize); err != nil {
 			t.Fatal(err)
 		}
 
@@ -65,8 +79,12 @@ func TestCUContext(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if sharedConf != EightByteBankSize {
-			t.Error("Expected sharedMemConf to be EightByteBankSize")
+		if sharedConf != newBankSize && sharedConf != defaultSharedConf {
+			t.Errorf("Expected sharedMemConf to be SharedConfig of %v or %v. Got %v instead", newBankSize, defaultSharedConf, sharedConf)
+		}
+
+		if sharedConf == defaultSharedConf {
+			t.Logf("The graphics card does not have a configurable shared memory banks")
 		}
 
 		// cache config

@@ -197,6 +197,9 @@ func (ctx *BatchedContext) enqueue(c call) (retVal DevicePtr, err error) {
 // WorkAvailable returns the chan where work availability is broadcasted on.
 func (ctx *BatchedContext) WorkAvailable() <-chan struct{} { return ctx.workAvailable }
 
+// Signal is used to tell the context that work is available
+func (ctx *BatchedContext) Signal() { ctx.workAvailable <- struct{}{} }
+
 // DoWork waits for work to come in from the queue. If it's blocking, the entire queue will be processed immediately.
 // Otherwise it will be added to the batch queue.
 func (ctx *BatchedContext) DoWork() {

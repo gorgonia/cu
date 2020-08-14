@@ -50,7 +50,7 @@ The first line preprocesses all the macros, leaving a singular header file. The 
 * `PopCurrentCtx` - deleted
 * `SetCurrentContext` - deleted
 * `CurrentContext` - deleted
-* `CurrentDevice` 
+* `CurrentDevice`
 * `CurrentFlags`
 * `CanAccessPeer` - deleted
 * `P2PAttribute` - deleted

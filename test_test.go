@@ -10,8 +10,8 @@ const add32PTX = `//
 // Based on LLVM 3.4svn
 //
 
-.version 5.0
-.target sm_20
+.version 6.5
+.target sm_75
 .address_size 64
 
 	// .globl	add32
@@ -49,7 +49,7 @@ const add32PTX = `//
 	mad.lo.s32 	%r18, %r14, %r11, %r17;
 	mad.lo.s32 	%r1, %r12, %r16, %r18;
 	setp.ge.s32	%p1, %r1, %r2;
-	@%p1 bra 	BB0_2;
+	@%p1 bra 	BB1_2;
 
 	cvta.to.global.u64 	%rd3, %rd1;
 	mul.wide.s32 	%rd4, %r1, 4;
@@ -58,10 +58,10 @@ const add32PTX = `//
 	add.s64 	%rd7, %rd6, %rd4;
 	ld.global.f32 	%f1, [%rd7];
 	ld.global.f32 	%f2, [%rd5];
-	add.f32 	%f3, %f2, %f1;
+	add.rn.f32 	%f3, %f2, %f1;
 	st.global.f32 	[%rd5], %f3;
 
-BB0_2:
+BB1_2:
 	ret;
 }
 

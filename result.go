@@ -26,8 +26,6 @@ func result(x C.CUresult) error {
 	return err
 }
 
-type cuResult int
-
 const (
 	Success                     cuResult = C.CUDA_SUCCESS
 	InvalidValue                cuResult = C.CUDA_ERROR_INVALID_VALUE
