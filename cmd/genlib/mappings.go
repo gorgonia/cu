@@ -172,6 +172,48 @@ var ignoredFunctions = map[string]struct{}{
 	"cuImportExternalSemaphore":               empty,
 	"cuSignalExternalSemaphoresAsync":         empty,
 	"cuWaitExternalSemaphoresAsync":           empty,
+
+	// TEMP TODO
+	"cuGraphAddChildGraphNode":                empty,
+	"cuGraphAddDependencies":                  empty,
+	"cuGraphAddEmptyNode":                     empty,
+	"cuGraphAddHostNode":                      empty,
+	"cuGraphAddKernelNode":                    empty,
+	"cuGraphAddMemcpyNode":                    empty,
+	"cuGraphAddMemsetNode":                    empty,
+	"cuGraphChildGraphNodeGetGraph":           empty,
+	"cuGraphClone":                            empty,
+	"cuGraphCreate":                           empty,
+	"cuGraphDestroy":                          empty,
+	"cuGraphDestroyNode":                      empty,
+	"cuGraphExecDestroy":                      empty,
+	"cuGraphExecHostNodeSetParams":            empty,
+	"cuGraphExecKernelNodeSetParams":          empty,
+	"cuGraphExecMemcpyNodeSetParams":          empty,
+	"cuGraphExecMemsetNodeSetParams":          empty,
+	"cuGraphExecUpdate":                       empty,
+	"cuGraphGetEdges":                         empty,
+	"cuGraphGetNodes":                         empty,
+	"cuGraphGetRootNodes":                     empty,
+	"cuGraphHostNodeGetParams":                empty,
+	"cuGraphHostNodeSetParams":                empty,
+	"cuGraphInstantiate":                      empty,
+	"cuGraphKernelNodeCopyAttributes":         empty,
+	"cuGraphKernelNodeGetAttribute":           empty,
+	"cuGraphKernelNodeGetParams":              empty,
+	"cuGraphKernelNodeSetAttribute":           empty,
+	"cuGraphKernelNodeSetParams":              empty,
+	"cuGraphLaunch":                           empty,
+	"cuGraphMemcpyNodeGetParams":              empty,
+	"cuGraphMemcpyNodeSetParams":              empty,
+	"cuGraphMemsetNodeGetParams":              empty,
+	"cuGraphMemsetNodeSetParams":              empty,
+	"cuGraphNodeFindInClone":                  empty,
+	"cuGraphNodeGetDependencies":              empty,
+	"cuGraphNodeGetDependentNodes":            empty,
+	"cuGraphNodeGetType":                      empty,
+	"cuGraphRemoveDependencies":               empty,
+	"cuOccupancyAvailableDynamicSMemPerBlock": empty,
 }
 
 var fnNameMap = map[string]string{
@@ -208,7 +250,7 @@ var fnNameMap = map[string]string{
 	"cuModuleGetGlobal":   "Module Global",
 	"cuModuleGetFunction": "Module Function",
 
-	"cuModuleUnload": "Unload",
+	"cuModuleUnload": "Module Unload",
 
 	"cuMemGetInfo":              "MemInfo",
 	"cuMemAlloc":                "MemAlloc",
@@ -260,7 +302,7 @@ var fnNameMap = map[string]string{
 
 	"cuArrayCreate":          "MakeArray",
 	"cuArrayGetDescriptor":   "Array Descriptor",
-	"cuArrayDestroy":         "DestroyArray",
+	"cuArrayDestroy":         "Array Destroy",
 	"cuArray3DCreate":        "Make3DArray",
 	"cuArray3DGetDescriptor": "Array Descriptor3",
 
@@ -273,7 +315,7 @@ var fnNameMap = map[string]string{
 	"cuStreamAttachMemAsync":            "Stream AttachMemAsync",
 	"cuStreamQuery":                     "Stream Query",
 	"cuStreamSynchronize":               "Stream Synchronize",
-	"cuStreamDestroy":                   "DestroyStream",
+	"cuStreamDestroy":                   "Stream Destroy",
 	"cuStreamBeginCapture":              "Stream BeginCapture",
 	"cuStreamCopyAttributes":            "Stream CopyAttributes",
 	"cuStreamEndCapture":                "Stream EndCapture",
@@ -282,7 +324,7 @@ var fnNameMap = map[string]string{
 	"cuStreamGetCtx":                    "Stream Context",
 	"cuStreamIsCapturing":               "Stream IsCapturing",
 	"cuStreamSetAttribute":              "Stream SetAttribute",
-	"cuStreamWaitValue64":               "Stream WaitValue64",
+	"cuStreamWaitValue64":               "Stream WaitOnValue64",
 	"cuStreamWriteValue64":              "Stream WriteValue64",
 	"cuThreadExchangeStreamCaptureMode": "ExchangeStreamCaptureThreads", // TODO - possibly manual write
 
@@ -290,7 +332,7 @@ var fnNameMap = map[string]string{
 	"cuEventRecord":        "Event Record",
 	"cuEventQuery":         "Event Query",
 	"cuEventSynchronize":   "Event Synchronize",
-	"cuEventDestroy":       "DestroyEvent",
+	"cuEventDestroy":       "Event Destroy",
 	"cuEventElapsedTime":   "Event Elapsed", // getter
 	"cuStreamWaitValue32":  "Stream WaitOnValue32",
 	"cuStreamWriteValue32": "Stream WriteValue32",

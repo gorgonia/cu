@@ -49,6 +49,7 @@ func decl2csig(d *bindgen.CSignature) *CSignature {
 		params = append(params, bgparam2param(p))
 	}
 	retVal.Params = params
+	retVal.Fix()
 	return retVal
 }
 
