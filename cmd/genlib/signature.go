@@ -79,7 +79,6 @@ func (sig *CSignature) Fix() {
 func (sig *CSignature) GoSig() *GoSignature {
 	name, ok := fnNameMap[sig.Name]
 	if !ok {
-
 		err := fmt.Sprintf("Name %q not found in mapping", sig.Name)
 		errs[err] = struct{}{}
 	}
@@ -101,7 +100,9 @@ func (sig *CSignature) GoSig() *GoSignature {
 			}
 		}
 		if receiverParam.Name == "" {
-			panic(fmt.Sprintf("Not found for receiver %q", receiver))
+			err := fmt.Sprintf("Receiver %q not found in signature of %v", receiver, sig.Name)
+			errs[err] = struct{}{}
+			return nil
 		}
 	}
 

@@ -174,3 +174,7 @@ func (ctx *Ctx) Run(errChan chan error) error {
 func finalizeCtx(ctx *Ctx) { ctx.Close() }
 
 /* Manually Written Methods */
+
+func (ctx *Ctx) ResetL2Cache() {
+	ctx.Do(ctx.CUContext.ResetL2Cache)
+}

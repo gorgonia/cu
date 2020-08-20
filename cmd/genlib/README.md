@@ -1,6 +1,6 @@
-# genlibcu #
+# genlib #
 
-genlibcu is the program that generates the package `cu`. It does so by parsing `cuda.h` which is a modified form of `cuda.h` that comes with a CUDA installation. Specifially these were the modifications made:
+genlib is the program that generates the package `cu`. It does so by parsing `cuda.h` which is a modified form of `cuda.h` that comes with a CUDA installation. Specifially these were the modifications made:
 
 ```
 cp /usr/local/cuda/include/cuda.h cuda2.h // copy cuda.h to current dir

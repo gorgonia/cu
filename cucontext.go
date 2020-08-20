@@ -86,3 +86,14 @@ func (d Device) RetainPrimaryCtx() (primaryContext CUContext, err error) {
 	}
 	return primaryContext, nil
 }
+
+// ResetL2Cache resets all persisting lines in cache to normal status
+// Use only if your device suports it.
+//
+// https://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__CTX.html#group__CUDA__CTX_1gb529532b5b1aef808295a6d1d18a0823
+func (ctx *CUContext) ResetL2Cache() error {
+	if err := result(C.cuCtxResetPersistingL2Cache()); err != nil {
+		return err
+	}
+	return nil
+}
