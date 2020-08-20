@@ -9,13 +9,13 @@ package cu
 //#cgo linux,windows CFLAGS: -I/usr/local/cuda/include/
 //
 ////default location if not properly symlinked:
+//#cgo linux LDFLAGS:-L/usr/local/cuda-11.0/targets/x86_64-linux/lib
 //#cgo linux LDFLAGS:-L/usr/local/cuda-10.2/lib64 -L/usr/local/cuda-10.2/lib
-//#cgo linux LDFLAGS:-L/usr/local/cuda-10.1/lib64 -L/usr/local/cuda-10.1/lib
 //#cgo linux LDFLAGS:-L/usr/local/cuda-6.0/lib64 -L/usr/local/cuda-6.0/lib
 //#cgo linux LDFLAGS:-L/usr/local/cuda-5.5/lib64 -L/usr/local/cuda-5.5/lib
 //#cgo linux LDFLAGS:-L/usr/local/cuda-5.0/lib64 -L/usr/local/cuda-5.0/lib
+//#cgo linux CFLAGS: -I/usr/local/cuda-11.0/targets/x86_64-linux/include
 //#cgo linux CFLAGS: -I/usr/local/cuda-10.2/include/
-//#cgo linux CFLAGS: -I/usr/local/cuda-10.1/include/
 //#cgo linux CFLAGS: -I/usr/local/cuda-6.0/include/
 //#cgo linux CFLAGS: -I/usr/local/cuda-5.5/include/
 //#cgo linux CFLAGS: -I/usr/local/cuda-5.0/include/

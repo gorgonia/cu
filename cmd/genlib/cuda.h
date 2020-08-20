@@ -242,6 +242,20 @@ struct __pthread_mutex_s {
 
 };
 struct __pthread_cond_s {
+	__extension__ union {
+		__extension__ unsigned long long int __wseq;
+		struct {
+			unsigned int __low;
+			unsigned int __high;
+		} __wseq32;
+	} foo;
+	__extension__ union {
+		__extension__ unsigned long long int __g1_start;
+		struct {
+			unsigned int __low;
+			unsigned int __high;
+		} __g1_start32;
+	} bar ;
 	unsigned int __g_refs[2] ;
 	unsigned int __g_size[2];
 	unsigned int __g1_orig_size;
@@ -569,12 +583,20 @@ typedef union CUstreamBatchMemOpParams_union {
 	struct CUstreamMemOpWaitValueParams_st {
 		CUstreamBatchMemOpType operation;
 		CUdeviceptr address;
+		union {
+			cuuint32_t value;
+			cuuint64_t value64;
+		} foo;
 		unsigned int flags;
 		CUdeviceptr alias;
 	} waitValue;
 	struct CUstreamMemOpWriteValueParams_st {
 		CUstreamBatchMemOpType operation;
 		CUdeviceptr address;
+		union {
+			cuuint32_t value;
+			cuuint64_t value64;
+		} bar;
 		unsigned int flags;
 		CUdeviceptr alias;
 	} writeValue;

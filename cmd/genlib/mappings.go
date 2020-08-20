@@ -9,6 +9,7 @@ var ignoredFunctions = map[string]struct{}{
 	"cuInit":             empty,
 	"cuDriverGetVersion": empty,
 	"cuDeviceGetName":    empty, // wat?
+	"cuDeviceGetUuid":    empty, // ignored because we have manually written a function to return uuid.UUID
 
 	// context stuff
 	"cuCtxCreate":              empty,

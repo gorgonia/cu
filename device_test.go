@@ -47,11 +47,16 @@ func TestDevice(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		uuid, err := d.UUID()
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		fmt.Fprintf(buf, "Device %d\n========\nName      :\t%q\n", d, name)
 		fmt.Fprintf(buf, "Clock Rate:\t%v kHz\n", cr)
 		fmt.Fprintf(buf, "Memory    :\t%v bytes\n", mem)
-		fmt.Fprintf(buf, "Compute   : \t%d.%d\n", maj, min)
+		fmt.Fprintf(buf, "Compute   :\t%d.%d\n", maj, min)
+		fmt.Fprintf(buf, "UUID      :\t%v\n", uuid)
 		t.Log(buf.String())
 
 		buf.Reset()

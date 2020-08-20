@@ -79,7 +79,9 @@ func (sig *CSignature) Fix() {
 func (sig *CSignature) GoSig() *GoSignature {
 	name, ok := fnNameMap[sig.Name]
 	if !ok {
-		panic(fmt.Sprintf("Name %q not found in mapping", sig.Name))
+
+		err := fmt.Sprintf("Name %q not found in mapping", sig.Name)
+		errs[err] = struct{}{}
 	}
 
 	name, receiver := splitReceiver(name)
@@ -124,8 +126,9 @@ func (sig *CSignature) GoSig() *GoSignature {
 			var ok bool
 			gp.Name = p.Name
 			if gp.Type, ok = goTypeFromCtype(p.Type); !ok {
-				log.Printf("p.Name %q %v", p.Name, p.Type)
-				panic(fmt.Sprintf("ctype %q has no Go equivalent. Signature: %v", p.Type, sig))
+				err := fmt.Sprintf("ctype %q has no Go equivalent.", p.Type)
+				errs[err] = struct{}{}
+				continue
 			}
 		}
 
@@ -219,7 +222,8 @@ func flagType(name string) string {
 	default:
 		log.Printf("Unreachable flagtype %v", name)
 	}
-	panic("Unreachable")
+	// panic("Unreachable")
+	return "UNKNOWN"
 }
 
 func goTypeFromCtype(ct string) (string, bool) {
