@@ -56,6 +56,11 @@ var ignoredFunctions = map[string]struct{}{
 	"cuOccupancyMaxActiveBlocksPerMultiprocessor":          empty,
 	"cuOccupancyMaxActiveBlocksPerMultiprocessorWithFlags": empty,
 
+	// graph stuff
+	"cuGraphCreate":  empty,
+	"cuGraphDestroy": empty,
+	"cuGraphClone":   empty,
+
 	/* SUPPORT PLANNED BUT NOT YET DONE */
 	// memory stuff
 	"cuMemAllocHost":            empty, // use C.malloc
@@ -182,9 +187,6 @@ var ignoredFunctions = map[string]struct{}{
 	"cuGraphAddMemcpyNode":                    empty,
 	"cuGraphAddMemsetNode":                    empty,
 	"cuGraphChildGraphNodeGetGraph":           empty,
-	"cuGraphClone":                            empty,
-	"cuGraphCreate":                           empty,
-	"cuGraphDestroy":                          empty,
 	"cuGraphDestroyNode":                      empty,
 	"cuGraphExecDestroy":                      empty,
 	"cuGraphExecHostNodeSetParams":            empty,
@@ -508,8 +510,8 @@ var gotypesConversion = map[string]string{
 }
 
 var ctypesConversion = map[string]string{
-	"C.CUstream":                "Stream(uintptr(unsafe.Pointer(%s)))",
-	"C.CUevent":                 "Event(uintptr(unsafe.Pointer(%s)))",
+	//"C.CUstream":                "Stream(uintptr(unsafe.Pointer(%s)))",
+	//"C.CUevent":                 "Event(uintptr(unsafe.Pointer(%s)))",
 	"C.CUDA_ARRAY_DESCRIPTOR":   "goArrayDesc(&%s)",
 	"C.CUDA_ARRAY3D_DESCRIPTOR": "goArray3Desc(&%s)",
 	"C.CUarray":                 "goArray(&%s)",
