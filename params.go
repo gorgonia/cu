@@ -1,8 +1,100 @@
 package cu
 
-// #include <cuda.h>
-import "C"
+/*
+#include <cuda.h>
 
+void CallHostFunc(void* fn){
+	handleCUDACB(fn);
+};
+*/
+import "C"
+import "unsafe"
+
+// KernelNodeParams represents the parameters to launch a kernel in a graph node.
 type KernelNodeParams struct {
-	C.CUDA_KERNAL_NODE_PARAMS
+	Func           Function
+	GridDimX       uint
+	GridDimY       uint
+	GridDimZ       uint
+	BlockDimX      uint
+	BlockDimY      uint
+	BlockDimZ      uint
+	SharedMemBytes uint
+
+	Params []*KernelNodeParams
 }
+
+func (p *KernelNodeParams) c() *C.CUDA_KERNEL_NODE_PARAMS {
+	// here anonymous initialization of struct fields is used because `func` is a keyword.
+	// see also: https://github.com/golang/go/issues/41968
+	retVal := &C.CUDA_KERNEL_NODE_PARAMS{
+		p.Func.fn,
+		C.uint(p.GridDimX),
+		C.uint(p.GridDimY),
+		C.uint(p.GridDimZ),
+		C.uint(p.BlockDimX),
+		C.uint(p.BlockDimY),
+		C.uint(p.BlockDimZ),
+		C.uint(p.SharedMemBytes),
+		nil,
+		nil,
+	}
+	return retVal
+}
+
+// HostNodeParams are parameters passed in to a node that will call a host function (i.e. a function written in Go)
+type HostNodeParams struct {
+	Func HostFunction
+	Data unsafe.Pointer
+
+	registered bool
+	ptr        unsafe.Pointer
+}
+
+func (p *HostNodeParams) c() *C.CUDA_HOST_NODE_PARAMS {
+	var ptr unsafe.Pointer
+	if p.registered {
+		ptr = p.ptr
+	} else {
+		ptr = RegisterFunc(p.Func)
+		p.ptr = ptr
+		p.registered = true
+	}
+
+	return &C.CUDA_HOST_NODE_PARAMS{
+		fn:       C.CUhostFn(C.CallHostFunc),
+		userData: ptr, // userData is basically the Go function to call.
+	}
+}
+
+type CopyParams struct {
+	SrcXInBytes  uint64
+	SrcY         uint64
+	SrcZ         uint64
+	SrcLOD       uint64
+	SrcType      MemoryType
+	SrcHost      unsafe.Pointer
+	SrcDevicePtr DevicePtr
+	SrcArray     Array
+	Reserved0    unsafe.Pointer
+	SrcPitch     uint64
+	SrcHeight    uint64
+
+	DstXInBytes  uint64
+	DstY         uint64
+	DstZ         uint64
+	DstLOD       uint64
+	DstType      MemoryType
+	DstHost      unsafe.Pointer
+	DstDevicePtr DevicePtr
+	DstArray     Array
+	Reserved1    unsafe.Pointer
+	DstPitch     uint64
+	DstHeight    uint64
+
+	WidthInBytes uint64
+	Height       uint64
+	Depth        uint64
+}
+
+func (p *CopyParams) c() *C.CUDA_MEMCPY3D { return nil } //TODO

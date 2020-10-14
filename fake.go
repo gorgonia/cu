@@ -1,6 +1,7 @@
 package cu
 
 /*
+#include <stdlib.h>
 void handleCUDACB(void* v);
 */
 import "C"
@@ -14,7 +15,8 @@ import (
 var fakepointers = make(map[unsafe.Pointer]HostFunction)
 var lock sync.RWMutex
 
-func registerFunc(fn HostFunction) unsafe.Pointer {
+// RegisterFunc is used to register a Go based callback such that it may be called by CUDA.
+func RegisterFunc(fn HostFunction) unsafe.Pointer {
 	var ptr unsafe.Pointer = C.malloc(C.size_t(1))
 	if ptr == nil {
 		panic("Cannot allocate a fake pointer")
@@ -29,9 +31,9 @@ func registerFunc(fn HostFunction) unsafe.Pointer {
 
 func getHostFn(ptr unsafe.Pointer) HostFunction {
 	if ptr == nil {
-		return HostFunction{}
+		return nil
 	}
-	lock.Rlock()
+	lock.RLock()
 	retVal := fakepointers[ptr]
 	lock.RUnlock()
 	return retVal
@@ -42,15 +44,15 @@ func deregisterFunc(ptr unsafe.Pointer) {
 		return
 	}
 
-	mutex.Lock()
+	lock.Lock()
 	delete(fakepointers, ptr)
-	mutex.Unlock()
+	lock.Unlock()
 
 	C.free(ptr)
 }
 
-// export handleCUDACB
+//export handleCUDACB
 func handleCUDACB(fn unsafe.Pointer) {
 	callback := getHostFn(fn)
-	callback.Func(callback.UserData...)
+	callback()
 }
