@@ -73,6 +73,16 @@ func (g Graph) AddKernelNode(children []Node, kernelParams []KernelParams) (Node
 	return retVal, err
 }
 
+func (g Graph) Edges(from, to []Node) (edges []int, numEdges int, err error) {
+	if len(from) != len(to) {
+		return errors.Errorf("Expected from and to to have the same length. From is %d long. To is %d long", len(from), len(to))
+	}
+	if len(from) == 0 {
+		return nil, 0, nil // TODO
+	}
+
+}
+
 // Node represents a CUDA graph node
 type Node struct{ n C.CUgraphNode }
 
