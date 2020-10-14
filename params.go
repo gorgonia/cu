@@ -97,4 +97,33 @@ type CopyParams struct {
 	Depth        uint64
 }
 
-func (p *CopyParams) c() *C.CUDA_MEMCPY3D { return nil } //TODO
+func (p *CopyParams) c() *C.CUDA_MEMCPY3D {
+	return &C.CUDA_MEMCPY3D{
+		srcXInBytes:   C.size_t(p.SrcXInBytes),
+		srcY:          C.size_t(p.SrcY),
+		srcZ:          C.size_t(p.SrcZ),
+		srcLOD:        C.size_t(p.SrcLOD),
+		srcMemoryType: C.CUmemorytype(p.SrcType),
+		srcHost:       p.SrcHost,
+		srcDevice:     C.CUdeviceptr(p.SrcDevicePtr),
+		srcArray:      p.SrcArray.c(),
+		reserved0:     nil,
+		srcPitch:      C.size_t(p.SrcPitch),
+		srcHeight:     C.size_t(p.SrcHeight),
+		dstXInBytes:   C.size_t(p.DstXInBytes),
+		dstY:          C.size_t(p.DstY),
+		dstZ:          C.size_t(p.DstZ),
+		dstLOD:        C.size_t(p.DstLOD),
+		dstMemoryType: C.CUmemorytype(p.DstType),
+		dstHost:       p.DstHost,
+		dstDevice:     C.CUdeviceptr(p.DstDevicePtr),
+		dstArray:      p.DstArray.c(),
+		reserved1:     nil,
+		dstPitch:      C.size_t(p.DstPitch),
+		dstHeight:     C.size_t(p.DstHeight),
+		WidthInBytes:  C.size_t(p.WidthInBytes),
+		Height:        C.size_t(p.Height),
+		Depth:         C.size_t(p.Depth),
+	}
+
+}
