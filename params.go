@@ -125,5 +125,24 @@ func (p *CopyParams) c() *C.CUDA_MEMCPY3D {
 		Height:        C.size_t(p.Height),
 		Depth:         C.size_t(p.Depth),
 	}
+}
 
+type MemsetParams struct {
+	Dst         DevicePtr
+	Pitch       uint64
+	Value       uint
+	ElementSize uint
+	Width       uint64
+	Height      uint64
+}
+
+func (p *MemsetParams) c() *C.CUDA_MEMSET_NODE_PARAMS {
+	return &C.CUDA_MEMSET_NODE_PARAMS{
+		dst:         C.CUdeviceptr(p.Dst),
+		pitch:       C.size_t(p.pitch),
+		value:       C.uint(p.value),
+		elementSize: C.uint(p.ElementSize),
+		width:       C.size_t(p.Width),
+		height:      C.size_t(p.height),
+	}
 }

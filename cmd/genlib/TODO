@@ -1,11 +1,11 @@
-* Checklist [12/39]
+* Checklist [13/39]
   - [X] CUresult cuGraphAddChildGraphNode ( CUgraphNode* phGraphNode, CUgraph hGraph, const CUgraphNode* dependencies, size_t numDependencies, CUgraph childGraph )
   - [X] CUresult cuGraphAddDependencies ( CUgraph hGraph, const CUgraphNode* from, const CUgraphNode* to, size_t numDependencies )
   - [X] CUresult cuGraphAddEmptyNode ( CUgraphNode* phGraphNode, CUgraph hGraph, const CUgraphNode* dependencies, size_t numDependencies )
   - [X] CUresult cuGraphAddHostNode ( CUgraphNode* phGraphNode, CUgraph hGraph, const CUgraphNode* dependencies, size_t numDependencies, const CUDA_HOST_NODE_PARAMS* nodeParams )
   - [X] CUresult cuGraphAddKernelNode ( CUgraphNode* phGraphNode, CUgraph hGraph, const CUgraphNode* dependencies, size_t numDependencies, const CUDA_KERNEL_NODE_PARAMS* nodeParams )
   - [X] CUresult cuGraphAddMemcpyNode ( CUgraphNode* phGraphNode, CUgraph hGraph, const CUgraphNode* dependencies, size_t numDependencies, const CUDA_MEMCPY3D* copyParams, CUcontext ctx )
-  - [ ] CUresult cuGraphAddMemsetNode ( CUgraphNode* phGraphNode, CUgraph hGraph, const CUgraphNode* dependencies, size_t numDependencies, const CUDA_MEMSET_NODE_PARAMS* memsetParams, CUcontext ctx )
+  - [X] CUresult cuGraphAddMemsetNode ( CUgraphNode* phGraphNode, CUgraph hGraph, const CUgraphNode* dependencies, size_t numDependencies, const CUDA_MEMSET_NODE_PARAMS* memsetParams, CUcontext ctx )
   - [ ] CUresult cuGraphChildGraphNodeGetGraph ( CUgraphNode hNode, CUgraph* phGraph )
   - [X] CUresult cuGraphClone ( CUgraph* phGraphClone, CUgraph originalGraph )
   - [X] CUresult cuGraphCreate ( CUgraph* phGraph, unsigned int  flags )

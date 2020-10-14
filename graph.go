@@ -86,6 +86,13 @@ func (g Graph) AddMemcpyNode(children []Node, params *CopyParams, ctx Context) (
 	return retVal, err
 }
 
+func (g Graph) AddMemsetNode(children []Node, params *MemsetParams, ctx Context) (Node, error) {
+	ptr, numDependencies := unsplatNodes(children)
+	var retVal Node
+	err := result(C.cuGraphAddMemsetNode(&retVal.n, g.c(), ptr, numDependencies, params.c(), ctx.CUDAContext().c()))
+	return retVal, err
+}
+
 // Edges returns the edges between nodes. CUDA's API is quite dodgy and unclear. It is reproduced below:
 //
 // Returns a list of hGraph's dependency edges. Edges are returned via corresponding indices in from and to; that is, the node in to[i] has a dependency on the node in from[i]. from and to may both be NULL, in which case this function only returns the number of edges in numEdges. Otherwise, numEdges entries will be filled in. If numEdges is higher than the actual number of edges, the remaining entries in from and to will be set to NULL, and the number of edges actually returned will be written to numEdges.
