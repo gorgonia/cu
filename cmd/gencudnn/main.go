@@ -11,8 +11,8 @@ import (
 	"os"
 	"path"
 
-	"github.com/cznic/cc"
 	"github.com/gorgonia/bindgen"
+	"modernc.org/cc"
 )
 
 var pkgloc string
@@ -57,14 +57,14 @@ func main() {
 
 	// Step 0: run parse.py to get more sanity about inputs and outputs
 	// Step 1: Explore
-	// explore(hdrfile, functions, enums, otherTypes)
+	explore(hdrfile, functions, enums, otherTypes)
 	// explore(hdrfile, otherTypes)
 	// explore(hdrfile, functions)
 
 	// Step 2: generate mappings for this package, then edit them manually
 	// 	Specifically, the `ignored` map is edited - things that will be manually written are not removed from the list
 	//	Some enum map names may also be changed
-	generateMappings(true)
+	// generateMappings(true)
 
 	// Step 3: generate enums, then edit the file in the dnn package.
 	// generateEnums()

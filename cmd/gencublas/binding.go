@@ -12,9 +12,9 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/cznic/cc"
-	"github.com/cznic/xc"
 	bg "github.com/gorgonia/bindgen"
+	"modernc.org/cc"
+	"modernc.org/xc"
 )
 
 var goTypes = map[bg.TypeKey]bg.Template{

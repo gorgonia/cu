@@ -3,8 +3,8 @@ package main
 import (
 	"strings"
 
-	"github.com/cznic/cc"
 	"github.com/gorgonia/bindgen"
+	"modernc.org/cc"
 )
 
 func Parse() (retVal []*CSignature) {

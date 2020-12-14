@@ -14,9 +14,13 @@ require (
 	github.com/gorgonia/bindgen v0.0.0-20180812032444-09626750019e
 	github.com/kr/pretty v0.1.0
 	github.com/pkg/errors v0.8.1
-	github.com/remyoudompheng/bigfft v0.0.0-20190728182440-6a916e37a237 // indirect
 	github.com/stretchr/testify v1.4.0
 	gonum.org/v1/gonum v0.0.0-20190902003836-43865b531bee
 	gorgonia.org/gorgonia v0.9.2
 	gorgonia.org/tensor v0.9.0-beta
+	modernc.org/cc v1.0.0 // indirect
+	modernc.org/golex v1.0.1 // indirect
+	modernc.org/mathutil v1.1.1 // indirect
+	modernc.org/strutil v1.1.0 // indirect
+	modernc.org/xc v1.0.0 // indirect
 )

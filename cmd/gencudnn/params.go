@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/cznic/cc"
 	bg "github.com/gorgonia/bindgen"
+	"modernc.org/cc"
 )
 
 func isInput(fnName string, p bg.Parameter) bool {

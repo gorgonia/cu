@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cznic/cc"
 	"github.com/gorgonia/bindgen"
 	"github.com/kr/pretty"
+	"modernc.org/cc"
 )
 
 // generate this contains function to generate for THIS package (main)

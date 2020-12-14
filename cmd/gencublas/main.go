@@ -17,8 +17,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/cznic/cc"
 	bg "github.com/gorgonia/bindgen"
+	"modernc.org/cc"
 )
 
 var (

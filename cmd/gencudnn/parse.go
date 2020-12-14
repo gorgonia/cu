@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cznic/cc"
 	"github.com/gorgonia/bindgen"
+	"modernc.org/cc"
 )
 
 // Functions returns the C function declarations in the givel set of file paths.

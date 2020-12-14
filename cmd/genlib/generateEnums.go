@@ -5,8 +5,8 @@ import (
 	"io"
 	"strings"
 
-	"github.com/cznic/cc"
 	"github.com/gorgonia/bindgen"
+	"modernc.org/cc"
 )
 
 // genCUresult represents a list of enums we want to generate
