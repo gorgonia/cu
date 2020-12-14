@@ -10,7 +10,7 @@ require (
 	github.com/cznic/strutil v0.0.0-20181122101858-275e90344537 // indirect
 	github.com/cznic/xc v0.0.0-20181122101856-45b06973881e
 	github.com/gonum/blas v0.0.0-20181208220705-f22b278b28ac
-	github.com/google/uuid v1.1.1 // indirect
+	github.com/google/uuid v1.1.1
 	github.com/gorgonia/bindgen v0.0.0-20180812032444-09626750019e
 	github.com/kr/pretty v0.1.0
 	github.com/pkg/errors v0.8.1

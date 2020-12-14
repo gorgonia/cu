@@ -139,10 +139,10 @@ type MemsetParams struct {
 func (p *MemsetParams) c() *C.CUDA_MEMSET_NODE_PARAMS {
 	return &C.CUDA_MEMSET_NODE_PARAMS{
 		dst:         C.CUdeviceptr(p.Dst),
-		pitch:       C.size_t(p.pitch),
-		value:       C.uint(p.value),
+		pitch:       C.size_t(p.Pitch),
+		value:       C.uint(p.Value),
 		elementSize: C.uint(p.ElementSize),
 		width:       C.size_t(p.Width),
-		height:      C.size_t(p.height),
+		height:      C.size_t(p.Height),
 	}
 }

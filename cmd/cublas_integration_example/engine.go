@@ -5,7 +5,7 @@ import (
 	"unsafe"
 
 	"gorgonia.org/cu"
-	"gorgonia.org/cu/blas"
+	cublas "gorgonia.org/cu/blas"
 	"gorgonia.org/tensor"
 )
 
@@ -74,6 +74,5 @@ func (e *Engine) ContextErr() error { return e.ctx.Error() }
 
 type foomem []float64
 
-func (m foomem) Uintptr() uintptr        { return uintptr(unsafe.Pointer(&m[0])) }
-func (m foomem) Pointer() unsafe.Pointer { return unsafe.Pointer(&m[0]) }
-func (m foomem) MemSize() uintptr        { return uintptr(len(m) * 8) }
+func (m foomem) Uintptr() uintptr { return uintptr(unsafe.Pointer(&m[0])) }
+func (m foomem) MemSize() uintptr { return uintptr(len(m) * 8) }

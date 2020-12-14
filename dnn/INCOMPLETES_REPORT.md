@@ -1,3 +1,6 @@
+# TODO #
+* NewRNN
+
 ## Potential Nils ##
 These functions have a `*T` return value, but a possible null exception error might happen
 
@@ -99,4 +102,3 @@ These functions have a `*T` return value, but a possible null exception error mi
 * `cudnnRuntimeTag_t`
 * `cudnnSeverity_t`
 * `cudnnStatus_t`
-
