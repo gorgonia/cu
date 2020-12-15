@@ -14,7 +14,7 @@ import (
 // generate this contains function to generate for THIS package (main)
 
 // generateMappings is used to generate the mappings
-func generateMappings(appendCurrent bool) {
+func generateMappings(appendCurrent bool, fns ...func(buf io.WriteCloser, t *cc.TranslationUnit)) {
 	hdr := "package main\n"
 
 	initfn := `
@@ -38,17 +38,11 @@ func generateMappings(appendCurrent bool) {
 		fmt.Fprintln(buf, hdr)
 		bindgen.GenIgnored(buf, t, functions)
 		fmt.Fprintln(buf, initfn)
-		bindgen.GenNameMap(buf, t, "fnNameMap", processNameBasic, functions, true)
-		bindgen.GenNameMap(buf, t, "enumMappings", processNameBasic, enums, true)
-
-		generateCRUD(buf, t, "create")
-		generateCRUD(buf, t, "set")
-		generateCRUD(buf, t, "destroy")
-		generateCRUD(buf, t, "methods")
-		fmt.Fprintln(buf, "}\n")
 	}
-	generateAlphaBeta(buf, t)
-	fmt.Fprintln(buf, initfn)
+
+	for _, fn := range fns {
+		fn(buf, t)
+	}
 	fmt.Fprintln(buf, "}\n")
 }
 

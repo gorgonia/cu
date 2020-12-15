@@ -54,17 +54,26 @@ func goimports(filename string) error {
 func main() {
 	var pkg *PkgState
 	// pkg = parsePkg(false)
-
 	// Step 0: run parse.py to get more sanity about inputs and outputs
 	// Step 1: Explore
-	explore(hdrfile, functions, enums, otherTypes)
+	// explore(hdrfile, functions, enums, otherTypes)
 	// explore(hdrfile, otherTypes)
 	// explore(hdrfile, functions)
 
 	// Step 2: generate mappings for this package, then edit them manually
 	// 	Specifically, the `ignored` map is edited - things that will be manually written are not removed from the list
 	//	Some enum map names may also be changed
-	// generateMappings(true)
+	defaultPipeline := func(buf io.WriteCloser, t *cc.TranslationUnit) {
+		bindgen.GenNameMap(buf, t, "fnNameMap", processNameBasic, functions, true)
+		bindgen.GenNameMap(buf, t, "enumMappings", processNameBasic, enums, true)
+		generateAlphaBeta(buf, t)
+		generateCRUD(buf, t, "create")
+		generateCRUD(buf, t, "set")
+		generateCRUD(buf, t, "destroy")
+		generateCRUD(buf, t, "methods")
+
+	}
+	generateMappings(false, defaultPipeline)
 
 	// Step 3: generate enums, then edit the file in the dnn package.
 	// generateEnums()
