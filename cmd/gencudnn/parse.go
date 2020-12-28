@@ -113,6 +113,12 @@ func processEnumName(lcp, name string) string {
 		return "PrecomputedMeans"
 	case "CUDNN_SAMPLER_BILINEAR":
 		return "Bilinear"
+	case "CUDNN_PTR_16B_ALIGNED":
+		return "Ptr16"
+	case "CUDNN_PTR_NULL":
+		return "NullPtr"
+	case "CUDNN_PTR_ELEM_ALIGNED":
+		return "PtrElemAligned"
 	}
 
 	var trimmed string
@@ -134,6 +140,7 @@ func processEnumName(lcp, name string) string {
 	case "CUDNN_CTC_LOSS_ALGO_":
 		// CTC Loss Algorithms
 		lowered = lowered + "CTCLoss"
+	case "CUDNN_PTR_":
 	default:
 	}
 
