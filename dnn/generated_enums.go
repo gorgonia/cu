@@ -255,7 +255,7 @@ func (e BatchNormMode) C() C.cudnnBatchNormMode_t { return C.cudnnBatchNormMode_
 type BatchNormOps int
 
 const (
-	BatchNormOps               = C.CUDNN_BATCHNORM_OPS_BN
+	BatchNorm     BatchNormOps = C.CUDNN_BATCHNORM_OPS_BN
 	Activation    BatchNormOps = C.CUDNN_BATCHNORM_OPS_BN_ACTIVATION
 	AddActivation BatchNormOps = C.CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION
 )
@@ -468,7 +468,7 @@ func (e FusedOps) C() C.cudnnFusedOps_t { return C.cudnnFusedOps_t(e) }
 type GenStatsMode int
 
 const (
-	GenStatsMode = C.CUDNN_GENSTATS_SUM_SQSUM
+	SumSq GenStatsMode = C.CUDNN_GENSTATS_SUM_SQSUM
 )
 
 // C returns the C representation of GenStatsMode
@@ -570,7 +570,7 @@ func (e NormMode) C() C.cudnnNormMode_t { return C.cudnnNormMode_t(e) }
 type NormOps int
 
 const (
-	NormOps               = C.CUDNN_NORM_OPS_NORM
+	Norm          NormOps = C.CUDNN_NORM_OPS_NORM
 	Activation    NormOps = C.CUDNN_NORM_OPS_NORM_ACTIVATION
 	AddActivation NormOps = C.CUDNN_NORM_OPS_NORM_ADD_ACTIVATION
 )

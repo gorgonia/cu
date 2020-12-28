@@ -113,12 +113,18 @@ func processEnumName(lcp, name string) string {
 		return "PrecomputedMeans"
 	case "CUDNN_SAMPLER_BILINEAR":
 		return "Bilinear"
-	case "CUDNN_PTR_16B_ALIGNED":
+	case "CUDNN_PTR_16B_ALIGNED": // processing would yield `16B_Aligned`, which is not a valid Go name
 		return "Ptr16"
 	case "CUDNN_PTR_NULL":
 		return "NullPtr"
 	case "CUDNN_PTR_ELEM_ALIGNED":
 		return "PtrElemAligned"
+	case "CUDNN_BATCHNORM_OPS_BN":
+		return "BatchNorm" //  name == lcp otherwise
+	case "CUDNN_GENSTATS_SUM_SQSUM":
+		return "SumSq" // it is the only enum in the list, so name == lcp
+	case "CUDNN_NORM_OPS_NORM":
+		return "Norm" // name == lcp otherwise
 	}
 
 	var trimmed string

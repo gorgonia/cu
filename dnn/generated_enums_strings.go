@@ -5,38 +5,246 @@ package cudnn
 // #include <cudnn.h>
 import "C"
 
-var _ErrQueryModeNames = map[ErrQueryMode]string{
-	Rawcode:     "Rawcode",
-	Nonblocking: "Nonblocking",
-	Blocking:    "Blocking",
+var _ActivationModeNames = map[ActivationMode]string{
+	Sigmoid:     "Sigmoid",
+	ReLU:        "ReLU",
+	Tanh:        "Tanh",
+	ClippedReLU: "ClippedReLU",
+	Elu:         "Elu",
+	Identity:    "Identity",
 }
 
-func (e ErrQueryMode) String() string { return _ErrQueryModeNames[e] }
+func (e ActivationMode) String() string { return _ActivationModeNames[e] }
+
+var _BackendAttributeNameNames = map[BackendAttributeName]string{
+	PointwiseMode:                         "PointwiseMode",
+	PointwiseMathPrec:                     "PointwiseMathPrec",
+	PointwiseNanPropagation:               "PointwiseNanPropagation",
+	PointwiseReluLowerClip:                "PointwiseReluLowerClip",
+	PointwiseReluUpperClip:                "PointwiseReluUpperClip",
+	ConvolutionCompType:                   "ConvolutionCompType",
+	ConvolutionConvMode:                   "ConvolutionConvMode",
+	ConvolutionDilations:                  "ConvolutionDilations",
+	ConvolutionFilterStrides:              "ConvolutionFilterStrides",
+	ConvolutionPostPaddings:               "ConvolutionPostPaddings",
+	ConvolutionPrePaddings:                "ConvolutionPrePaddings",
+	ConvolutionSpatialDims:                "ConvolutionSpatialDims",
+	EngineheurMode:                        "EngineheurMode",
+	EngineheurOperationGraph:              "EngineheurOperationGraph",
+	EngineheurResults:                     "EngineheurResults",
+	EnginecfgEngine:                       "EnginecfgEngine",
+	EnginecfgIntermediateInfo:             "EnginecfgIntermediateInfo",
+	EnginecfgKnobChoices:                  "EnginecfgKnobChoices",
+	ExecutionPlanHandle:                   "ExecutionPlanHandle",
+	ExecutionPlanEngineConfig:             "ExecutionPlanEngineConfig",
+	ExecutionPlanWorkspaceSize:            "ExecutionPlanWorkspaceSize",
+	ExecutionPlanComputedIntermediateUids: "ExecutionPlanComputedIntermediateUids",
+	ExecutionPlanRunOnlyIntermediateUids:  "ExecutionPlanRunOnlyIntermediateUids",
+	IntermediateInfoUniqueId:              "IntermediateInfoUniqueId",
+	IntermediateInfoSize:                  "IntermediateInfoSize",
+	IntermediateInfoDependentDataUids:     "IntermediateInfoDependentDataUids",
+	IntermediateInfoDependentAttributes:   "IntermediateInfoDependentAttributes",
+	KnobChoiceKnobType:                    "KnobChoiceKnobType",
+	KnobChoiceKnobValue:                   "KnobChoiceKnobValue",
+	OperationConvolutionForwardAlpha:      "OperationConvolutionForwardAlpha",
+	OperationConvolutionForwardBeta:       "OperationConvolutionForwardBeta",
+	OperationConvolutionForwardConvDesc:   "OperationConvolutionForwardConvDesc",
+	OperationConvolutionForwardW:          "OperationConvolutionForwardW",
+	OperationConvolutionForwardX:          "OperationConvolutionForwardX",
+	OperationConvolutionForwardY:          "OperationConvolutionForwardY",
+	OperationConvolutionBwdDataAlpha:      "OperationConvolutionBwdDataAlpha",
+	OperationConvolutionBwdDataBeta:       "OperationConvolutionBwdDataBeta",
+	OperationConvolutionBwdDataConvDesc:   "OperationConvolutionBwdDataConvDesc",
+	OperationConvolutionBwdDataW:          "OperationConvolutionBwdDataW",
+	OperationConvolutionBwdDataDx:         "OperationConvolutionBwdDataDx",
+	OperationConvolutionBwdDataDy:         "OperationConvolutionBwdDataDy",
+	OperationConvolutionBwdFilterAlpha:    "OperationConvolutionBwdFilterAlpha",
+	OperationConvolutionBwdFilterBeta:     "OperationConvolutionBwdFilterBeta",
+	OperationConvolutionBwdFilterConvDesc: "OperationConvolutionBwdFilterConvDesc",
+	OperationConvolutionBwdFilterDw:       "OperationConvolutionBwdFilterDw",
+	OperationConvolutionBwdFilterX:        "OperationConvolutionBwdFilterX",
+	OperationConvolutionBwdFilterDy:       "OperationConvolutionBwdFilterDy",
+	OperationPointwisePwDescriptor:        "OperationPointwisePwDescriptor",
+	OperationPointwiseXdesc:               "OperationPointwiseXdesc",
+	OperationPointwiseBdesc:               "OperationPointwiseBdesc",
+	OperationPointwiseYdesc:               "OperationPointwiseYdesc",
+	OperationPointwiseAlpha1:              "OperationPointwiseAlpha1",
+	OperationPointwiseAlpha2:              "OperationPointwiseAlpha2",
+	OperationGenstatsMode:                 "OperationGenstatsMode",
+	OperationGenstatsMathPrec:             "OperationGenstatsMathPrec",
+	OperationGenstatsXdesc:                "OperationGenstatsXdesc",
+	OperationGenstatsSumdesc:              "OperationGenstatsSumdesc",
+	OperationGenstatsSqsumdesc:            "OperationGenstatsSqsumdesc",
+	OperationgraphHandle:                  "OperationgraphHandle",
+	OperationgraphOps:                     "OperationgraphOps",
+	OperationgraphEngineGlobalCount:       "OperationgraphEngineGlobalCount",
+	TensorByteAlignment:                   "TensorByteAlignment",
+	TensorDataType:                        "TensorDataType",
+	TensorDimensions:                      "TensorDimensions",
+	TensorStrides:                         "TensorStrides",
+	TensorVectorCount:                     "TensorVectorCount",
+	TensorVectorizedDimension:             "TensorVectorizedDimension",
+	TensorUniqueId:                        "TensorUniqueId",
+	TensorIsVirtual:                       "TensorIsVirtual",
+	VariantPackUniqueIds:                  "VariantPackUniqueIds",
+	VariantPackDataPointers:               "VariantPackDataPointers",
+	VariantPackIntermediates:              "VariantPackIntermediates",
+	VariantPackWorkspace:                  "VariantPackWorkspace",
+	LayoutInfoTensorUid:                   "LayoutInfoTensorUid",
+	LayoutInfoTypes:                       "LayoutInfoTypes",
+	KnobInfoType:                          "KnobInfoType",
+	KnobInfoMaximumValue:                  "KnobInfoMaximumValue",
+	KnobInfoMinimumValue:                  "KnobInfoMinimumValue",
+	KnobInfoStride:                        "KnobInfoStride",
+	EngineOperationGraph:                  "EngineOperationGraph",
+	EngineGlobalIndex:                     "EngineGlobalIndex",
+	EngineKnobInfo:                        "EngineKnobInfo",
+	EngineNumericalNote:                   "EngineNumericalNote",
+	EngineLayoutInfo:                      "EngineLayoutInfo",
+}
+
+func (e BackendAttributeName) String() string { return _BackendAttributeNameNames[e] }
+
+var _BackendAttributeTypeNames = map[BackendAttributeType]string{
+	Handle:            "Handle",
+	DataType:          "DataType",
+	Boolean:           "Boolean",
+	Int64:             "Int64",
+	Float:             "Float",
+	Double:            "Double",
+	VoidPtr:           "VoidPtr",
+	ConvolutionMode:   "ConvolutionMode",
+	HeurMode:          "HeurMode",
+	KnobType:          "KnobType",
+	NanPropogation:    "NanPropogation",
+	NumericalNote:     "NumericalNote",
+	LayoutType:        "LayoutType",
+	AttribName:        "AttribName",
+	PointwiseMode:     "PointwiseMode",
+	BackendDescriptor: "BackendDescriptor",
+	GenstatsMode:      "GenstatsMode",
+}
+
+func (e BackendAttributeType) String() string { return _BackendAttributeTypeNames[e] }
+
+var _BackendDescriptorTypeNames = map[BackendDescriptorType]string{
+	PointwiseDescriptor:                          "PointwiseDescriptor",
+	ConvolutionDescriptor:                        "ConvolutionDescriptor",
+	EngineDescriptor:                             "EngineDescriptor",
+	EnginecfgDescriptor:                          "EnginecfgDescriptor",
+	EngineheurDescriptor:                         "EngineheurDescriptor",
+	ExecutionPlanDescriptor:                      "ExecutionPlanDescriptor",
+	IntermediateInfoDescriptor:                   "IntermediateInfoDescriptor",
+	KnobChoiceDescriptor:                         "KnobChoiceDescriptor",
+	KnobInfoDescriptor:                           "KnobInfoDescriptor",
+	LayoutInfoDescriptor:                         "LayoutInfoDescriptor",
+	OperationConvolutionForwardDescriptor:        "OperationConvolutionForwardDescriptor",
+	OperationConvolutionBackwardFilterDescriptor: "OperationConvolutionBackwardFilterDescriptor",
+	OperationConvolutionBackwardDataDescriptor:   "OperationConvolutionBackwardDataDescriptor",
+	OperationPointwiseDescriptor:                 "OperationPointwiseDescriptor",
+	OperationGenStatsDescriptor:                  "OperationGenStatsDescriptor",
+	OperationgraphDescriptor:                     "OperationgraphDescriptor",
+	VariantPackDescriptor:                        "VariantPackDescriptor",
+	TensorDescriptor:                             "TensorDescriptor",
+}
+
+func (e BackendDescriptorType) String() string { return _BackendDescriptorTypeNames[e] }
+
+var _BackendHeurModeNames = map[BackendHeurMode]string{
+	Instant: "Instant",
+	SCount:  "SCount",
+}
+
+func (e BackendHeurMode) String() string { return _BackendHeurModeNames[e] }
+
+var _BackendKnobTypeNames = map[BackendKnobType]string{
+	SplitK:        "SplitK",
+	Swizzle:       "Swizzle",
+	TileSize:      "TileSize",
+	UseTex:        "UseTex",
+	Edge:          "Edge",
+	Kblock:        "Kblock",
+	Ldga:          "Ldga",
+	Ldgb:          "Ldgb",
+	ChunkK:        "ChunkK",
+	SplitH:        "SplitH",
+	WinoTile:      "WinoTile",
+	Multiply:      "Multiply",
+	SplitKBuf:     "SplitKBuf",
+	Tilek:         "Tilek",
+	Stages:        "Stages",
+	ReductionMode: "ReductionMode",
+	CtaSplitKMode: "CtaSplitKMode",
+	SplitKSlc:     "SplitKSlc",
+	IdxMode:       "IdxMode",
+	Sliced:        "Sliced",
+	SplitRs:       "SplitRs",
+	Singlebuffer:  "Singlebuffer",
+	Ldgc:          "Ldgc",
+	Specfilt:      "Specfilt",
+	Counts:        "Counts",
+}
+
+func (e BackendKnobType) String() string { return _BackendKnobTypeNames[e] }
+
+var _BackendLayoutTypeNames = map[BackendLayoutType]string{
+	PreferredNchw:   "PreferredNchw",
+	PreferredNhwc:   "PreferredNhwc",
+	PreferredPad4ck: "PreferredPad4ck",
+	PreferredPad8ck: "PreferredPad8ck",
+	Count:           "Count",
+}
+
+func (e BackendLayoutType) String() string { return _BackendLayoutTypeNames[e] }
+
+var _BackendNumericalNoteNames = map[BackendNumericalNote]string{
+	TensorCore:                "TensorCore",
+	DownConvertInputs:         "DownConvertInputs",
+	ReducedPrecisionReduction: "ReducedPrecisionReduction",
+	Fft:                       "Fft",
+	Nondeterministic:          "Nondeterministic",
+	Winograd:                  "Winograd",
+	TypeCount:                 "TypeCount",
+}
+
+func (e BackendNumericalNote) String() string { return _BackendNumericalNoteNames[e] }
+
+var _BatchNormModeNames = map[BatchNormMode]string{
+	PerActivation:     "PerActivation",
+	Spatial:           "Spatial",
+	SpatialPersistent: "SpatialPersistent",
+}
+
+func (e BatchNormMode) String() string { return _BatchNormModeNames[e] }
+
+var _BatchNormOpsNames = map[BatchNormOps]string{
+	BatchNorm:     "BatchNorm",
+	Activation:    "Activation",
+	AddActivation: "AddActivation",
+}
+
+func (e BatchNormOps) String() string { return _BatchNormOpsNames[e] }
+
+var _CTCLossAlgoNames = map[CTCLossAlgo]string{
+	DeterministicCTCLoss:    "DeterministicCTCLoss",
+	NonDeterministicCTCLoss: "NonDeterministicCTCLoss",
+}
+
+func (e CTCLossAlgo) String() string { return _CTCLossAlgoNames[e] }
 
 var _DataTypeNames = map[DataType]string{
-	Float:  "Float",
-	Double: "Double",
-	Half:   "Half",
-	Int8:   "Int8",
-	Int32:  "Int32",
-	Int8x4: "Int8x4",
+	Float:   "Float",
+	Double:  "Double",
+	Half:    "Half",
+	Int8:    "Int8",
+	Int32:   "Int32",
+	Int8x4:  "Int8x4",
+	Uint8:   "Uint8",
+	Uint8x4: "Uint8x4",
+	Int8x32: "Int8x32",
 }
 
 func (e DataType) String() string { return _DataTypeNames[e] }
-
-var _MathTypeNames = map[MathType]string{
-	DefaultMath:  "DefaultMath",
-	TensorOpMath: "TensorOpMath",
-}
-
-func (e MathType) String() string { return _MathTypeNames[e] }
-
-var _NanPropagationNames = map[NanPropagation]string{
-	NotPropagateNan: "NotPropagateNan",
-	PropagateNan:    "PropagateNan",
-}
-
-func (e NanPropagation) String() string { return _NanPropagationNames[e] }
 
 var _DeterminismNames = map[Determinism]string{
 	NonDeterministic: "NonDeterministic",
@@ -45,13 +253,216 @@ var _DeterminismNames = map[Determinism]string{
 
 func (e Determinism) String() string { return _DeterminismNames[e] }
 
-var _TensorFormatNames = map[TensorFormat]string{
-	NCHW:      "NCHW",
-	NHWC:      "NHWC",
-	NCHWVectC: "NCHWVectC",
+var _DirectionModeNames = map[DirectionMode]string{
+	Unidirectional: "Unidirectional",
+	Bidirectional:  "Bidirectional",
 }
 
-func (e TensorFormat) String() string { return _TensorFormatNames[e] }
+func (e DirectionMode) String() string { return _DirectionModeNames[e] }
+
+var _DivNormModeNames = map[DivNormMode]string{
+	PrecomputedMeans: "PrecomputedMeans",
+}
+
+func (e DivNormMode) String() string { return _DivNormModeNames[e] }
+
+var _ErrQueryModeNames = map[ErrQueryMode]string{
+	Rawcode:     "Rawcode",
+	Nonblocking: "Nonblocking",
+	Blocking:    "Blocking",
+}
+
+func (e ErrQueryMode) String() string { return _ErrQueryModeNames[e] }
+
+var _FoldingDirectionNames = map[FoldingDirection]string{
+	Fold:   "Fold",
+	Unfold: "Unfold",
+}
+
+func (e FoldingDirection) String() string { return _FoldingDirectionNames[e] }
+
+var _ForwardModeNames = map[ForwardMode]string{
+	Inference: "Inference",
+	Training:  "Training",
+}
+
+func (e ForwardMode) String() string { return _ForwardModeNames[e] }
+
+var _FusedOpsConstParamLabelNames = map[FusedOpsConstParamLabel]string{
+	Xdesc:                        "Xdesc",
+	XdataPlaceholder:             "XdataPlaceholder",
+	BnMode:                       "BnMode",
+	BnEqscalebiasDesc:            "BnEqscalebiasDesc",
+	BnEqscalePlaceholder:         "BnEqscalePlaceholder",
+	BnEqbiasPlaceholder:          "BnEqbiasPlaceholder",
+	ActivationDesc:               "ActivationDesc",
+	ConvDesc:                     "ConvDesc",
+	Wdesc:                        "Wdesc",
+	WdataPlaceholder:             "WdataPlaceholder",
+	Dwdesc:                       "Dwdesc",
+	DwdataPlaceholder:            "DwdataPlaceholder",
+	Ydesc:                        "Ydesc",
+	YdataPlaceholder:             "YdataPlaceholder",
+	Dydesc:                       "Dydesc",
+	DydataPlaceholder:            "DydataPlaceholder",
+	YstatsDesc:                   "YstatsDesc",
+	YsumPlaceholder:              "YsumPlaceholder",
+	YsqsumPlaceholder:            "YsqsumPlaceholder",
+	BnScalebiasMeanvarDesc:       "BnScalebiasMeanvarDesc",
+	BnScalePlaceholder:           "BnScalePlaceholder",
+	BnBiasPlaceholder:            "BnBiasPlaceholder",
+	BnSavedMeanPlaceholder:       "BnSavedMeanPlaceholder",
+	BnSavedInvstdPlaceholder:     "BnSavedInvstdPlaceholder",
+	BnRunningMeanPlaceholder:     "BnRunningMeanPlaceholder",
+	BnRunningVarPlaceholder:      "BnRunningVarPlaceholder",
+	Zdesc:                        "Zdesc",
+	ZdataPlaceholder:             "ZdataPlaceholder",
+	BnZEqscalebiasDesc:           "BnZEqscalebiasDesc",
+	BnZEqscalePlaceholder:        "BnZEqscalePlaceholder",
+	BnZEqbiasPlaceholder:         "BnZEqbiasPlaceholder",
+	ActivationBitmaskDesc:        "ActivationBitmaskDesc",
+	ActivationBitmaskPlaceholder: "ActivationBitmaskPlaceholder",
+	Dxdesc:                       "Dxdesc",
+	DxdataPlaceholder:            "DxdataPlaceholder",
+	Dzdesc:                       "Dzdesc",
+	DzdataPlaceholder:            "DzdataPlaceholder",
+	BnDscalePlaceholder:          "BnDscalePlaceholder",
+	BnDbiasPlaceholder:           "BnDbiasPlaceholder",
+}
+
+func (e FusedOpsConstParamLabel) String() string { return _FusedOpsConstParamLabelNames[e] }
+
+var _FusedOpsPointerPlaceHolderNames = map[FusedOpsPointerPlaceHolder]string{
+	NullPtr:        "NullPtr",
+	PtrElemAligned: "PtrElemAligned",
+	Ptr16:          "Ptr16",
+}
+
+func (e FusedOpsPointerPlaceHolder) String() string { return _FusedOpsPointerPlaceHolderNames[e] }
+
+var _FusedOpsVariantParamLabelNames = map[FusedOpsVariantParamLabel]string{
+	PtrXdata:                        "PtrXdata",
+	PtrBnEqscale:                    "PtrBnEqscale",
+	PtrBnEqbias:                     "PtrBnEqbias",
+	PtrWdata:                        "PtrWdata",
+	PtrDwdata:                       "PtrDwdata",
+	PtrYdata:                        "PtrYdata",
+	PtrDydata:                       "PtrDydata",
+	PtrYsum:                         "PtrYsum",
+	PtrYsqsum:                       "PtrYsqsum",
+	PtrWorkspace:                    "PtrWorkspace",
+	PtrBnScale:                      "PtrBnScale",
+	PtrBnBias:                       "PtrBnBias",
+	PtrBnSavedMean:                  "PtrBnSavedMean",
+	PtrBnSavedInvstd:                "PtrBnSavedInvstd",
+	PtrBnRunningMean:                "PtrBnRunningMean",
+	PtrBnRunningVar:                 "PtrBnRunningVar",
+	PtrZdata:                        "PtrZdata",
+	PtrBnZEqscale:                   "PtrBnZEqscale",
+	PtrBnZEqbias:                    "PtrBnZEqbias",
+	PtrActivationBitmask:            "PtrActivationBitmask",
+	PtrDxdata:                       "PtrDxdata",
+	PtrDzdata:                       "PtrDzdata",
+	PtrBnDscale:                     "PtrBnDscale",
+	PtrBnDbias:                      "PtrBnDbias",
+	ScalarSizeTWorkspaceSizeInBytes: "ScalarSizeTWorkspaceSizeInBytes",
+	ScalarInt64TBnAccumulationCount: "ScalarInt64TBnAccumulationCount",
+	ScalarDoubleBnExpAvgFactor:      "ScalarDoubleBnExpAvgFactor",
+	ScalarDoubleBnEpsilon:           "ScalarDoubleBnEpsilon",
+}
+
+func (e FusedOpsVariantParamLabel) String() string { return _FusedOpsVariantParamLabelNames[e] }
+
+var _FusedOpsNames = map[FusedOps]string{
+	ScaleBiasActivationConvBnstats:   "ScaleBiasActivationConvBnstats",
+	ScaleBiasActivationWgrad:         "ScaleBiasActivationWgrad",
+	BnFinalizeStatisticsTraining:     "BnFinalizeStatisticsTraining",
+	BnFinalizeStatisticsInference:    "BnFinalizeStatisticsInference",
+	ConvScaleBiasAddActivation:       "ConvScaleBiasAddActivation",
+	ScaleBiasAddActivationGenBitmask: "ScaleBiasAddActivationGenBitmask",
+	DactivationForkDbatchnorm:        "DactivationForkDbatchnorm",
+}
+
+func (e FusedOps) String() string { return _FusedOpsNames[e] }
+
+var _GenStatsModeNames = map[GenStatsMode]string{
+	SumSq: "SumSq",
+}
+
+func (e GenStatsMode) String() string { return _GenStatsModeNames[e] }
+
+var _IndicesTypeNames = map[IndicesType]string{
+	Indices32: "Indices32",
+	Indices64: "Indices64",
+	Indices16: "Indices16",
+	Indices8:  "Indices8",
+}
+
+func (e IndicesType) String() string { return _IndicesTypeNames[e] }
+
+var _LRNModeNames = map[LRNMode]string{
+	CrossChannelDim1: "CrossChannelDim1",
+}
+
+func (e LRNMode) String() string { return _LRNModeNames[e] }
+
+var _LossNormalizationModeNames = map[LossNormalizationMode]string{
+	None:    "None",
+	Softmax: "Softmax",
+}
+
+func (e LossNormalizationMode) String() string { return _LossNormalizationModeNames[e] }
+
+var _MathTypeNames = map[MathType]string{
+	DefaultMath:                 "DefaultMath",
+	TensorOpMath:                "TensorOpMath",
+	TensorOpMathAllowConversion: "TensorOpMathAllowConversion",
+	FmaMath:                     "FmaMath",
+}
+
+func (e MathType) String() string { return _MathTypeNames[e] }
+
+var _MultiHeadAttnWeightKindNames = map[MultiHeadAttnWeightKind]string{
+	QWeights: "QWeights",
+	KWeights: "KWeights",
+	VWeights: "VWeights",
+	OWeights: "OWeights",
+	QBiases:  "QBiases",
+	KBiases:  "KBiases",
+	VBiases:  "VBiases",
+	OBiases:  "OBiases",
+}
+
+func (e MultiHeadAttnWeightKind) String() string { return _MultiHeadAttnWeightKindNames[e] }
+
+var _NanPropagationNames = map[NanPropagation]string{
+	NotPropagateNan: "NotPropagateNan",
+	PropagateNan:    "PropagateNan",
+}
+
+func (e NanPropagation) String() string { return _NanPropagationNames[e] }
+
+var _NormAlgoNames = map[NormAlgo]string{
+	Standard: "Standard",
+	Persist:  "Persist",
+}
+
+func (e NormAlgo) String() string { return _NormAlgoNames[e] }
+
+var _NormModeNames = map[NormMode]string{
+	Activation: "Activation",
+	Channel:    "Channel",
+}
+
+func (e NormMode) String() string { return _NormModeNames[e] }
+
+var _NormOpsNames = map[NormOps]string{
+	Norm:          "Norm",
+	Activation:    "Activation",
+	AddActivation: "AddActivation",
+}
+
+func (e NormOps) String() string { return _NormOpsNames[e] }
 
 var _OpTensorOpNames = map[OpTensorOp]string{
 	Add:  "Add",
@@ -63,6 +474,85 @@ var _OpTensorOpNames = map[OpTensorOp]string{
 }
 
 func (e OpTensorOp) String() string { return _OpTensorOpNames[e] }
+
+var _PointwiseModeNames = map[PointwiseMode]string{
+	Add:        "Add",
+	Mul:        "Mul",
+	Min:        "Min",
+	Max:        "Max",
+	Sqrt:       "Sqrt",
+	ReluFwd:    "ReluFwd",
+	TanhFwd:    "TanhFwd",
+	SigmoidFwd: "SigmoidFwd",
+	EluFwd:     "EluFwd",
+}
+
+func (e PointwiseMode) String() string { return _PointwiseModeNames[e] }
+
+var _PoolingModeNames = map[PoolingMode]string{
+	MaxPooling:                 "MaxPooling",
+	AverageCountIncludePadding: "AverageCountIncludePadding",
+	AverageCountExcludePadding: "AverageCountExcludePadding",
+	MaxDeterministic:           "MaxDeterministic",
+}
+
+func (e PoolingMode) String() string { return _PoolingModeNames[e] }
+
+var _RNNAlgoNames = map[RNNAlgo]string{
+	Standard:       "Standard",
+	PersistStatic:  "PersistStatic",
+	PersistDynamic: "PersistDynamic",
+	Count:          "Count",
+}
+
+func (e RNNAlgo) String() string { return _RNNAlgoNames[e] }
+
+var _RNNBiasModeNames = map[RNNBiasMode]string{
+	NoBias:        "NoBias",
+	SingleInpBias: "SingleInpBias",
+	DoubleBias:    "DoubleBias",
+	SingleRecBias: "SingleRecBias",
+}
+
+func (e RNNBiasMode) String() string { return _RNNBiasModeNames[e] }
+
+var _RNNClipModeNames = map[RNNClipMode]string{
+	None:   "None",
+	Minmax: "Minmax",
+}
+
+func (e RNNClipMode) String() string { return _RNNClipModeNames[e] }
+
+var _RNNDataLayoutNames = map[RNNDataLayout]string{
+	SeqMajorUnpacked:   "SeqMajorUnpacked",
+	SeqMajorPacked:     "SeqMajorPacked",
+	BatchMajorUnpacked: "BatchMajorUnpacked",
+}
+
+func (e RNNDataLayout) String() string { return _RNNDataLayoutNames[e] }
+
+var _RNNInputModeNames = map[RNNInputMode]string{
+	LinearInput: "LinearInput",
+	SkipInput:   "SkipInput",
+}
+
+func (e RNNInputMode) String() string { return _RNNInputModeNames[e] }
+
+var _RNNModeNames = map[RNNMode]string{
+	RNNReLU: "RNNReLU",
+	RNNTanh: "RNNTanh",
+	LSTM:    "LSTM",
+	GRU:     "GRU",
+}
+
+func (e RNNMode) String() string { return _RNNModeNames[e] }
+
+var _ReduceTensorIndicesNames = map[ReduceTensorIndices]string{
+	ReduceNoIndices:        "ReduceNoIndices",
+	ReduceFlattenedIndices: "ReduceFlattenedIndices",
+}
+
+func (e ReduceTensorIndices) String() string { return _ReduceTensorIndicesNames[e] }
 
 var _ReduceTensorOpNames = map[ReduceTensorOp]string{
 	ReduceAdd:        "ReduceAdd",
@@ -78,21 +568,36 @@ var _ReduceTensorOpNames = map[ReduceTensorOp]string{
 
 func (e ReduceTensorOp) String() string { return _ReduceTensorOpNames[e] }
 
-var _ReduceTensorIndicesNames = map[ReduceTensorIndices]string{
-	ReduceNoIndices:        "ReduceNoIndices",
-	ReduceFlattenedIndices: "ReduceFlattenedIndices",
+var _ReorderTypeNames = map[ReorderType]string{
+	DefaultReorder: "DefaultReorder",
+	NoReorder:      "NoReorder",
 }
 
-func (e ReduceTensorIndices) String() string { return _ReduceTensorIndicesNames[e] }
+func (e ReorderType) String() string { return _ReorderTypeNames[e] }
 
-var _IndicesTypeNames = map[IndicesType]string{
-	Indices32: "Indices32",
-	Indices64: "Indices64",
-	Indices16: "Indices16",
-	Indices8:  "Indices8",
+var _SamplerTypeNames = map[SamplerType]string{
+	Bilinear: "Bilinear",
 }
 
-func (e IndicesType) String() string { return _IndicesTypeNames[e] }
+func (e SamplerType) String() string { return _SamplerTypeNames[e] }
+
+var _SeqDataAxisNames = map[SeqDataAxis]string{
+	TimeDim:  "TimeDim",
+	BatchDim: "BatchDim",
+	BeamDim:  "BeamDim",
+	VectDim:  "VectDim",
+}
+
+func (e SeqDataAxis) String() string { return _SeqDataAxisNames[e] }
+
+var _SeverityNames = map[Severity]string{
+	Fatal:   "Fatal",
+	Error:   "Error",
+	Warning: "Warning",
+	Info:    "Info",
+}
+
+func (e Severity) String() string { return _SeverityNames[e] }
 
 var _SoftmaxAlgorithmNames = map[SoftmaxAlgorithm]string{
 	Fast:     "Fast",
@@ -109,85 +614,17 @@ var _SoftmaxModeNames = map[SoftmaxMode]string{
 
 func (e SoftmaxMode) String() string { return _SoftmaxModeNames[e] }
 
-var _PoolingModeNames = map[PoolingMode]string{
-	MaxPooling:                 "MaxPooling",
-	AverageCountIncludePadding: "AverageCountIncludePadding",
-	AverageCountExcludePadding: "AverageCountExcludePadding",
-	MaxDeterministic:           "MaxDeterministic",
+var _TensorFormatNames = map[TensorFormat]string{
+	NCHW:      "NCHW",
+	NHWC:      "NHWC",
+	NCHWVectC: "NCHWVectC",
 }
 
-func (e PoolingMode) String() string { return _PoolingModeNames[e] }
+func (e TensorFormat) String() string { return _TensorFormatNames[e] }
 
-var _ActivationModeNames = map[ActivationMode]string{
-	Sigmoid:     "Sigmoid",
-	ReLU:        "ReLU",
-	Tanh:        "Tanh",
-	ClippedReLU: "ClippedReLU",
-	Elu:         "Elu",
+var _WgradModeNames = map[WgradMode]string{
+	Add: "Add",
+	Set: "Set",
 }
 
-func (e ActivationMode) String() string { return _ActivationModeNames[e] }
-
-var _LRNModeNames = map[LRNMode]string{
-	CrossChannelDim1: "CrossChannelDim1",
-}
-
-func (e LRNMode) String() string { return _LRNModeNames[e] }
-
-var _DivNormModeNames = map[DivNormMode]string{
-	PrecomputedMeans: "PrecomputedMeans",
-}
-
-func (e DivNormMode) String() string { return _DivNormModeNames[e] }
-
-var _BatchNormModeNames = map[BatchNormMode]string{
-	PerActivation:     "PerActivation",
-	Spatial:           "Spatial",
-	SpatialPersistent: "SpatialPersistent",
-}
-
-func (e BatchNormMode) String() string { return _BatchNormModeNames[e] }
-
-var _SamplerTypeNames = map[SamplerType]string{
-	Bilinear: "Bilinear",
-}
-
-func (e SamplerType) String() string { return _SamplerTypeNames[e] }
-
-var _RNNModeNames = map[RNNMode]string{
-	RNNReLU: "RNNReLU",
-	RNNTanh: "RNNTanh",
-	LSTM:    "LSTM",
-	GRU:     "GRU",
-}
-
-func (e RNNMode) String() string { return _RNNModeNames[e] }
-
-var _DirectionModeNames = map[DirectionMode]string{
-	Unidirectional: "Unidirectional",
-	Bidirectional:  "Bidirectional",
-}
-
-func (e DirectionMode) String() string { return _DirectionModeNames[e] }
-
-var _RNNInputModeNames = map[RNNInputMode]string{
-	LinearInput: "LinearInput",
-	SkipInput:   "SkipInput",
-}
-
-func (e RNNInputMode) String() string { return _RNNInputModeNames[e] }
-
-var _RNNAlgoNames = map[RNNAlgo]string{
-	Standard:       "Standard",
-	PersistStatic:  "PersistStatic",
-	PersistDynamic: "PersistDynamic",
-}
-
-func (e RNNAlgo) String() string { return _RNNAlgoNames[e] }
-
-var _CTCLossAlgoNames = map[CTCLossAlgo]string{
-	DeterministicCTCLoss:    "DeterministicCTCLoss",
-	NonDeterministicCTCLoss: "NonDeterministicCTCLoss",
-}
-
-func (e CTCLossAlgo) String() string { return _CTCLossAlgoNames[e] }
+func (e WgradMode) String() string { return _WgradModeNames[e] }
