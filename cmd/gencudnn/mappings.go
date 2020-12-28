@@ -1,94 +1,94 @@
 package main
 
 var ignored = map[string]struct{}{
-	"cudnnActivationBackward":                                  {},
-	"cudnnActivationForward":                                   {},
-	"cudnnAddTensor":                                           {},
-	"cudnnAdvInferVersionCheck":                                {},
-	"cudnnAdvTrainVersionCheck":                                {},
-	"cudnnBackendCreateDescriptor":                             {},
-	"cudnnBackendDestroyDescriptor":                            {},
-	"cudnnBackendExecute":                                      {},
-	"cudnnBackendFinalize":                                     {},
-	"cudnnBackendGetAttribute":                                 {},
-	"cudnnBackendInitialize":                                   {},
-	"cudnnBackendSetAttribute":                                 {},
-	"cudnnBatchNormalizationBackward":                          {},
-	"cudnnBatchNormalizationBackwardEx":                        {},
-	"cudnnBatchNormalizationForwardInference":                  {},
-	"cudnnBatchNormalizationForwardTraining":                   {},
-	"cudnnBatchNormalizationForwardTrainingEx":                 {},
-	"cudnnBuildRNNDynamic":                                     {},
-	"cudnnCTCLoss":                                             {},
-	"cudnnCTCLoss_v8":                                          {},
-	"cudnnCnnInferVersionCheck":                                {},
-	"cudnnCnnTrainVersionCheck":                                {},
-	"cudnnConvolutionBackwardBias":                             {},
-	"cudnnConvolutionBackwardData":                             {},
-	"cudnnConvolutionBackwardFilter":                           {},
-	"cudnnConvolutionBiasActivationForward":                    {},
-	"cudnnConvolutionForward":                                  {},
-	"cudnnCopyAlgorithmDescriptor":                             {},
-	"cudnnCreate":                                              {},
-	"cudnnCreateActivationDescriptor":                          {},
-	"cudnnCreateAlgorithmDescriptor":                           {},
-	"cudnnCreateAlgorithmPerformance":                          {},
-	"cudnnCreateAttnDescriptor":                                {},
-	"cudnnCreateCTCLossDescriptor":                             {},
-	"cudnnCreateConvolutionDescriptor":                         {},
-	"cudnnCreateDropoutDescriptor":                             {},
-	"cudnnCreateFilterDescriptor":                              {},
-	"cudnnCreateFusedOpsConstParamPack":                        {},
-	"cudnnCreateFusedOpsPlan":                                  {},
-	"cudnnCreateFusedOpsVariantParamPack":                      {},
-	"cudnnCreateLRNDescriptor":                                 {},
-	"cudnnCreateOpTensorDescriptor":                            {},
-	"cudnnCreatePersistentRNNPlan":                             {},
-	"cudnnCreatePoolingDescriptor":                             {},
-	"cudnnCreateRNNDataDescriptor":                             {},
-	"cudnnCreateRNNDescriptor":                                 {},
-	"cudnnCreateReduceTensorDescriptor":                        {},
-	"cudnnCreateSeqDataDescriptor":                             {},
-	"cudnnCreateSpatialTransformerDescriptor":                  {},
-	"cudnnCreateTensorDescriptor":                              {},
-	"cudnnCreateTensorTransformDescriptor":                     {},
-	"cudnnDeriveBNTensorDescriptor":                            {},
-	"cudnnDeriveNormTensorDescriptor":                          {},
-	"cudnnDestroy":                                             {},
-	"cudnnDestroyActivationDescriptor":                         {},
-	"cudnnDestroyAlgorithmDescriptor":                          {},
-	"cudnnDestroyAlgorithmPerformance":                         {},
-	"cudnnDestroyAttnDescriptor":                               {},
-	"cudnnDestroyCTCLossDescriptor":                            {},
-	"cudnnDestroyConvolutionDescriptor":                        {},
-	"cudnnDestroyDropoutDescriptor":                            {},
-	"cudnnDestroyFilterDescriptor":                             {},
-	"cudnnDestroyFusedOpsConstParamPack":                       {},
-	"cudnnDestroyFusedOpsPlan":                                 {},
-	"cudnnDestroyFusedOpsVariantParamPack":                     {},
-	"cudnnDestroyLRNDescriptor":                                {},
-	"cudnnDestroyOpTensorDescriptor":                           {},
-	"cudnnDestroyPersistentRNNPlan":                            {},
-	"cudnnDestroyPoolingDescriptor":                            {},
-	"cudnnDestroyRNNDataDescriptor":                            {},
-	"cudnnDestroyRNNDescriptor":                                {},
-	"cudnnDestroyReduceTensorDescriptor":                       {},
-	"cudnnDestroySeqDataDescriptor":                            {},
-	"cudnnDestroySpatialTransformerDescriptor":                 {},
-	"cudnnDestroyTensorDescriptor":                             {},
-	"cudnnDestroyTensorTransformDescriptor":                    {},
-	"cudnnDivisiveNormalizationBackward":                       {},
-	"cudnnDivisiveNormalizationForward":                        {},
-	"cudnnDropoutBackward":                                     {},
-	"cudnnDropoutForward":                                      {},
-	"cudnnDropoutGetReserveSpaceSize":                          {},
-	"cudnnDropoutGetStatesSize":                                {},
-	"cudnnFindConvolutionBackwardDataAlgorithm":                {},
-	"cudnnFindConvolutionBackwardDataAlgorithmEx":              {},
-	"cudnnFindConvolutionBackwardFilterAlgorithm":              {},
-	"cudnnFindConvolutionBackwardFilterAlgorithmEx":            {},
-	"cudnnFindConvolutionForwardAlgorithm":                     {},
-	"cudnnFindConvolutionForwardAlgorithmEx":                   {},
+	// "cudnnActivationBackward":{}, //
+	// "cudnnActivationForward":{}, //
+	// "cudnnAddTensor":{}, //
+	"cudnnAdvInferVersionCheck":     {},
+	"cudnnAdvTrainVersionCheck":     {},
+	"cudnnBackendCreateDescriptor":  {},
+	"cudnnBackendDestroyDescriptor": {},
+	"cudnnBackendExecute":           {},
+	"cudnnBackendFinalize":          {},
+	"cudnnBackendGetAttribute":      {},
+	"cudnnBackendInitialize":        {},
+	"cudnnBackendSetAttribute":      {},
+	// "cudnnBatchNormalizationBackward":{}, //
+	"cudnnBatchNormalizationBackwardEx": {},
+	// "cudnnBatchNormalizationForwardInference":{}, //
+	// "cudnnBatchNormalizationForwardTraining":{}, //
+	"cudnnBatchNormalizationForwardTrainingEx": {},
+	"cudnnBuildRNNDynamic":                     {},
+	// "cudnnCTCLoss":{}, //
+	"cudnnCTCLoss_v8":           {},
+	"cudnnCnnInferVersionCheck": {},
+	"cudnnCnnTrainVersionCheck": {},
+	// "cudnnConvolutionBackwardBias":{}, //
+	// "cudnnConvolutionBackwardData":{}, //
+	// "cudnnConvolutionBackwardFilter":{}, //
+	// "cudnnConvolutionBiasActivationForward":{}, //
+	// "cudnnConvolutionForward":{}, //
+	"cudnnCopyAlgorithmDescriptor": {},
+	"cudnnCreate":                  {},
+	// "cudnnCreateActivationDescriptor":{}, //
+	"cudnnCreateAlgorithmDescriptor":  {},
+	"cudnnCreateAlgorithmPerformance": {},
+	"cudnnCreateAttnDescriptor":       {},
+	// "cudnnCreateCTCLossDescriptor":{}, //
+	"cudnnCreateConvolutionDescriptor": {},
+	// "cudnnCreateDropoutDescriptor":{}, //
+	// "cudnnCreateFilterDescriptor":{}, //
+	"cudnnCreateFusedOpsConstParamPack":   {},
+	"cudnnCreateFusedOpsPlan":             {},
+	"cudnnCreateFusedOpsVariantParamPack": {},
+	// "cudnnCreateLRNDescriptor":{}, //
+	// "cudnnCreateOpTensorDescriptor":{}, //
+	// "cudnnCreatePersistentRNNPlan":{}, //
+	// "cudnnCreatePoolingDescriptor":{}, //
+	"cudnnCreateRNNDataDescriptor": {},
+	// "cudnnCreateRNNDescriptor":{}, //
+	// "cudnnCreateReduceTensorDescriptor":{}, //
+	"cudnnCreateSeqDataDescriptor": {},
+	// "cudnnCreateSpatialTransformerDescriptor":{}, //
+	// "cudnnCreateTensorDescriptor":{}, //
+	"cudnnCreateTensorTransformDescriptor": {},
+	// "cudnnDeriveBNTensorDescriptor":{}, //
+	"cudnnDeriveNormTensorDescriptor": {},
+	"cudnnDestroy":                    {},
+	// "cudnnDestroyActivationDescriptor":{}, //
+	"cudnnDestroyAlgorithmDescriptor":  {},
+	"cudnnDestroyAlgorithmPerformance": {},
+	"cudnnDestroyAttnDescriptor":       {},
+	// "cudnnDestroyCTCLossDescriptor":{}, //
+	"cudnnDestroyConvolutionDescriptor": {},
+	// "cudnnDestroyDropoutDescriptor":{}, //
+	// "cudnnDestroyFilterDescriptor":{}, //
+	"cudnnDestroyFusedOpsConstParamPack":   {},
+	"cudnnDestroyFusedOpsPlan":             {},
+	"cudnnDestroyFusedOpsVariantParamPack": {},
+	// "cudnnDestroyLRNDescriptor":{}, //
+	// "cudnnDestroyOpTensorDescriptor":{}, //
+	// "cudnnDestroyPersistentRNNPlan":{}, //
+	// "cudnnDestroyPoolingDescriptor":{}, //
+	"cudnnDestroyRNNDataDescriptor": {},
+	// "cudnnDestroyRNNDescriptor":{}, //
+	// "cudnnDestroyReduceTensorDescriptor":{}, //
+	"cudnnDestroySeqDataDescriptor": {},
+	// "cudnnDestroySpatialTransformerDescriptor":{}, //
+	// "cudnnDestroyTensorDescriptor":{}, //
+	"cudnnDestroyTensorTransformDescriptor": {},
+	// "cudnnDivisiveNormalizationBackward":{}, //
+	// "cudnnDivisiveNormalizationForward":{}, //
+	// "cudnnDropoutBackward":{}, //
+	// "cudnnDropoutForward":{}, //
+	// "cudnnDropoutGetReserveSpaceSize":{}, //
+	// "cudnnDropoutGetStatesSize":{}, //
+	// "cudnnFindConvolutionBackwardDataAlgorithm":{}, //
+	// "cudnnFindConvolutionBackwardDataAlgorithmEx":{}, //
+	// "cudnnFindConvolutionBackwardFilterAlgorithm":{}, //
+	// "cudnnFindConvolutionBackwardFilterAlgorithmEx":{}, //
+	// "cudnnFindConvolutionForwardAlgorithm":{}, //
+	// "cudnnFindConvolutionForwardAlgorithmEx":{}, //
 	"cudnnFindRNNBackwardDataAlgorithmEx":                      {},
 	"cudnnFindRNNBackwardWeightsAlgorithmEx":                   {},
 	"cudnnFindRNNForwardInferenceAlgorithmEx":                  {},
@@ -153,115 +153,115 @@ var ignored = map[string]struct{}{
 	"cudnnGetRNNDescriptor_v8":                                 {},
 	"cudnnGetRNNForwardInferenceAlgorithmMaxCount":             {},
 	"cudnnGetRNNForwardTrainingAlgorithmMaxCount":              {},
-	"cudnnGetRNNLinLayerBiasParams":                            {},
-	"cudnnGetRNNLinLayerMatrixParams":                          {},
-	"cudnnGetRNNMatrixMathType":                                {},
-	"cudnnGetRNNPaddingMode":                                   {},
-	"cudnnGetRNNParamsSize":                                    {},
-	"cudnnGetRNNProjectionLayers":                              {},
-	"cudnnGetRNNTempSpaceSizes":                                {},
-	"cudnnGetRNNTrainingReserveSize":                           {},
-	"cudnnGetRNNWeightParams":                                  {},
-	"cudnnGetRNNWeightSpaceSize":                               {},
-	"cudnnGetRNNWorkspaceSize":                                 {},
-	"cudnnGetReduceTensorDescriptor":                           {},
-	"cudnnGetReductionIndicesSize":                             {},
-	"cudnnGetReductionWorkspaceSize":                           {},
-	"cudnnGetSeqDataDescriptor":                                {},
-	"cudnnGetStream":                                           {},
-	"cudnnGetTensor4dDescriptor":                               {},
-	"cudnnGetTensorNdDescriptor":                               {},
-	"cudnnGetTensorSizeInBytes":                                {},
-	"cudnnGetTensorTransformDescriptor":                        {},
-	"cudnnGetVersion":                                          {},
-	"cudnnIm2Col":                                              {},
-	"cudnnInitTransformDest":                                   {},
-	"cudnnLRNCrossChannelBackward":                             {},
-	"cudnnLRNCrossChannelForward":                              {},
-	"cudnnMakeFusedOpsPlan":                                    {},
-	"cudnnMultiHeadAttnBackwardData":                           {},
-	"cudnnMultiHeadAttnBackwardWeights":                        {},
-	"cudnnMultiHeadAttnForward":                                {},
-	"cudnnNormalizationBackward":                               {},
-	"cudnnNormalizationForwardInference":                       {},
-	"cudnnNormalizationForwardTraining":                        {},
-	"cudnnOpTensor":                                            {},
-	"cudnnOpsInferVersionCheck":                                {},
-	"cudnnOpsTrainVersionCheck":                                {},
-	"cudnnPoolingBackward":                                     {},
-	"cudnnPoolingForward":                                      {},
-	"cudnnQueryRuntimeError":                                   {},
-	"cudnnRNNBackwardData":                                     {},
-	"cudnnRNNBackwardDataEx":                                   {},
-	"cudnnRNNBackwardData_v8":                                  {},
-	"cudnnRNNBackwardWeights":                                  {},
-	"cudnnRNNBackwardWeightsEx":                                {},
-	"cudnnRNNBackwardWeights_v8":                               {},
-	"cudnnRNNForward":                                          {},
-	"cudnnRNNForwardInference":                                 {},
-	"cudnnRNNForwardInferenceEx":                               {},
-	"cudnnRNNForwardTraining":                                  {},
-	"cudnnRNNForwardTrainingEx":                                {},
-	"cudnnRNNGetClip":                                          {},
-	"cudnnRNNGetClip_v8":                                       {},
-	"cudnnRNNSetClip":                                          {},
-	"cudnnRNNSetClip_v8":                                       {},
-	"cudnnReduceTensor":                                        {},
-	"cudnnReorderFilterAndBias":                                {},
-	"cudnnRestoreAlgorithm":                                    {},
-	"cudnnRestoreDropoutDescriptor":                            {},
-	"cudnnSaveAlgorithm":                                       {},
-	"cudnnScaleTensor":                                         {},
-	"cudnnSetActivationDescriptor":                             {},
-	"cudnnSetAlgorithmDescriptor":                              {},
-	"cudnnSetAlgorithmPerformance":                             {},
-	"cudnnSetAttnDescriptor":                                   {},
-	"cudnnSetCTCLossDescriptor":                                {},
-	"cudnnSetCTCLossDescriptorEx":                              {},
-	"cudnnSetCTCLossDescriptor_v8":                             {},
-	"cudnnSetCallback":                                         {},
-	"cudnnSetConvolution2dDescriptor":                          {},
-	"cudnnSetConvolutionGroupCount":                            {},
-	"cudnnSetConvolutionMathType":                              {},
-	"cudnnSetConvolutionNdDescriptor":                          {},
-	"cudnnSetConvolutionReorderType":                           {},
-	"cudnnSetDropoutDescriptor":                                {},
-	"cudnnSetFilter4dDescriptor":                               {},
-	"cudnnSetFilterNdDescriptor":                               {},
-	"cudnnSetFusedOpsConstParamPackAttribute":                  {},
-	"cudnnSetFusedOpsVariantParamPackAttribute":                {},
-	"cudnnSetLRNDescriptor":                                    {},
-	"cudnnSetOpTensorDescriptor":                               {},
-	"cudnnSetPersistentRNNPlan":                                {},
-	"cudnnSetPooling2dDescriptor":                              {},
-	"cudnnSetPoolingNdDescriptor":                              {},
-	"cudnnSetRNNAlgorithmDescriptor":                           {},
-	"cudnnSetRNNBiasMode":                                      {},
-	"cudnnSetRNNDataDescriptor":                                {},
-	"cudnnSetRNNDescriptor_v6":                                 {},
-	"cudnnSetRNNDescriptor_v8":                                 {},
-	"cudnnSetRNNMatrixMathType":                                {},
-	"cudnnSetRNNPaddingMode":                                   {},
-	"cudnnSetRNNProjectionLayers":                              {},
-	"cudnnSetReduceTensorDescriptor":                           {},
-	"cudnnSetSeqDataDescriptor":                                {},
-	"cudnnSetSpatialTransformerNdDescriptor":                   {},
-	"cudnnSetStream":                                           {},
-	"cudnnSetTensor":                                           {},
-	"cudnnSetTensor4dDescriptor":                               {},
-	"cudnnSetTensor4dDescriptorEx":                             {},
-	"cudnnSetTensorNdDescriptor":                               {},
-	"cudnnSetTensorNdDescriptorEx":                             {},
-	"cudnnSetTensorTransformDescriptor":                        {},
-	"cudnnSoftmaxBackward":                                     {},
-	"cudnnSoftmaxForward":                                      {},
-	"cudnnSpatialTfGridGeneratorBackward":                      {},
-	"cudnnSpatialTfGridGeneratorForward":                       {},
-	"cudnnSpatialTfSamplerBackward":                            {},
-	"cudnnSpatialTfSamplerForward":                             {},
-	"cudnnTransformFilter":                                     {},
-	"cudnnTransformTensor":                                     {},
-	"cudnnTransformTensorEx":                                   {},
+	// "cudnnGetRNNLinLayerBiasParams":{}, //
+	// "cudnnGetRNNLinLayerMatrixParams":{}, //
+	"cudnnGetRNNMatrixMathType": {},
+	"cudnnGetRNNPaddingMode":    {},
+	// "cudnnGetRNNParamsSize":{}, //
+	"cudnnGetRNNProjectionLayers": {},
+	"cudnnGetRNNTempSpaceSizes":   {},
+	// "cudnnGetRNNTrainingReserveSize":{}, //
+	"cudnnGetRNNWeightParams":    {},
+	"cudnnGetRNNWeightSpaceSize": {},
+	// "cudnnGetRNNWorkspaceSize":{}, //
+	"cudnnGetReduceTensorDescriptor": {},
+	// "cudnnGetReductionIndicesSize":{}, //
+	// "cudnnGetReductionWorkspaceSize":{}, //
+	"cudnnGetSeqDataDescriptor":         {},
+	"cudnnGetStream":                    {},
+	"cudnnGetTensor4dDescriptor":        {},
+	"cudnnGetTensorNdDescriptor":        {},
+	"cudnnGetTensorSizeInBytes":         {},
+	"cudnnGetTensorTransformDescriptor": {},
+	"cudnnGetVersion":                   {},
+	// "cudnnIm2Col":{}, //
+	"cudnnInitTransformDest": {},
+	// "cudnnLRNCrossChannelBackward":{}, //
+	// "cudnnLRNCrossChannelForward":{}, //
+	"cudnnMakeFusedOpsPlan":              {},
+	"cudnnMultiHeadAttnBackwardData":     {},
+	"cudnnMultiHeadAttnBackwardWeights":  {},
+	"cudnnMultiHeadAttnForward":          {},
+	"cudnnNormalizationBackward":         {},
+	"cudnnNormalizationForwardInference": {},
+	"cudnnNormalizationForwardTraining":  {},
+	// "cudnnOpTensor":{}, //
+	"cudnnOpsInferVersionCheck": {},
+	"cudnnOpsTrainVersionCheck": {},
+	// "cudnnPoolingBackward":{}, //
+	// "cudnnPoolingForward":{}, //
+	"cudnnQueryRuntimeError": {},
+	// "cudnnRNNBackwardData":{}, //
+	"cudnnRNNBackwardDataEx":  {},
+	"cudnnRNNBackwardData_v8": {},
+	// "cudnnRNNBackwardWeights":{}, //
+	"cudnnRNNBackwardWeightsEx":  {},
+	"cudnnRNNBackwardWeights_v8": {},
+	"cudnnRNNForward":            {},
+	// "cudnnRNNForwardInference":{}, //
+	"cudnnRNNForwardInferenceEx": {},
+	// "cudnnRNNForwardTraining":{}, //
+	"cudnnRNNForwardTrainingEx": {},
+	"cudnnRNNGetClip":           {},
+	"cudnnRNNGetClip_v8":        {},
+	"cudnnRNNSetClip":           {},
+	"cudnnRNNSetClip_v8":        {},
+	// "cudnnReduceTensor":{}, //
+	"cudnnReorderFilterAndBias": {},
+	"cudnnRestoreAlgorithm":     {},
+	// "cudnnRestoreDropoutDescriptor":{}, //
+	"cudnnSaveAlgorithm": {},
+	// "cudnnScaleTensor":{}, //
+	// "cudnnSetActivationDescriptor":{}, //
+	"cudnnSetAlgorithmDescriptor":  {},
+	"cudnnSetAlgorithmPerformance": {},
+	"cudnnSetAttnDescriptor":       {},
+	// "cudnnSetCTCLossDescriptor":{}, //
+	"cudnnSetCTCLossDescriptorEx":     {},
+	"cudnnSetCTCLossDescriptor_v8":    {},
+	"cudnnSetCallback":                {},
+	"cudnnSetConvolution2dDescriptor": {},
+	"cudnnSetConvolutionGroupCount":   {},
+	"cudnnSetConvolutionMathType":     {},
+	"cudnnSetConvolutionNdDescriptor": {},
+	"cudnnSetConvolutionReorderType":  {},
+	// "cudnnSetDropoutDescriptor":{}, //
+	// "cudnnSetFilter4dDescriptor":{}, //
+	// "cudnnSetFilterNdDescriptor":{}, //
+	"cudnnSetFusedOpsConstParamPackAttribute":   {},
+	"cudnnSetFusedOpsVariantParamPackAttribute": {},
+	// "cudnnSetLRNDescriptor":{}, //
+	// "cudnnSetOpTensorDescriptor":{}, //
+	// "cudnnSetPersistentRNNPlan":{}, //
+	// "cudnnSetPooling2dDescriptor":{}, //
+	// "cudnnSetPoolingNdDescriptor":{}, //
+	"cudnnSetRNNAlgorithmDescriptor": {},
+	"cudnnSetRNNBiasMode":            {},
+	"cudnnSetRNNDataDescriptor":      {},
+	// "cudnnSetRNNDescriptor_v6":{}, //
+	"cudnnSetRNNDescriptor_v8": {},
+	// "cudnnSetRNNMatrixMathType":{}, //
+	"cudnnSetRNNPaddingMode":      {},
+	"cudnnSetRNNProjectionLayers": {},
+	// "cudnnSetReduceTensorDescriptor":{}, //
+	"cudnnSetSeqDataDescriptor": {},
+	// "cudnnSetSpatialTransformerNdDescriptor":{}, //
+	"cudnnSetStream": {},
+	// "cudnnSetTensor":{}, //
+	// "cudnnSetTensor4dDescriptor":{}, //
+	// "cudnnSetTensor4dDescriptorEx":{}, //
+	// "cudnnSetTensorNdDescriptor":{}, //
+	// "cudnnSetTensorNdDescriptorEx":{}, //
+	"cudnnSetTensorTransformDescriptor": {},
+	// "cudnnSoftmaxBackward":{}, //
+	// "cudnnSoftmaxForward":{}, //
+	// "cudnnSpatialTfGridGeneratorBackward":{}, //
+	// "cudnnSpatialTfGridGeneratorForward":{}, //
+	// "cudnnSpatialTfSamplerBackward":{}, //
+	// "cudnnSpatialTfSamplerForward":{}, //
+	"cudnnTransformFilter": {},
+	// "cudnnTransformTensor":{}, //
+	"cudnnTransformTensorEx": {},
 }
 
 func init() {
