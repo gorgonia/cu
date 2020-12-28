@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/gorgonia/bindgen"
@@ -43,12 +44,15 @@ func otherTypes(decl *cc.Declarator) bool {
 
 func isIgnored(a string) bool {
 	if _, ok := ignoredEnums[a]; ok {
+		log.Printf("\t%q in ignoredEnums", a)
 		return true
 	}
 	if _, ok := ignored[a]; ok {
+		log.Printf("\t%q in ignored", a)
 		return true
 	}
 	if _, ok := ignoredTypes[a]; ok {
+		log.Printf("\t%q in ignoredTypes", a)
 		return true
 	}
 	return false

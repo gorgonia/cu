@@ -4,4 +4,3 @@ package cudnn
 
 // #include <cudnn.h>
 import "C"
-

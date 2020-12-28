@@ -76,8 +76,8 @@ func main() {
 
 	// Step 3: generate enums, then edit the file in the dnn package.
 	//generateEnums()
-	generateEnumStrings()
-	//generateStubs(false, pkg) // true/false indicates debug mode
+	//generateEnumStrings()
+	generateStubs(false, pkg) // true/false indicates debug mode
 
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
 
@@ -278,6 +278,7 @@ outer:
 			continue
 		}
 		if alreadyProcessedType(gotype, decls) {
+			log.Printf("Already processed %v", gotype)
 			continue
 		}
 
@@ -293,6 +294,7 @@ outer:
 
 		for _, v := range vs {
 			if isIgnored(v) {
+				log.Printf("\t\t%q %t", v, isIgnored(v))
 				log.Printf("Skipped generating for %q", k)
 				continue outer
 			}

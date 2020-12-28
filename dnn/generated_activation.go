@@ -36,6 +36,9 @@ func NewActivation(mode ActivationMode, reluNanOpt NanPropagation, coef float64)
 	return retVal, nil
 }
 
+// ActivationDesc returns the internal activationDesc.
+func (a *Activation) ActivationDesc() *Activation { return a.activationDesc }
+
 // Mode returns the internal mode.
 func (a *Activation) Mode() ActivationMode { return a.mode }
 

@@ -40,6 +40,9 @@ func NewReduction(reduceTensorOp ReduceTensorOp, reduceTensorCompType DataType, 
 	return retVal, nil
 }
 
+// ReduceTensorDesc returns the internal reduceTensorDesc.
+func (r *Reduction) ReduceTensorDesc() *Reduction { return r.reduceTensorDesc }
+
 // ReduceTensorOp returns the internal reduceTensorOp.
 func (r *Reduction) ReduceTensorOp() ReduceTensorOp { return r.reduceTensorOp }
 

@@ -4,9 +4,7 @@ package cudnn
 
 // #include <cudnn.h>
 import "C"
-import (
-	"runtime"
-)
+import "runtime"
 
 // SpatialTransformer is a representation of cudnnSpatialTransformerDescriptor_t.
 type SpatialTransformer struct {
@@ -15,19 +13,17 @@ type SpatialTransformer struct {
 	samplerType SamplerType
 	dataType    DataType
 	nbDims      int
-	dimA        []int
+	dimA        TODO
 }
 
 // NewSpatialTransformer creates a new SpatialTransformer.
-func NewSpatialTransformer(samplerType SamplerType, dataType DataType, nbDims int, dimA []int) (retVal *SpatialTransformer, err error) {
+func NewSpatialTransformer(samplerType SamplerType, dataType DataType, nbDims int, dimA TODO) (retVal *SpatialTransformer, err error) {
 	var internal C.cudnnSpatialTransformerDescriptor_t
 	if err := result(C.cudnnCreateSpatialTransformerDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
-	dimAC, dimACManaged := ints2CIntPtr(dimA)
-	defer returnManaged(dimACManaged)
-	if err := result(C.cudnnSetSpatialTransformerNdDescriptor(internal, samplerType.C(), dataType.C(), C.int(nbDims), dimAC)); err != nil {
+	if err := result(C.cudnnSetSpatialTransformerNdDescriptor(internal, samplerType.C(), dataType.C(), C.int(nbDims), dimA)); err != nil {
 		return nil, err
 	}
 
@@ -41,6 +37,9 @@ func NewSpatialTransformer(samplerType SamplerType, dataType DataType, nbDims in
 	runtime.SetFinalizer(retVal, destroySpatialTransformer)
 	return retVal, nil
 }
+
+// StDesc returns the internal stDesc.
+func (s *SpatialTransformer) StDesc() *SpatialTransformer { return s.stDesc }
 
 // SamplerType returns the internal samplerType.
 func (s *SpatialTransformer) SamplerType() SamplerType { return s.samplerType }
