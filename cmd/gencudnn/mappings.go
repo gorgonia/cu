@@ -701,6 +701,9 @@ func init() {
 		"cudnnAlgorithmDescriptor_t":          {"cudnnDestroyAlgorithmDescriptor"},
 	}
 
-	methods = map[string][]string{}
-
+	methods = map[string][]string{
+		"cudnnHandle_t":            {"cudnnActivationBackward", "cudnnActivationForward", "cudnnAddTensor", "cudnnBatchNormalizationBackward", "cudnnBatchNormalizationForwardInference", "cudnnBatchNormalizationForwardTraining", "cudnnCTCLoss", "cudnnConvolutionBackwardBias", "cudnnConvolutionBackwardData", "cudnnConvolutionBackwardFilter", "cudnnConvolutionBiasActivationForward", "cudnnConvolutionForward", "cudnnDivisiveNormalizationBackward", "cudnnDivisiveNormalizationForward", "cudnnDropoutBackward", "cudnnDropoutForward", "cudnnDropoutGetStatesSize", "cudnnFindConvolutionBackwardDataAlgorithm", "cudnnFindConvolutionBackwardDataAlgorithmEx", "cudnnFindConvolutionBackwardFilterAlgorithm", "cudnnFindConvolutionBackwardFilterAlgorithmEx", "cudnnFindConvolutionForwardAlgorithm", "cudnnFindConvolutionForwardAlgorithmEx", "cudnnGetRNNLinLayerBiasParams", "cudnnGetRNNLinLayerMatrixParams", "cudnnGetRNNParamsSize", "cudnnGetRNNTrainingReserveSize", "cudnnGetRNNWorkspaceSize", "cudnnGetReductionIndicesSize", "cudnnGetReductionWorkspaceSize", "cudnnIm2Col", "cudnnLRNCrossChannelBackward", "cudnnLRNCrossChannelForward", "cudnnOpTensor", "cudnnPoolingBackward", "cudnnPoolingForward", "cudnnRNNBackwardData", "cudnnRNNBackwardWeights", "cudnnRNNForwardInference", "cudnnRNNForwardTraining", "cudnnReduceTensor", "cudnnScaleTensor", "cudnnSoftmaxBackward", "cudnnSoftmaxForward", "cudnnSpatialTfGridGeneratorBackward", "cudnnSpatialTfGridGeneratorForward", "cudnnSpatialTfSamplerBackward", "cudnnSpatialTfSamplerForward", "cudnnTransformTensor"},
+		"cudnnTensorDescriptor_t":  {"cudnnDeriveBNTensorDescriptor", "cudnnDropoutGetReserveSpaceSize"},
+		"cudnnDropoutDescriptor_t": {"cudnnRestoreDropoutDescriptor"},
+	}
 }
