@@ -1,5 +1,6 @@
 package cudnn
 
+// #include <stdint.h>
 import "C"
 import (
 	"fmt"
