@@ -34,8 +34,8 @@ func NewFusedOpConsts(paramLabel FusedOpsConstParamLabel, param Memory) (retVal 
 	return retVal, nil
 }
 
-// ConstPack returns the internal constPack.
-func (f *FusedOpConsts) ConstPack() *FusedOpConsts { return f.constPack }
+// C returns the internal cgo representation.
+func (f *FusedOpConsts) C() C.cudnnFusedOpsConstParamPack_t { return f.internal }
 
 // ParamLabel returns the internal paramLabel.
 func (f *FusedOpConsts) ParamLabel() FusedOpsConstParamLabel { return f.paramLabel }

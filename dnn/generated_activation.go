@@ -36,8 +36,8 @@ func NewActivation(mode ActivationMode, reluNanOpt NanPropagation, coef float64)
 	return retVal, nil
 }
 
-// ActivationDesc returns the internal activationDesc.
-func (a *Activation) ActivationDesc() *Activation { return a.activationDesc }
+// C returns the cgo representation.
+func (a *Activation) ActivationDesc() C.cudnnActivationDescriptor_t { return a.internal }
 
 // Mode returns the internal mode.
 func (a *Activation) Mode() ActivationMode { return a.mode }

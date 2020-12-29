@@ -38,8 +38,8 @@ func NewLRN(lrnN uint, lrnAlpha float64, lrnBeta float64, lrnK float64) (retVal 
 	return retVal, nil
 }
 
-// NormDesc returns the internal normDesc.
-func (l *LRN) NormDesc() *LRN { return l.normDesc }
+// C returns the internal cgo representation
+func (l *LRN) C() C.cudnnLRNDescriptor_t { return l.internal }
 
 // LrnN returns the internal lrnN.
 func (l *LRN) LrnN() uint { return l.lrnN }

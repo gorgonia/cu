@@ -38,8 +38,8 @@ func NewAlgorithmPerformance(algoDesc *AlgorithmDescriptor, status Status, time 
 	return retVal, nil
 }
 
-// AlgoPerf returns the internal algoPerf.
-func (a *AlgorithmPerformance) AlgoPerf() *AlgorithmPerformance { return a.algoPerf }
+// C returns the internal cgo representation.
+func (a *AlgorithmPerformance) C() C.cudnnAlgorithmPerformance_t { return a.algoPerf }
 
 // AlgoDesc returns the internal algoDesc.
 func (a *AlgorithmPerformance) AlgoDesc() *AlgorithmDescriptor { return a.algoDesc }

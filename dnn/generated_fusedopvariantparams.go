@@ -4,7 +4,10 @@ package cudnn
 
 // #include <cudnn.h>
 import "C"
-import "runtime"
+import (
+	"runtime"
+	"unsafe"
+)
 
 // FusedOpVariantParams is a representation of cudnnFusedOpsVariantParamPack_t.
 type FusedOpVariantParams struct {
@@ -21,7 +24,7 @@ func NewFusedOpVariantParams(paramLabel FusedOpsVariantParamLabel, ptr Memory) (
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetFusedOpsVariantParamPackAttribute(internal, paramLabel.C(), ptr.Pointer())); err != nil {
+	if err := result(C.cudnnSetFusedOpsVariantParamPackAttribute(internal, paramLabel.C(), unsafe.Pointer(ptr.Pointer()))); err != nil {
 		return nil, err
 	}
 
@@ -34,8 +37,8 @@ func NewFusedOpVariantParams(paramLabel FusedOpsVariantParamLabel, ptr Memory) (
 	return retVal, nil
 }
 
-// VarPack returns the internal varPack.
-func (f *FusedOpVariantParams) VarPack() *FusedOpVariantParams { return f.varPack }
+// C returns the internal cgo representation.
+func (f *FusedOpVariantParams) C() C.cudnnFusedOpsVariantParamPack_t { return f.internal }
 
 // ParamLabel returns the internal paramLabel.
 func (f *FusedOpVariantParams) ParamLabel() FusedOpsVariantParamLabel { return f.paramLabel }

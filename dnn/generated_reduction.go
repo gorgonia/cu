@@ -40,8 +40,8 @@ func NewReduction(reduceTensorOp ReduceTensorOp, reduceTensorCompType DataType, 
 	return retVal, nil
 }
 
-// ReduceTensorDesc returns the internal reduceTensorDesc.
-func (r *Reduction) ReduceTensorDesc() *Reduction { return r.reduceTensorDesc }
+// C returns the internal cgo representation.
+func (r *Reduction) C() C.cudnnReduceTensorDescriptor_t { return r.internal }
 
 // ReduceTensorOp returns the internal reduceTensorOp.
 func (r *Reduction) ReduceTensorOp() ReduceTensorOp { return r.reduceTensorOp }

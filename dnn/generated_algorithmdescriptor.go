@@ -32,8 +32,8 @@ func NewAlgorithmDescriptor(algorithm TODO) (retVal *AlgorithmDescriptor, err er
 	return retVal, nil
 }
 
-// AlgoDesc returns the internal algoDesc.
-func (a *AlgorithmDescriptor) AlgoDesc() *AlgorithmDescriptor { return a.algoDesc }
+// C returns the internal cgo representation
+func (a *AlgorithmDescriptor) C() C.cudnnAlgorithmDescriptor_t { return a.internal }
 
 //TODO: "cudnnSetAlgorithmDescriptor": Parameter 1 Skipped "algorithm" of struct{union Algorithm;} - unmapped type
 

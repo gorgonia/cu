@@ -68,8 +68,8 @@ func NewAttention(attnMode uint, nHeads int, smScaler float64, dataType DataType
 	return retVal, nil
 }
 
-// AttnDesc returns the internal attnDesc.
-func (a *Attention) AttnDesc() *Attention { return a.attnDesc }
+// C returns the internal cgo representation.
+func (a *Attention) C() C.cudnnAttnDescriptor_t { return a.internal }
 
 // AttnMode returns the internal attnMode.
 func (a *Attention) AttnMode() uint { return a.attnMode }
