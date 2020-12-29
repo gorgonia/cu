@@ -43,7 +43,7 @@ cudnnStatus_t cudnnGetCallback(
 
 *  /home/chewxy/workspace/gorgoniaws/src/gorgonia.org/cu/dnn/generated_ctcloss.go. TODO: true
 *  ~~/home/chewxy/workspace/gorgoniaws/src/gorgonia.org/cu/dnn/generated_spatialtransformer.go. TODO: true~~
-*  /home/chewxy/workspace/gorgoniaws/src/gorgonia.org/cu/dnn/generated_seqdata.go. TODO: true
+*  ~~/home/chewxy/workspace/gorgoniaws/src/gorgonia.org/cu/dnn/generated_seqdata.go. TODO: true~~
 *  /home/chewxy/workspace/gorgoniaws/src/gorgonia.org/cu/dnn/generated_backend.go. TODO: true
 *  ~~/home/chewxy/workspace/gorgoniaws/src/gorgonia.org/cu/dnn/generated_rnndata.go. TODO: true~~
 *  /home/chewxy/workspace/gorgoniaws/src/gorgonia.org/cu/dnn/generated_tensortransform.go. TODO: true

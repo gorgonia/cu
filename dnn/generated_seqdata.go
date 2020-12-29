@@ -4,7 +4,10 @@ package cudnn
 
 // #include <cudnn.h>
 import "C"
-import "runtime"
+import (
+	"runtime"
+	"unsafe"
+)
 
 // SeqData is a representation of cudnnSeqDataDescriptor_t.
 type SeqData struct {
@@ -12,21 +15,27 @@ type SeqData struct {
 
 	dataType           DataType
 	nbDims             int
-	dimA               TODO
+	dimA               []int
 	axes               SeqDataAxis
 	seqLengthArraySize uintptr
-	seqLengthArray     TODO
+	seqLengthArray     []int
 	paddingFill        Memory
 }
 
 // NewSeqData creates a new SeqData.
-func NewSeqData(dataType DataType, nbDims int, dimA TODO, axes SeqDataAxis, seqLengthArraySize uintptr, seqLengthArray TODO, paddingFill Memory) (retVal *SeqData, err error) {
+func NewSeqData(dataType DataType, nbDims int, dimA []int, axes SeqDataAxis, seqLengthArraySize uintptr, seqLengthArray []int, paddingFill Memory) (retVal *SeqData, err error) {
 	var internal C.cudnnSeqDataDescriptor_t
 	if err := result(C.cudnnCreateSeqDataDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetSeqDataDescriptor(internal, dataType.C(), C.int(nbDims), dimA, axes.C(), C.size_t(seqLengthArraySize), seqLengthArray, paddingFill.Pointer())); err != nil {
+	dimAC, dimACManaged := ints2CIntPtr(dimA)
+	defer returnManaged(dimACManaged)
+
+	seqLengthArrayC, seqLengthArrayCManaged := ints2CIntPtr(seqLengthArray)
+	defer returnManaged(seqLengthArrayCManaged)
+
+	if err := result(C.cudnnSetSeqDataDescriptor(internal, dataType.C(), C.int(nbDims), dimAC, axes.C(), C.size_t(seqLengthArraySize), seqLengthArrayC, unsafe.Pointer(paddingFill.Uintptr()))); err != nil {
 		return nil, err
 	}
 
@@ -44,8 +53,8 @@ func NewSeqData(dataType DataType, nbDims int, dimA TODO, axes SeqDataAxis, seqL
 	return retVal, nil
 }
 
-// SeqDataDesc returns the internal seqDataDesc.
-func (s *SeqData) SeqDataDesc() *SeqData { return s.seqDataDesc }
+// C() returns the internal cgo representation
+func (s *SeqData) C() C.cudnnSeqDataDescriptor_t { return s.internal }
 
 // DataType returns the internal dataType.
 func (s *SeqData) DataType() DataType { return s.dataType }

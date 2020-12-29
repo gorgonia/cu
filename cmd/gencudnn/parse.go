@@ -244,7 +244,7 @@ func toC(name, typ string) string {
 	}
 
 	if typ == "Memory" {
-		return fmt.Sprintf("%v.Pointer()", name)
+		return fmt.Sprintf("unsafe.Pointer(%v.Uintptr())", name)
 	}
 
 	// log.Printf("name %q typ %q", name, typ)
