@@ -1,11 +1,8 @@
-# TODO #
-* NewRNN
-
 ## Potential Nils ##
 These functions have a `*T` return value, but a possible null exception error might happen
 
-* `NewDropoutWithContext`
 * `NewCTCLoss`
+* `NewDropoutWithContext`
 
 ## Unconverted C Functions ##
 

@@ -10,23 +10,28 @@ import (
 	"github.com/pkg/errors"
 )
 
-// RestoreDropoutDescriptor restores a dropout descriptor to a previously saved-off state.
-func (dr *Dropout) RestoreDropoutDescriptor(handle *Context, dropout float32, states Memory, stateSizeInBytes uintptr, seed uint64) error {
-	// call cudnnRestoreDropoutDescriptor
-	return result(C.cudnnRestoreDropoutDescriptor(dr.internal, handle.internal, C.float(dropout), states.Pointer(), C.size_t(stateSizeInBytes), C.ulonglong(seed)))
+func (co *Context) ActivationBackward(activationDesc *Activation, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch yDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
+	}
+	// call cudnnActivationBackward
+	return result(C.cudnnActivationBackward(co.internal, activationDesc.internal, alphaC, yDesc.internal, unsafe.Pointer(y.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr())))
 }
-
-// // Derives a secondary tensor descriptor for BatchNormalization scale, invVariance, bnBias, bnScale subtensors from the layer's x data descriptor. Use the tensor descriptor produced by this function as the bnScaleBiasMeanVarDesc and bnScaleBiasDiffDesc parameters in Spatial and Per-Activation Batch Normalization forward and backward functions. Resulting dimensions will be 1xC(x1)x1x1 for BATCHNORM_MODE_SPATIAL and 1xC(xD)xHxW for BATCHNORM_MODE_PER_ACTIVATION (parentheses for 5D). For HALF input data type the resulting tensor descriptor will have a FLOAT type. For other data types it will have the same type as the input data.
-// func (te *TensorDescriptor) DeriveBNTensorDescriptor(mode BatchNormMode) (derivedBnDesc *TensorDescriptor, err error) {
-// 	// TODO: xDesc cudnnTensorDescriptor_t
-// 	// call cudnnDeriveBNTensorDescriptor
-// 	err = result(C.cudnnDeriveBNTensorDescriptor(te.internal, xDesc.internal, mode.C()))
-// 	return
-// }
-
-// TransformTensor copies the scaled data from one tensor to another tensor with a different layout. Those descriptors need to have the same dimensions but not necessarily the same strides. The input and output tensors must not overlap in any way (i.e., tensors cannot be transformed in place). TransformTensor can be used to convert a tensor with an unsupported format to a supported one.
-func (co *Context) TransformTensor(alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
-	// DOUBLECHECK: "cudnnTransformTensor" returns Memory type in Parameter 6
+func (co *Context) ActivationForward(activationDesc *Activation, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -44,12 +49,9 @@ func (co *Context) TransformTensor(alpha float64, xDesc *TensorDescriptor, x Mem
 	default:
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
-	// call cudnnTransformTensor
-	return result(C.cudnnTransformTensor(co.internal, alphaC, xDesc.internal, x.Pointer(), betaC, yDesc.internal, y.Pointer()))
+	// call cudnnActivationForward
+	return result(C.cudnnActivationForward(co.internal, activationDesc.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
 }
-
-// AddTensor adds the scaled values of a bias tensor to another tensor. Each dimension of the bias tensor A must match the corresponding dimension of the destination tensor C or must be equal to 1. In the latter case, the same value from the bias tensor for those dimensions will be used to blend into the C tensor.
-//	C_ is both an input and output
 func (co *Context) AddTensor(alpha float64, aDesc *TensorDescriptor, A Memory, beta float64, cDesc *TensorDescriptor, C_ Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch aDesc.dataType {
@@ -69,580 +71,8 @@ func (co *Context) AddTensor(alpha float64, aDesc *TensorDescriptor, A Memory, b
 		return errors.Errorf("Unsupported data type: %v", aDesc.dataType)
 	}
 	// call cudnnAddTensor
-	return result(C.cudnnAddTensor(co.internal, alphaC, aDesc.internal, A.Pointer(), betaC, cDesc.internal, C_.Pointer()))
+	return result(C.cudnnAddTensor(co.internal, alphaC, aDesc.internal, unsafe.Pointer(A.Uintptr()), betaC, cDesc.internal, unsafe.Pointer(C_.Uintptr())))
 }
-
-// OpTensor implements the equation C = op ( alpha1[0] * A, alpha2[0] * B ) + beta[0] * C, given tensors A, B, and C and scaling factors alpha1, alpha2, and beta. The op to use is indicated by the descriptor opTensorDesc. Currently-supported ops are listed by the OpTensorOp_t enum.
-//	C_ is both an input and output
-func (co *Context) OpTensor(opTensorDesc *Op, alpha1 float64, aDesc *TensorDescriptor, A Memory, alpha2 float64, bDesc *TensorDescriptor, B Memory, beta float64, cDesc *TensorDescriptor, C_ Memory) error {
-	var alpha1C, alpha2C, betaC unsafe.Pointer
-	switch aDesc.dataType {
-	case Float, Half:
-		var alpha1F, alpha2F, betaF C.float
-		alpha1F = C.float(float32(alpha1))
-		alpha2F = C.float(float32(alpha2))
-		betaF = C.float(float32(beta))
-		alpha1C = unsafe.Pointer(&alpha1F)
-		alpha2C = unsafe.Pointer(&alpha2F)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alpha1F, alpha2F, betaF C.double
-		alpha1F = C.double(alpha1)
-		alpha2F = C.double(alpha2)
-		betaF = C.double(beta)
-		alpha1C = unsafe.Pointer(&alpha1F)
-		alpha2C = unsafe.Pointer(&alpha2F)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", aDesc.dataType)
-	}
-	// call cudnnOpTensor
-	return result(C.cudnnOpTensor(co.internal, opTensorDesc.internal, alpha1C, aDesc.internal, A.Pointer(), alpha2C, bDesc.internal, B.Pointer(), betaC, cDesc.internal, C_.Pointer()))
-}
-
-// GetReductionIndicesSize is a helper function to return the minimum size of the index space to be passed to the reduction given the input and output tensors.
-func (co *Context) GetReductionIndicesSize(reduceTensorDesc *Reduction, aDesc *TensorDescriptor, cDesc *TensorDescriptor) (sizeInBytes uintptr, err error) {
-	var sizeInBytesC C.size_t
-	// call cudnnGetReductionIndicesSize
-	err = result(C.cudnnGetReductionIndicesSize(co.internal, reduceTensorDesc.internal, aDesc.internal, cDesc.internal, &sizeInBytesC))
-	sizeInBytes = uintptr(sizeInBytesC)
-	return
-}
-
-// GetReductionWorkspaceSize is a helper function to return the minimum size of the workspace to be passed to the reduction given the input and output tensors.
-func (co *Context) GetReductionWorkspaceSize(reduceTensorDesc *Reduction, aDesc *TensorDescriptor, cDesc *TensorDescriptor) (sizeInBytes uintptr, err error) {
-	var sizeInBytesC C.size_t
-	// call cudnnGetReductionWorkspaceSize
-	err = result(C.cudnnGetReductionWorkspaceSize(co.internal, reduceTensorDesc.internal, aDesc.internal, cDesc.internal, &sizeInBytesC))
-	sizeInBytes = uintptr(sizeInBytesC)
-	return
-}
-
-// ReduceTensor reduces tensor A by implementing the equation C = alpha * reduce op ( A ) + beta * C, given tensors A and C and scaling factors alpha and beta. The reduction op to use is indicated by the descriptor reduceTensorDesc. Currently-supported ops are listed by the ReduceTensorOp_t enum.
-//	C_ is both an input and output
-func (co *Context) ReduceTensor(reduceTensorDesc *Reduction, indices Memory, indicesSizeInBytes uintptr, workspace Memory, workspaceSizeInBytes uintptr, alpha float64, aDesc *TensorDescriptor, A Memory, beta float64, cDesc *TensorDescriptor, C_ Memory) error {
-	// DOUBLECHECK: "cudnnReduceTensor" returns Memory type in Parameter 2
-	var alphaC, betaC unsafe.Pointer
-	switch aDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", aDesc.dataType)
-	}
-	// call cudnnReduceTensor
-	return result(C.cudnnReduceTensor(co.internal, reduceTensorDesc.internal, indices.Pointer(), C.size_t(indicesSizeInBytes), workspace.Pointer(), C.size_t(workspaceSizeInBytes), alphaC, aDesc.internal, A.Pointer(), betaC, cDesc.internal, C_.Pointer()))
-}
-
-// ScaleTensor scale all the elements of a tensor by a given factor.
-//	y is both an input and output
-func (co *Context) ScaleTensor(yDesc *TensorDescriptor, y Memory, alpha float64) error {
-	var alphaC unsafe.Pointer
-	switch yDesc.dataType {
-	case Float, Half:
-		var alphaF C.float
-		alphaF = C.float(float32(alpha))
-		alphaC = unsafe.Pointer(&alphaF)
-	case Double:
-		var alphaF C.double
-		alphaF = C.double(alpha)
-		alphaC = unsafe.Pointer(&alphaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
-	}
-	// call cudnnScaleTensor
-	return result(C.cudnnScaleTensor(co.internal, yDesc.internal, y.Pointer(), alphaC))
-}
-
-// // FindConvolutionForwardAlgorithm attempts all cuDNN algorithms (including CUDNN_TENSOR_OP_MATH and CUDNN_DEFAULT_MATH versions of algorithms where CUDNN_TENSOR_OP_MATH may be available) for cudnnConvolutionForward(), using memory allocated via cudaMalloc(), and outputs performance metrics to a user-allocated array of cudnnConvolutionFwdAlgoPerf_t. These metrics are written in sorted fashion where the first element has the lowest compute time. The total number of resulting algorithms can be queried through the API cudnnGetConvolutionForwardMaxCount().
-// func (co *Context) FindConvolutionForwardAlgorithm(xDesc *TensorDescriptor, wDesc *Filter, convDesc *Convolution, yDesc *TensorDescriptor, requestedAlgoCount int) (returnedAlgoCount int, perfResults *ConvolutionFwdPerf, err error) {
-// 	var returnedAlgoCountC C.int
-// 	perfResults = new(ConvolutionFwdPerf)
-// 	// TODO: perfResults cudnnConvolutionFwdAlgoPerf_t
-// 	// call cudnnFindConvolutionForwardAlgorithm
-// 	err = result(C.cudnnFindConvolutionForwardAlgorithm(co.internal, xDesc.internal, wDesc.internal, convDesc.internal, yDesc.internal, C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal))
-// 	returnedAlgoCount = int(returnedAlgoCountC)
-// 	return
-// }
-
-// // FindConvolutionForwardAlgorithmEx attempts all available cuDNN algorithms (including CUDNN_TENSOR_OP_MATH and CUDNN_DEFAULT_MATH versions of algorithms where CUDNN_TENSOR_OP_MATH may be available) for cudnnConvolutionForward, using user-allocated GPU memory, and outputs performance metrics to a user-allocated array of cudnnConvolutionFwdAlgoPerf_t. These metrics are written in sorted fashion where the first element has the lowest compute time. The total number of resulting algorithms can be queried through the API cudnnGetConvolutionForwardMaxCount().
-// //	y is both an input and output
-// func (co *Context) FindConvolutionForwardAlgorithmEx(xDesc *TensorDescriptor, x Memory, wDesc *Filter, w Memory, convDesc *Convolution, yDesc *TensorDescriptor, y Memory, requestedAlgoCount int, workSpace Memory, workSpaceSizeInBytes uintptr) (returnedAlgoCount int, perfResults *ConvolutionFwdPerf, err error) {
-// 	var returnedAlgoCountC C.int
-// 	// TODO: perfResults cudnnConvolutionFwdAlgoPerf_t
-// 	// call cudnnFindConvolutionForwardAlgorithmEx
-// 	err = result(C.cudnnFindConvolutionForwardAlgorithmEx(co.internal, xDesc.internal, x.Pointer(), wDesc.internal, w.Pointer(), convDesc.internal, yDesc.internal, y.Pointer(), C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal, workSpace.Pointer(), C.size_t(workSpaceSizeInBytes)))
-// 	returnedAlgoCount = int(returnedAlgoCountC)
-// 	return
-// }
-
-// ConvolutionForward executes convolutions or cross-correlations over x using filters specified with w, returning results in y. Scaling factors alpha and beta can be used to scale the input tensor and the output tensor respectively.
-//	y is both an input and output
-func (co *Context) ConvolutionForward(alpha float64, xDesc *TensorDescriptor, x Memory, wDesc *Filter, w Memory, convDesc *Convolution, algo ConvolutionFwdAlgo, workSpace Memory, workSpaceSizeInBytes uintptr, beta float64, yDesc *TensorDescriptor, y Memory) error {
-	var alphaC, betaC unsafe.Pointer
-	switch xDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
-	}
-	// call cudnnConvolutionForward
-	return result(C.cudnnConvolutionForward(co.internal, alphaC, xDesc.internal, x.Pointer(), wDesc.internal, w.Pointer(), convDesc.internal, algo.C(), workSpace.Pointer(), C.size_t(workSpaceSizeInBytes), betaC, yDesc.internal, y.Pointer()))
-}
-
-// ConvolutionBiasActivationForward applies a bias and then an activation to the convolutions or cross-correlations of cudnnConvolutionForward(), returning results in y. The full computation follows the equation y = act ( alpha1 * conv(x) + alpha2 * z + bias ).
-//	y is both an input and output
-func (co *Context) ConvolutionBiasActivationForward(alpha1 float64, xDesc *TensorDescriptor, x Memory, wDesc *Filter, w Memory, convDesc *Convolution, algo ConvolutionFwdAlgo, workSpace Memory, workSpaceSizeInBytes uintptr, alpha2 float64, zDesc *TensorDescriptor, z Memory, biasDesc *TensorDescriptor, bias Memory, activationDesc *Activation, yDesc *TensorDescriptor, y Memory) error {
-	var alpha1C, alpha2C unsafe.Pointer
-	switch xDesc.dataType {
-	case Float, Half:
-		var alpha1F, alpha2F C.float
-		alpha1F = C.float(float32(alpha1))
-		alpha2F = C.float(float32(alpha2))
-		alpha1C = unsafe.Pointer(&alpha1F)
-		alpha2C = unsafe.Pointer(&alpha2F)
-	case Double:
-		var alpha1F, alpha2F C.double
-		alpha1F = C.double(alpha1)
-		alpha2F = C.double(alpha2)
-		alpha1C = unsafe.Pointer(&alpha1F)
-		alpha2C = unsafe.Pointer(&alpha2F)
-	default:
-		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
-	}
-	// call cudnnConvolutionBiasActivationForward
-	return result(C.cudnnConvolutionBiasActivationForward(co.internal, alpha1C, xDesc.internal, x.Pointer(), wDesc.internal, w.Pointer(), convDesc.internal, algo.C(), workSpace.Pointer(), C.size_t(workSpaceSizeInBytes), alpha2C, zDesc.internal, z.Pointer(), biasDesc.internal, bias.Pointer(), activationDesc.internal, yDesc.internal, y.Pointer()))
-}
-
-// ConvolutionBackwardBias computes the convolution function gradient with respect to the bias, which is the sum of every element belonging to the same feature map across all of the images of the input tensor. Therefore, the number of elements produced is equal to the number of features maps of the input tensor.
-func (co *Context) ConvolutionBackwardBias(alpha float64, dyDesc *TensorDescriptor, dy Memory, beta float64, dbDesc *TensorDescriptor, db Memory) error {
-	// DOUBLECHECK: "cudnnConvolutionBackwardBias" returns Memory type in Parameter 6
-	var alphaC, betaC unsafe.Pointer
-	switch dyDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", dyDesc.dataType)
-	}
-	// call cudnnConvolutionBackwardBias
-	return result(C.cudnnConvolutionBackwardBias(co.internal, alphaC, dyDesc.internal, dy.Pointer(), betaC, dbDesc.internal, db.Pointer()))
-}
-
-// // FindConvolutionBackwardFilterAlgorithm attempts all cuDNN algorithms (including CUDNN_TENSOR_OP_MATH and CUDNN_DEFAULT_MATH versions of algorithms where CUDNN_TENSOR_OP_MATH may be available) for cudnnConvolutionBackwardFilter(), using GPU memory allocated via cudaMalloc(), and outputs performance metrics to a user-allocated array of cudnnConvolutionBwdFilterAlgoPerf_t. These metrics are written in sorted fashion where the first element has the lowest compute time. The total number of resulting algorithms can be queried through the API cudnnGetConvolutionBackwardMaxCount().
-// func (co *Context) FindConvolutionBackwardFilterAlgorithm(xDesc *TensorDescriptor, dyDesc *TensorDescriptor, convDesc *Convolution, dwDesc *Filter, requestedAlgoCount int) (returnedAlgoCount int, perfResults *ConvolutionBwdPerf, err error) {
-// 	var returnedAlgoCountC C.int
-// 	// TODO: perfResults cudnnConvolutionBwdFilterAlgoPerf_t
-// 	// call cudnnFindConvolutionBackwardFilterAlgorithm
-// 	err = result(C.cudnnFindConvolutionBackwardFilterAlgorithm(co.internal, xDesc.internal, dyDesc.internal, convDesc.internal, dwDesc.internal, C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal))
-// 	returnedAlgoCount = int(returnedAlgoCountC)
-// 	return
-// }
-
-// // FindConvolutionBackwardFilterAlgorithmEx attempts all cuDNN algorithms (including CUDNN_TENSOR_OP_MATH and CUDNN_DEFAULT_MATH versions of algorithms where CUDNN_TENSOR_OP_MATH may be available) for cudnnConvolutionBackwardFilter, using user-allocated GPU memory, and outputs performance metrics to a user-allocated array of cudnnConvolutionBwdFilterAlgoPerf_t. These metrics are written in sorted fashion where the first element has the lowest compute time. The total number of resulting algorithms can be queried through the API cudnnGetConvolutionBackwardMaxCount().
-// //	dw is both an input and output
-// func (co *Context) FindConvolutionBackwardFilterAlgorithmEx(xDesc *TensorDescriptor, x Memory, dyDesc *TensorDescriptor, y Memory, convDesc *Convolution, dwDesc *Filter, dw Memory, requestedAlgoCount int, workSpace Memory, workSpaceSizeInBytes uintptr) (returnedAlgoCount int, perfResults *ConvolutionBwdPerf, err error) {
-// 	var returnedAlgoCountC C.int
-// 	// TODO: perfResults cudnnConvolutionBwdFilterAlgoPerf_t
-// 	// call cudnnFindConvolutionBackwardFilterAlgorithmEx
-// 	err = result(C.cudnnFindConvolutionBackwardFilterAlgorithmEx(co.internal, xDesc.internal, x.Pointer(), dyDesc.internal, y.Pointer(), convDesc.internal, dwDesc.internal, dw.Pointer(), C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal, workSpace.Pointer(), C.size_t(workSpaceSizeInBytes)))
-// 	returnedAlgoCount = int(returnedAlgoCountC)
-// 	return
-// }
-
-// ConvolutionBackwardFilter computes the convolution gradient with respect to filter coefficients using the specified algo, returning results in gradDesc.Scaling factors alpha and beta can be used to scale the input tensor and the output tensor respectively.
-//	dw is both an input and output
-func (co *Context) ConvolutionBackwardFilter(alpha float64, xDesc *TensorDescriptor, x Memory, dyDesc *TensorDescriptor, dy Memory, convDesc *Convolution, algo ConvolutionBwdFilterAlgo, workSpace Memory, workSpaceSizeInBytes uintptr, beta float64, dwDesc *Filter, dw Memory) error {
-	var alphaC, betaC unsafe.Pointer
-	switch xDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
-	}
-	// call cudnnConvolutionBackwardFilter
-	return result(C.cudnnConvolutionBackwardFilter(co.internal, alphaC, xDesc.internal, x.Pointer(), dyDesc.internal, dy.Pointer(), convDesc.internal, algo.C(), workSpace.Pointer(), C.size_t(workSpaceSizeInBytes), betaC, dwDesc.internal, dw.Pointer()))
-}
-
-// // FindConvolutionBackwardDataAlgorithm attempts all cuDNN algorithms (including CUDNN_TENSOR_OP_MATH and CUDNN_DEFAULT_MATH versions of algorithms where CUDNN_TENSOR_OP_MATH may be available) for cudnnConvolutionBackwardData(), using memory allocated via cudaMalloc() and outputs performance metrics to a user-allocated array of cudnnConvolutionBwdDataAlgoPerf_t. These metrics are written in sorted fashion where the first element has the lowest compute time. The total number of resulting algorithms can be queried through the API cudnnGetConvolutionBackwardMaxCount().
-// func (co *Context) FindConvolutionBackwardDataAlgorithm(wDesc *Filter, dyDesc *TensorDescriptor, convDesc *Convolution, dxDesc *TensorDescriptor, requestedAlgoCount int) (returnedAlgoCount int, perfResults *ConvolutionBwdDataPerf, err error) {
-// 	var returnedAlgoCountC C.int
-// 	// TODO: perfResults cudnnConvolutionBwdDataAlgoPerf_t
-// 	// call cudnnFindConvolutionBackwardDataAlgorithm
-// 	err = result(C.cudnnFindConvolutionBackwardDataAlgorithm(co.internal, wDesc.internal, dyDesc.internal, convDesc.internal, dxDesc.internal, C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal))
-// 	returnedAlgoCount = int(returnedAlgoCountC)
-// 	return
-// }
-
-// // FindConvolutionBackwardDataAlgorithmEx attempts all cuDNN algorithms (including CUDNN_TENSOR_OP_MATH and CUDNN_DEFAULT_MATH versions of algorithms where CUDNN_TENSOR_OP_MATH may be available) for cudnnConvolutionBackwardData, using user-allocated GPU memory, and outputs performance metrics to a user-allocated array of cudnnConvolutionBwdDataAlgoPerf_t. These metrics are written in sorted fashion where the first element has the lowest compute time. The total number of resulting algorithms can be queried through the API cudnnGetConvolutionBackwardMaxCount().
-// //	dxDesc is both an input and output
-// func (co *Context) FindConvolutionBackwardDataAlgorithmEx(wDesc *Filter, w Memory, dyDesc *TensorDescriptor, dy Memory, convDesc *Convolution, dxDesc *TensorDescriptor, dx Memory, requestedAlgoCount int, workSpace Memory, workSpaceSizeInBytes uintptr) (returnedAlgoCount int, perfResults *ConvolutionBwdDataPerf, err error) {
-// 	var returnedAlgoCountC C.int
-// 	// TODO: perfResults cudnnConvolutionBwdDataAlgoPerf_t
-// 	// call cudnnFindConvolutionBackwardDataAlgorithmEx
-// 	err = result(C.cudnnFindConvolutionBackwardDataAlgorithmEx(co.internal, wDesc.internal, w.Pointer(), dyDesc.internal, dy.Pointer(), convDesc.internal, dxDesc.internal, dx.Pointer(), C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal, workSpace.Pointer(), C.size_t(workSpaceSizeInBytes)))
-// 	returnedAlgoCount = int(returnedAlgoCountC)
-// 	return
-// }
-
-// ConvolutionBackwardData computes the convolution gradient with respect to the output tensor using the specified algo, returning results in gradDesc. Scaling factors alpha and beta can be used to scale the input tensor and the output tensor respectively.
-//	dx is both an input and output
-func (co *Context) ConvolutionBackwardData(alpha float64, wDesc *Filter, w Memory, dyDesc *TensorDescriptor, dy Memory, convDesc *Convolution, algo ConvolutionBwdDataAlgo, workSpace Memory, workSpaceSizeInBytes uintptr, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
-	var alphaC, betaC unsafe.Pointer
-	switch dyDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", dyDesc.dataType)
-	}
-	// call cudnnConvolutionBackwardData
-	return result(C.cudnnConvolutionBackwardData(co.internal, alphaC, wDesc.internal, w.Pointer(), dyDesc.internal, dy.Pointer(), convDesc.internal, algo.C(), workSpace.Pointer(), C.size_t(workSpaceSizeInBytes), betaC, dxDesc.internal, dx.Pointer()))
-}
-
-// Im2Col constructs the A matrix necessary to perform a forward pass of GEMM convolution. Im2Col A matrix has a height of batch_size*y_height*y_width and width of input_channels*filter_height*filter_width, where batch_size is xDesc's first dimension, y_height/y_width are computed from cudnnGetConvolutionNdForwardOutputDim(), input_channels is xDesc's second dimension, filter_height/filter_width are wDesc's third and fourth dimension. The A matrix is stored in format HW-fully-packed in GPU memory.
-func (co *Context) Im2Col(xDesc *TensorDescriptor, x Memory, wDesc *Filter, convDesc *Convolution, colBuffer Memory) error {
-	// DOUBLECHECK: "cudnnIm2Col" returns Memory type in Parameter 5
-	// call cudnnIm2Col
-	return result(C.cudnnIm2Col(co.internal, xDesc.internal, x.Pointer(), wDesc.internal, convDesc.internal, colBuffer.Pointer()))
-}
-
-// SoftmaxForward computes the softmax function.
-func (co *Context) SoftmaxForward(algo SoftmaxAlgorithm, mode SoftmaxMode, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
-	// DOUBLECHECK: "cudnnSoftmaxForward" returns Memory type in Parameter 8
-	var alphaC, betaC unsafe.Pointer
-	switch xDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
-	}
-	// call cudnnSoftmaxForward
-	return result(C.cudnnSoftmaxForward(co.internal, algo.C(), mode.C(), alphaC, xDesc.internal, x.Pointer(), betaC, yDesc.internal, y.Pointer()))
-}
-
-// SoftmaxBackward computes the gradient of the softmax function.
-func (co *Context) SoftmaxBackward(algo SoftmaxAlgorithm, mode SoftmaxMode, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
-	// DOUBLECHECK: "cudnnSoftmaxBackward" returns Memory type in Parameter 10
-	var alphaC, betaC unsafe.Pointer
-	switch yDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
-	}
-	// call cudnnSoftmaxBackward
-	return result(C.cudnnSoftmaxBackward(co.internal, algo.C(), mode.C(), alphaC, yDesc.internal, y.Pointer(), dyDesc.internal, dy.Pointer(), betaC, dxDesc.internal, dx.Pointer()))
-}
-
-// PoolingForward computes pooling of input values (i.e., the maximum or average of several adjacent values) to produce an output with smaller height and/or width.
-func (co *Context) PoolingForward(poolingDesc *Pooling, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
-	// DOUBLECHECK: "cudnnPoolingForward" returns Memory type in Parameter 7
-	var alphaC, betaC unsafe.Pointer
-	switch xDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
-	}
-	// call cudnnPoolingForward
-	return result(C.cudnnPoolingForward(co.internal, poolingDesc.internal, alphaC, xDesc.internal, x.Pointer(), betaC, yDesc.internal, y.Pointer()))
-}
-
-// PoolingBackward computes the gradient of a pooling operation.
-func (co *Context) PoolingBackward(poolingDesc *Pooling, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
-	// DOUBLECHECK: "cudnnPoolingBackward" returns Memory type in Parameter 11
-	var alphaC, betaC unsafe.Pointer
-	switch yDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
-	}
-	// call cudnnPoolingBackward
-	return result(C.cudnnPoolingBackward(co.internal, poolingDesc.internal, alphaC, yDesc.internal, y.Pointer(), dyDesc.internal, dy.Pointer(), xDesc.internal, x.Pointer(), betaC, dxDesc.internal, dx.Pointer()))
-}
-
-// ActivationForward applies a specified neuron activation function element-wise over each input value.
-func (co *Context) ActivationForward(activationDesc *Activation, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
-	// DOUBLECHECK: "cudnnActivationForward" returns Memory type in Parameter 7
-	var alphaC, betaC unsafe.Pointer
-	switch xDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
-	}
-	// call cudnnActivationForward
-	return result(C.cudnnActivationForward(co.internal, activationDesc.internal, alphaC, xDesc.internal, x.Pointer(), betaC, yDesc.internal, y.Pointer()))
-}
-
-// ActivationBackward computes the gradient of a neuron activation function.
-func (co *Context) ActivationBackward(activationDesc *Activation, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
-	// DOUBLECHECK: "cudnnActivationBackward" returns Memory type in Parameter 11
-	var alphaC, betaC unsafe.Pointer
-	switch yDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
-	}
-	// call cudnnActivationBackward
-	return result(C.cudnnActivationBackward(co.internal, activationDesc.internal, alphaC, yDesc.internal, y.Pointer(), dyDesc.internal, dy.Pointer(), xDesc.internal, x.Pointer(), betaC, dxDesc.internal, dx.Pointer()))
-}
-
-// LRNCrossChannelForward performs the forward LRN layer computation.
-func (co *Context) LRNCrossChannelForward(normDesc *LRN, lrnMode LRNMode, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
-	// DOUBLECHECK: "cudnnLRNCrossChannelForward" returns Memory type in Parameter 8
-	var alphaC, betaC unsafe.Pointer
-	switch xDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
-	}
-	// call cudnnLRNCrossChannelForward
-	return result(C.cudnnLRNCrossChannelForward(co.internal, normDesc.internal, lrnMode.C(), alphaC, xDesc.internal, x.Pointer(), betaC, yDesc.internal, y.Pointer()))
-}
-
-// LRNCrossChannelBackward performs the backward LRN layer computation.
-func (co *Context) LRNCrossChannelBackward(normDesc *LRN, lrnMode LRNMode, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
-	// DOUBLECHECK: "cudnnLRNCrossChannelBackward" returns Memory type in Parameter 12
-	var alphaC, betaC unsafe.Pointer
-	switch yDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
-	}
-	// TODO: dxDesc cudnnTensorDescriptor_t
-	// call cudnnLRNCrossChannelBackward
-	return result(C.cudnnLRNCrossChannelBackward(co.internal, normDesc.internal, lrnMode.C(), alphaC, yDesc.internal, y.Pointer(), dyDesc.internal, dy.Pointer(), xDesc.internal, x.Pointer(), betaC, dxDesc.internal, dx.Pointer()))
-}
-
-// DivisiveNormalizationForward performs the forward spatial DivisiveNormalization layer computation. It divides every value in a layer by the standard deviation of it's spatial neighbors as described in `What is the Best Multi-Stage Architecture for Object Recognition`, Jarrett 2009, Local Contrast Normalization Layer section. Note that Divisive Normalization only implements the x/max(c, sigma_x) portion of the computation, where sigma_x is the variance over the spatial neighborhood of x. The full LCN (Local Contrastive Normalization) computation can be implemented as a two-step process:
-func (co *Context) DivisiveNormalizationForward(normDesc *LRN, mode DivNormMode, alpha float64, xDesc *TensorDescriptor, x Memory, means Memory, temp Memory, temp2 Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
-	// DOUBLECHECK: "cudnnDivisiveNormalizationForward" returns Memory type in Parameter 11
-	var alphaC, betaC unsafe.Pointer
-	switch xDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
-	}
-	// call cudnnDivisiveNormalizationForward
-	return result(C.cudnnDivisiveNormalizationForward(co.internal, normDesc.internal, mode.C(), alphaC, xDesc.internal, x.Pointer(), means.Pointer(), temp.Pointer(), temp2.Pointer(), betaC, yDesc.internal, y.Pointer()))
-}
-
-// DivisiveNormalizationBackward performs the backward DivisiveNormalization layer computation.
-func (co *Context) DivisiveNormalizationBackward(normDesc *LRN, mode DivNormMode, alpha float64, xDesc *TensorDescriptor, x Memory, means Memory, dy Memory, temp Memory, temp2 Memory, beta float64, dXdMeansDesc *TensorDescriptor, dx Memory, dMeans Memory) error {
-	// DOUBLECHECK: "cudnnDivisiveNormalizationBackward" returns Memory type in Parameter 13
-	var alphaC, betaC unsafe.Pointer
-	switch xDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
-	}
-	// call cudnnDivisiveNormalizationBackward
-	return result(C.cudnnDivisiveNormalizationBackward(co.internal, normDesc.internal, mode.C(), alphaC, xDesc.internal, x.Pointer(), means.Pointer(), dy.Pointer(), temp.Pointer(), temp2.Pointer(), betaC, dXdMeansDesc.internal, dx.Pointer(), dMeans.Pointer()))
-}
-
-// BatchNormalizationForwardTraining performs the forward BatchNormalization layer computation for training phase.
-func (co *Context) BatchNormalizationForwardTraining(mode BatchNormMode, alpha float64, beta float64, xDesc *TensorDescriptor, x Memory, yDesc *TensorDescriptor, y Memory, bnScaleBiasMeanVarDesc *TensorDescriptor, bnScale Memory, bnBias Memory, exponentialAverageFactor float64, resultRunningMean Memory, resultRunningVariance Memory, epsilon float64, resultSaveMean Memory, resultSaveInvVariance Memory) error {
-	// DOUBLECHECK: "cudnnBatchNormalizationForwardTraining" returns Memory type in Parameter 16
-	var alphaC, betaC unsafe.Pointer
-	switch xDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
-	}
-	// call cudnnBatchNormalizationForwardTraining
-	return result(C.cudnnBatchNormalizationForwardTraining(co.internal, mode.C(), alphaC, betaC, xDesc.internal, x.Pointer(), yDesc.internal, y.Pointer(), bnScaleBiasMeanVarDesc.internal, bnScale.Pointer(), bnBias.Pointer(), C.double(exponentialAverageFactor), resultRunningMean.Pointer(), resultRunningVariance.Pointer(), C.double(epsilon), resultSaveMean.Pointer(), resultSaveInvVariance.Pointer()))
-}
-
-// BatchNormalizationForwardInference performs the forward BatchNormalization layer computation for inference phase. BatchNormalizationForwardInference layer is based on the paper `Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift`, S. Ioffe, C. Szegedy, 2015.
-func (co *Context) BatchNormalizationForwardInference(mode BatchNormMode, alpha float64, beta float64, xDesc *TensorDescriptor, x Memory, yDesc *TensorDescriptor, y Memory, bnScaleBiasMeanVarDesc *TensorDescriptor, bnScale Memory, bnBias Memory, estimatedMean Memory, estimatedVariance Memory, epsilon float64) error {
-	var alphaC, betaC unsafe.Pointer
-	switch xDesc.dataType {
-	case Float, Half:
-		var alphaF, betaF C.float
-		alphaF = C.float(float32(alpha))
-		betaF = C.float(float32(beta))
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	case Double:
-		var alphaF, betaF C.double
-		alphaF = C.double(alpha)
-		betaF = C.double(beta)
-		alphaC = unsafe.Pointer(&alphaF)
-		betaC = unsafe.Pointer(&betaF)
-	default:
-		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
-	}
-	// call cudnnBatchNormalizationForwardInference
-	return result(C.cudnnBatchNormalizationForwardInference(co.internal, mode.C(), alphaC, betaC, xDesc.internal, x.Pointer(), yDesc.internal, y.Pointer(), bnScaleBiasMeanVarDesc.internal, bnScale.Pointer(), bnBias.Pointer(), estimatedMean.Pointer(), estimatedVariance.Pointer(), C.double(epsilon)))
-}
-
-// BatchNormalizationBackward performs the backward BatchNormalization layer computation.
 func (co *Context) BatchNormalizationBackward(mode BatchNormMode, alphaDataDiff float64, betaDataDiff float64, alphaParamDiff float64, betaParamDiff float64, xDesc *TensorDescriptor, x Memory, dyDesc *TensorDescriptor, dy Memory, dxDesc *TensorDescriptor, dx Memory, dBnScaleBiasDesc *TensorDescriptor, bnScale Memory, dBnScaleResult Memory, dBnBiasResult Memory, epsilon float64, savedMean Memory, savedInvVariance Memory) error {
 	var alphaDataDiffC, betaDataDiffC, alphaParamDiffC, betaParamDiffC unsafe.Pointer
 	switch xDesc.dataType {
@@ -670,26 +100,9 @@ func (co *Context) BatchNormalizationBackward(mode BatchNormMode, alphaDataDiff 
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnBatchNormalizationBackward
-	return result(C.cudnnBatchNormalizationBackward(co.internal, mode.C(), alphaDataDiffC, betaDataDiffC, alphaParamDiffC, betaParamDiffC, xDesc.internal, x.Pointer(), dyDesc.internal, dy.Pointer(), dxDesc.internal, dx.Pointer(), dBnScaleBiasDesc.internal, bnScale.Pointer(), dBnScaleResult.Pointer(), dBnBiasResult.Pointer(), C.double(epsilon), savedMean.Pointer(), savedInvVariance.Pointer()))
+	return result(C.cudnnBatchNormalizationBackward(co.internal, mode.C(), alphaDataDiffC, betaDataDiffC, alphaParamDiffC, betaParamDiffC, xDesc.internal, unsafe.Pointer(x.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), dxDesc.internal, unsafe.Pointer(dx.Uintptr()), dBnScaleBiasDesc.internal, unsafe.Pointer(bnScale.Uintptr()), unsafe.Pointer(dBnScaleResult.Uintptr()), unsafe.Pointer(dBnBiasResult.Uintptr()), C.double(epsilon), unsafe.Pointer(savedMean.Uintptr()), unsafe.Pointer(savedInvVariance.Uintptr())))
 }
-
-// SpatialTfGridGeneratorForward generates a grid of coordinates in the input tensor corresponding to each pixel from the output tensor.
-func (co *Context) SpatialTfGridGeneratorForward(stDesc *SpatialTransformer, theta Memory, grid Memory) error {
-	// DOUBLECHECK: "cudnnSpatialTfGridGeneratorForward" returns Memory type in Parameter 3
-	// call cudnnSpatialTfGridGeneratorForward
-	return result(C.cudnnSpatialTfGridGeneratorForward(co.internal, stDesc.internal, theta.Pointer(), grid.Pointer()))
-}
-
-// SpatialTfGridGeneratorBackward computes the gradient of a grid generation operation.
-func (co *Context) SpatialTfGridGeneratorBackward(stDesc *SpatialTransformer, dgrid Memory, dtheta Memory) error {
-	// DOUBLECHECK: "cudnnSpatialTfGridGeneratorBackward" returns Memory type in Parameter 3
-	// call cudnnSpatialTfGridGeneratorBackward
-	return result(C.cudnnSpatialTfGridGeneratorBackward(co.internal, stDesc.internal, dgrid.Pointer(), dtheta.Pointer()))
-}
-
-// SpatialTfSamplerForward performs a sampler operation and generates the output tensor using the grid given by the grid generator.
-func (co *Context) SpatialTfSamplerForward(stDesc *SpatialTransformer, alpha float64, xDesc *TensorDescriptor, x Memory, grid Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
-	// DOUBLECHECK: "cudnnSpatialTfSamplerForward" returns Memory type in Parameter 8
+func (co *Context) BatchNormalizationForwardInference(mode BatchNormMode, alpha float64, beta float64, xDesc *TensorDescriptor, x Memory, yDesc *TensorDescriptor, y Memory, bnScaleBiasMeanVarDesc *TensorDescriptor, bnScale Memory, bnBias Memory, estimatedMean Memory, estimatedVariance Memory, epsilon float64) error {
 	var alphaC, betaC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -707,13 +120,463 @@ func (co *Context) SpatialTfSamplerForward(stDesc *SpatialTransformer, alpha flo
 	default:
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
-	// call cudnnSpatialTfSamplerForward
-	return result(C.cudnnSpatialTfSamplerForward(co.internal, stDesc.internal, alphaC, xDesc.internal, x.Pointer(), grid.Pointer(), betaC, yDesc.internal, y.Pointer()))
+	// call cudnnBatchNormalizationForwardInference
+	return result(C.cudnnBatchNormalizationForwardInference(co.internal, mode.C(), alphaC, betaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), bnScaleBiasMeanVarDesc.internal, unsafe.Pointer(bnScale.Uintptr()), unsafe.Pointer(bnBias.Uintptr()), unsafe.Pointer(estimatedMean.Uintptr()), unsafe.Pointer(estimatedVariance.Uintptr()), C.double(epsilon)))
 }
-
-// SpatialTfSamplerBackward computes the gradient of a sampling operation.
+func (co *Context) BatchNormalizationForwardTraining(mode BatchNormMode, alpha float64, beta float64, xDesc *TensorDescriptor, x Memory, yDesc *TensorDescriptor, y Memory, bnScaleBiasMeanVarDesc *TensorDescriptor, bnScale Memory, bnBias Memory, exponentialAverageFactor float64, resultRunningMean Memory, resultRunningVariance Memory, epsilon float64, resultSaveMean Memory, resultSaveInvVariance Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch xDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
+	}
+	// call cudnnBatchNormalizationForwardTraining
+	return result(C.cudnnBatchNormalizationForwardTraining(co.internal, mode.C(), alphaC, betaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), bnScaleBiasMeanVarDesc.internal, unsafe.Pointer(bnScale.Uintptr()), unsafe.Pointer(bnBias.Uintptr()), C.double(exponentialAverageFactor), unsafe.Pointer(resultRunningMean.Uintptr()), unsafe.Pointer(resultRunningVariance.Uintptr()), C.double(epsilon), unsafe.Pointer(resultSaveMean.Uintptr()), unsafe.Pointer(resultSaveInvVariance.Uintptr())))
+}
+func (co *Context) CTCLoss(probsDesc *TensorDescriptor, probs Memory, hostLabels TODO, hostLabelLengths TODO, hostInputLengths TODO, costs Memory, gradientsDesc *TensorDescriptor, gradients Memory, algo CTCLossAlgo, ctcLossDesc *CTCLoss, workspace Memory, workSpaceSizeInBytes uintptr) error {
+	// call cudnnCTCLoss
+	return result(C.cudnnCTCLoss(co.internal, probsDesc.internal, unsafe.Pointer(probs.Uintptr()), hostLabels, hostLabelLengths, hostInputLengths, unsafe.Pointer(costs.Uintptr()), gradientsDesc.internal, unsafe.Pointer(gradients.Uintptr()), algo.C(), ctcLossDesc.internal, unsafe.Pointer(workspace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
+}
+func (co *Context) ConvolutionBackwardBias(alpha float64, dyDesc *TensorDescriptor, dy Memory, beta float64, dbDesc *TensorDescriptor, db Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch dyDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", dyDesc.dataType)
+	}
+	// call cudnnConvolutionBackwardBias
+	return result(C.cudnnConvolutionBackwardBias(co.internal, alphaC, dyDesc.internal, unsafe.Pointer(dy.Uintptr()), betaC, dbDesc.internal, unsafe.Pointer(db.Uintptr())))
+}
+func (co *Context) ConvolutionBackwardData(alpha float64, wDesc *Filter, w Memory, dyDesc *TensorDescriptor, dy Memory, convDesc *Convolution, algo ConvolutionBwdDataAlgo, workSpace Memory, workSpaceSizeInBytes uintptr, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch dyDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", dyDesc.dataType)
+	}
+	// call cudnnConvolutionBackwardData
+	return result(C.cudnnConvolutionBackwardData(co.internal, alphaC, wDesc.internal, unsafe.Pointer(w.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), convDesc.internal, algo.C(), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr())))
+}
+func (co *Context) ConvolutionBackwardFilter(alpha float64, xDesc *TensorDescriptor, x Memory, dyDesc *TensorDescriptor, dy Memory, convDesc *Convolution, algo ConvolutionBwdFilterAlgo, workSpace Memory, workSpaceSizeInBytes uintptr, beta float64, dwDesc *Filter, dw Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch xDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
+	}
+	// call cudnnConvolutionBackwardFilter
+	return result(C.cudnnConvolutionBackwardFilter(co.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), convDesc.internal, algo.C(), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), betaC, dwDesc.internal, unsafe.Pointer(dw.Uintptr())))
+}
+func (co *Context) ConvolutionBiasActivationForward(alpha1 float64, xDesc *TensorDescriptor, x Memory, wDesc *Filter, w Memory, convDesc *Convolution, algo ConvolutionFwdAlgo, workSpace Memory, workSpaceSizeInBytes uintptr, alpha2 float64, zDesc *TensorDescriptor, z Memory, biasDesc *TensorDescriptor, bias Memory, activationDesc *Activation, yDesc *TensorDescriptor, y Memory) error {
+	var alpha1C, alpha2C unsafe.Pointer
+	switch xDesc.dataType {
+	case Float, Half:
+		var alpha1F, alpha2F C.float
+		alpha1F = C.float(float32(alpha1))
+		alpha2F = C.float(float32(alpha2))
+		alpha1C = unsafe.Pointer(&alpha1F)
+		alpha2C = unsafe.Pointer(&alpha2F)
+	case Double:
+		var alpha1F, alpha2F C.double
+		alpha1F = C.double(alpha1)
+		alpha2F = C.double(alpha2)
+		alpha1C = unsafe.Pointer(&alpha1F)
+		alpha2C = unsafe.Pointer(&alpha2F)
+	default:
+		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
+	}
+	// call cudnnConvolutionBiasActivationForward
+	return result(C.cudnnConvolutionBiasActivationForward(co.internal, alpha1C, xDesc.internal, unsafe.Pointer(x.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), convDesc.internal, algo.C(), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), alpha2C, zDesc.internal, unsafe.Pointer(z.Uintptr()), biasDesc.internal, unsafe.Pointer(bias.Uintptr()), activationDesc.internal, yDesc.internal, unsafe.Pointer(y.Uintptr())))
+}
+func (co *Context) ConvolutionForward(alpha float64, xDesc *TensorDescriptor, x Memory, wDesc *Filter, w Memory, convDesc *Convolution, algo ConvolutionFwdAlgo, workSpace Memory, workSpaceSizeInBytes uintptr, beta float64, yDesc *TensorDescriptor, y Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch xDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
+	}
+	// call cudnnConvolutionForward
+	return result(C.cudnnConvolutionForward(co.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), convDesc.internal, algo.C(), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
+}
+func (co *Context) DivisiveNormalizationBackward(normDesc *LRN, mode DivNormMode, alpha float64, xDesc *TensorDescriptor, x Memory, means Memory, dy Memory, temp Memory, temp2 Memory, beta float64, dXdMeansDesc *TensorDescriptor, dx Memory, dMeans Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch xDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
+	}
+	// call cudnnDivisiveNormalizationBackward
+	return result(C.cudnnDivisiveNormalizationBackward(co.internal, normDesc.internal, mode.C(), alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), unsafe.Pointer(means.Uintptr()), unsafe.Pointer(dy.Uintptr()), unsafe.Pointer(temp.Uintptr()), unsafe.Pointer(temp2.Uintptr()), betaC, dXdMeansDesc.internal, unsafe.Pointer(dx.Uintptr()), unsafe.Pointer(dMeans.Uintptr())))
+}
+func (co *Context) DivisiveNormalizationForward(normDesc *LRN, mode DivNormMode, alpha float64, xDesc *TensorDescriptor, x Memory, means Memory, temp Memory, temp2 Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch xDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
+	}
+	// call cudnnDivisiveNormalizationForward
+	return result(C.cudnnDivisiveNormalizationForward(co.internal, normDesc.internal, mode.C(), alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), unsafe.Pointer(means.Uintptr()), unsafe.Pointer(temp.Uintptr()), unsafe.Pointer(temp2.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
+}
+func (co *Context) DropoutBackward(dropoutDesc *Dropout, dydesc *TensorDescriptor, dy Memory, dxdesc *TensorDescriptor, dx Memory, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
+	// call cudnnDropoutBackward
+	return result(C.cudnnDropoutBackward(co.internal, dropoutDesc.internal, dydesc.internal, unsafe.Pointer(dy.Uintptr()), dxdesc.internal, unsafe.Pointer(dx.Uintptr()), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
+}
+func (co *Context) DropoutForward(dropoutDesc *Dropout, xdesc *TensorDescriptor, x Memory, ydesc *TensorDescriptor, y Memory, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
+	// call cudnnDropoutForward
+	return result(C.cudnnDropoutForward(co.internal, dropoutDesc.internal, xdesc.internal, unsafe.Pointer(x.Uintptr()), ydesc.internal, unsafe.Pointer(y.Uintptr()), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
+}
+func (co *Context) DropoutGetStatesSize(sizeInBytes uintptr) error {
+	// call cudnnDropoutGetStatesSize
+	return result(C.cudnnDropoutGetStatesSize(co.internal, C.size_t(sizeInBytes)))
+}
+func (co *Context) FindConvolutionBackwardDataAlgorithm(wDesc *Filter, dyDesc *TensorDescriptor, convDesc *Convolution, dxDesc *TensorDescriptor, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionBwdDataPerf) error {
+	// call cudnnFindConvolutionBackwardDataAlgorithm
+	return result(C.cudnnFindConvolutionBackwardDataAlgorithm(co.internal, wDesc.internal, dyDesc.internal, convDesc.internal, dxDesc.internal, C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal))
+}
+func (co *Context) FindConvolutionBackwardDataAlgorithmEx(wDesc *Filter, w Memory, dyDesc *TensorDescriptor, dy Memory, convDesc *Convolution, dxDesc *TensorDescriptor, dx Memory, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionBwdDataPerf, workSpace Memory, workSpaceSizeInBytes uintptr) error {
+	// call cudnnFindConvolutionBackwardDataAlgorithmEx
+	return result(C.cudnnFindConvolutionBackwardDataAlgorithmEx(co.internal, wDesc.internal, unsafe.Pointer(w.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), convDesc.internal, dxDesc.internal, unsafe.Pointer(dx.Uintptr()), C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal, unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
+}
+func (co *Context) FindConvolutionBackwardFilterAlgorithm(xDesc *TensorDescriptor, dyDesc *TensorDescriptor, convDesc *Convolution, dwDesc *Filter, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionBwdPerf) error {
+	// call cudnnFindConvolutionBackwardFilterAlgorithm
+	return result(C.cudnnFindConvolutionBackwardFilterAlgorithm(co.internal, xDesc.internal, dyDesc.internal, convDesc.internal, dwDesc.internal, C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal))
+}
+func (co *Context) FindConvolutionBackwardFilterAlgorithmEx(xDesc *TensorDescriptor, x Memory, dyDesc *TensorDescriptor, y Memory, convDesc *Convolution, dwDesc *Filter, dw Memory, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionBwdPerf, workSpace Memory, workSpaceSizeInBytes uintptr) error {
+	// call cudnnFindConvolutionBackwardFilterAlgorithmEx
+	return result(C.cudnnFindConvolutionBackwardFilterAlgorithmEx(co.internal, xDesc.internal, unsafe.Pointer(x.Uintptr()), dyDesc.internal, unsafe.Pointer(y.Uintptr()), convDesc.internal, dwDesc.internal, unsafe.Pointer(dw.Uintptr()), C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal, unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
+}
+func (co *Context) FindConvolutionForwardAlgorithm(xDesc *TensorDescriptor, wDesc *Filter, convDesc *Convolution, yDesc *TensorDescriptor, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionFwdPerf) error {
+	// call cudnnFindConvolutionForwardAlgorithm
+	return result(C.cudnnFindConvolutionForwardAlgorithm(co.internal, xDesc.internal, wDesc.internal, convDesc.internal, yDesc.internal, C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal))
+}
+func (co *Context) FindConvolutionForwardAlgorithmEx(xDesc *TensorDescriptor, x Memory, wDesc *Filter, w Memory, convDesc *Convolution, yDesc *TensorDescriptor, y Memory, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionFwdPerf, workSpace Memory, workSpaceSizeInBytes uintptr) error {
+	// call cudnnFindConvolutionForwardAlgorithmEx
+	return result(C.cudnnFindConvolutionForwardAlgorithmEx(co.internal, xDesc.internal, unsafe.Pointer(x.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), convDesc.internal, yDesc.internal, unsafe.Pointer(y.Uintptr()), C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal, unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
+}
+func (co *Context) GetRNNLinLayerBiasParams(rnnDesc *RNN, pseudoLayer int, xDesc *TensorDescriptor, wDesc *Filter, w Memory, linLayerID int, linLayerBiasDesc *Filter, linLayerBias TODO) error {
+	// call cudnnGetRNNLinLayerBiasParams
+	return result(C.cudnnGetRNNLinLayerBiasParams(co.internal, rnnDesc.internal, C.int(pseudoLayer), xDesc.internal, wDesc.internal, unsafe.Pointer(w.Uintptr()), C.int(linLayerID), linLayerBiasDesc.internal, linLayerBias))
+}
+func (co *Context) GetRNNLinLayerMatrixParams(rnnDesc *RNN, pseudoLayer int, xDesc *TensorDescriptor, wDesc *Filter, w Memory, linLayerID int, linLayerMatDesc *Filter, linLayerMat TODO) error {
+	// call cudnnGetRNNLinLayerMatrixParams
+	return result(C.cudnnGetRNNLinLayerMatrixParams(co.internal, rnnDesc.internal, C.int(pseudoLayer), xDesc.internal, wDesc.internal, unsafe.Pointer(w.Uintptr()), C.int(linLayerID), linLayerMatDesc.internal, linLayerMat))
+}
+func (co *Context) GetRNNParamsSize(rnnDesc *RNN, xDesc *TensorDescriptor, sizeInBytes uintptr, dataType DataType) error {
+	// call cudnnGetRNNParamsSize
+	return result(C.cudnnGetRNNParamsSize(co.internal, rnnDesc.internal, xDesc.internal, C.size_t(sizeInBytes), dataType.C()))
+}
+func (co *Context) GetRNNTrainingReserveSize(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, sizeInBytes uintptr) error {
+	// call cudnnGetRNNTrainingReserveSize
+	return result(C.cudnnGetRNNTrainingReserveSize(co.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, C.size_t(sizeInBytes)))
+}
+func (co *Context) GetRNNWorkspaceSize(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, sizeInBytes uintptr) error {
+	// call cudnnGetRNNWorkspaceSize
+	return result(C.cudnnGetRNNWorkspaceSize(co.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, C.size_t(sizeInBytes)))
+}
+func (co *Context) GetReductionIndicesSize(reduceTensorDesc *Reduction, aDesc *TensorDescriptor, cDesc *TensorDescriptor, sizeInBytes uintptr) error {
+	// call cudnnGetReductionIndicesSize
+	return result(C.cudnnGetReductionIndicesSize(co.internal, reduceTensorDesc.internal, aDesc.internal, cDesc.internal, C.size_t(sizeInBytes)))
+}
+func (co *Context) GetReductionWorkspaceSize(reduceTensorDesc *Reduction, aDesc *TensorDescriptor, cDesc *TensorDescriptor, sizeInBytes uintptr) error {
+	// call cudnnGetReductionWorkspaceSize
+	return result(C.cudnnGetReductionWorkspaceSize(co.internal, reduceTensorDesc.internal, aDesc.internal, cDesc.internal, C.size_t(sizeInBytes)))
+}
+func (co *Context) Im2Col(xDesc *TensorDescriptor, x Memory, wDesc *Filter, convDesc *Convolution, colBuffer Memory) error {
+	// call cudnnIm2Col
+	return result(C.cudnnIm2Col(co.internal, xDesc.internal, unsafe.Pointer(x.Uintptr()), wDesc.internal, convDesc.internal, unsafe.Pointer(colBuffer.Uintptr())))
+}
+func (co *Context) LRNCrossChannelBackward(normDesc *LRN, lrnMode LRNMode, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch yDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
+	}
+	// call cudnnLRNCrossChannelBackward
+	return result(C.cudnnLRNCrossChannelBackward(co.internal, normDesc.internal, lrnMode.C(), alphaC, yDesc.internal, unsafe.Pointer(y.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr())))
+}
+func (co *Context) LRNCrossChannelForward(normDesc *LRN, lrnMode LRNMode, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch xDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
+	}
+	// call cudnnLRNCrossChannelForward
+	return result(C.cudnnLRNCrossChannelForward(co.internal, normDesc.internal, lrnMode.C(), alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
+}
+func (co *Context) OpTensor(opTensorDesc *Op, alpha1 float64, aDesc *TensorDescriptor, A Memory, alpha2 float64, bDesc *TensorDescriptor, B Memory, beta float64, cDesc *TensorDescriptor, C_ Memory) error {
+	var alpha1C, alpha2C, betaC unsafe.Pointer
+	switch aDesc.dataType {
+	case Float, Half:
+		var alpha1F, alpha2F, betaF C.float
+		alpha1F = C.float(float32(alpha1))
+		alpha2F = C.float(float32(alpha2))
+		betaF = C.float(float32(beta))
+		alpha1C = unsafe.Pointer(&alpha1F)
+		alpha2C = unsafe.Pointer(&alpha2F)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alpha1F, alpha2F, betaF C.double
+		alpha1F = C.double(alpha1)
+		alpha2F = C.double(alpha2)
+		betaF = C.double(beta)
+		alpha1C = unsafe.Pointer(&alpha1F)
+		alpha2C = unsafe.Pointer(&alpha2F)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", aDesc.dataType)
+	}
+	// call cudnnOpTensor
+	return result(C.cudnnOpTensor(co.internal, opTensorDesc.internal, alpha1C, aDesc.internal, unsafe.Pointer(A.Uintptr()), alpha2C, bDesc.internal, unsafe.Pointer(B.Uintptr()), betaC, cDesc.internal, unsafe.Pointer(C_.Uintptr())))
+}
+func (co *Context) PoolingBackward(poolingDesc *Pooling, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch yDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
+	}
+	// call cudnnPoolingBackward
+	return result(C.cudnnPoolingBackward(co.internal, poolingDesc.internal, alphaC, yDesc.internal, unsafe.Pointer(y.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr())))
+}
+func (co *Context) PoolingForward(poolingDesc *Pooling, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch xDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
+	}
+	// call cudnnPoolingForward
+	return result(C.cudnnPoolingForward(co.internal, poolingDesc.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
+}
+func (co *Context) RNNBackwardData(rnnDesc *RNN, seqLength int, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, dhyDesc *TensorDescriptor, dhy Memory, dcyDesc *TensorDescriptor, dcy Memory, wDesc *Filter, w Memory, hxDesc *TensorDescriptor, hx Memory, cxDesc *TensorDescriptor, cx Memory, dxDesc *TensorDescriptor, dx Memory, dhxDesc *TensorDescriptor, dhx Memory, dcxDesc *TensorDescriptor, dcx Memory, workSpace Memory, workSpaceSizeInBytes uintptr, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
+	// call cudnnRNNBackwardData
+	return result(C.cudnnRNNBackwardData(co.internal, rnnDesc.internal, C.int(seqLength), yDesc.internal, unsafe.Pointer(y.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), dhyDesc.internal, unsafe.Pointer(dhy.Uintptr()), dcyDesc.internal, unsafe.Pointer(dcy.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), hxDesc.internal, unsafe.Pointer(hx.Uintptr()), cxDesc.internal, unsafe.Pointer(cx.Uintptr()), dxDesc.internal, unsafe.Pointer(dx.Uintptr()), dhxDesc.internal, unsafe.Pointer(dhx.Uintptr()), dcxDesc.internal, unsafe.Pointer(dcx.Uintptr()), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
+}
+func (co *Context) RNNBackwardWeights(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, x Memory, hxDesc *TensorDescriptor, hx Memory, yDesc *TensorDescriptor, y Memory, workSpace Memory, workSpaceSizeInBytes uintptr, dwDesc *Filter, dw Memory, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
+	// call cudnnRNNBackwardWeights
+	return result(C.cudnnRNNBackwardWeights(co.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, unsafe.Pointer(x.Uintptr()), hxDesc.internal, unsafe.Pointer(hx.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), dwDesc.internal, unsafe.Pointer(dw.Uintptr()), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
+}
+func (co *Context) RNNForwardInference(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, x Memory, hxDesc *TensorDescriptor, hx Memory, cxDesc *TensorDescriptor, cx Memory, wDesc *Filter, w Memory, yDesc *TensorDescriptor, y Memory, hyDesc *TensorDescriptor, hy Memory, cyDesc *TensorDescriptor, cy Memory, workSpace Memory, workSpaceSizeInBytes uintptr) error {
+	// call cudnnRNNForwardInference
+	return result(C.cudnnRNNForwardInference(co.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, unsafe.Pointer(x.Uintptr()), hxDesc.internal, unsafe.Pointer(hx.Uintptr()), cxDesc.internal, unsafe.Pointer(cx.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), hyDesc.internal, unsafe.Pointer(hy.Uintptr()), cyDesc.internal, unsafe.Pointer(cy.Uintptr()), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
+}
+func (co *Context) RNNForwardTraining(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, x Memory, hxDesc *TensorDescriptor, hx Memory, cxDesc *TensorDescriptor, cx Memory, wDesc *Filter, w Memory, yDesc *TensorDescriptor, y Memory, hyDesc *TensorDescriptor, hy Memory, cyDesc *TensorDescriptor, cy Memory, workSpace Memory, workSpaceSizeInBytes uintptr, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
+	// call cudnnRNNForwardTraining
+	return result(C.cudnnRNNForwardTraining(co.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, unsafe.Pointer(x.Uintptr()), hxDesc.internal, unsafe.Pointer(hx.Uintptr()), cxDesc.internal, unsafe.Pointer(cx.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), hyDesc.internal, unsafe.Pointer(hy.Uintptr()), cyDesc.internal, unsafe.Pointer(cy.Uintptr()), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
+}
+func (co *Context) ReduceTensor(reduceTensorDesc *Reduction, indices Memory, indicesSizeInBytes uintptr, workspace Memory, workspaceSizeInBytes uintptr, alpha float64, aDesc *TensorDescriptor, A Memory, beta float64, cDesc *TensorDescriptor, C_ Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch aDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", aDesc.dataType)
+	}
+	// call cudnnReduceTensor
+	return result(C.cudnnReduceTensor(co.internal, reduceTensorDesc.internal, unsafe.Pointer(indices.Uintptr()), C.size_t(indicesSizeInBytes), unsafe.Pointer(workspace.Uintptr()), C.size_t(workspaceSizeInBytes), alphaC, aDesc.internal, unsafe.Pointer(A.Uintptr()), betaC, cDesc.internal, unsafe.Pointer(C_.Uintptr())))
+}
+func (co *Context) ScaleTensor(yDesc *TensorDescriptor, y Memory, alpha float64) error {
+	var alphaC unsafe.Pointer
+	switch yDesc.dataType {
+	case Float, Half:
+		var alphaF C.float
+		alphaF = C.float(float32(alpha))
+		alphaC = unsafe.Pointer(&alphaF)
+	case Double:
+		var alphaF C.double
+		alphaF = C.double(alpha)
+		alphaC = unsafe.Pointer(&alphaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
+	}
+	// call cudnnScaleTensor
+	return result(C.cudnnScaleTensor(co.internal, yDesc.internal, unsafe.Pointer(y.Uintptr()), alphaC))
+}
+func (co *Context) SoftmaxBackward(algo SoftmaxAlgorithm, mode SoftmaxMode, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch yDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
+	}
+	// call cudnnSoftmaxBackward
+	return result(C.cudnnSoftmaxBackward(co.internal, algo.C(), mode.C(), alphaC, yDesc.internal, unsafe.Pointer(y.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr())))
+}
+func (co *Context) SoftmaxForward(algo SoftmaxAlgorithm, mode SoftmaxMode, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch xDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
+	}
+	// call cudnnSoftmaxForward
+	return result(C.cudnnSoftmaxForward(co.internal, algo.C(), mode.C(), alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
+}
+func (co *Context) SpatialTfGridGeneratorBackward(stDesc *SpatialTransformer, dgrid Memory, dtheta Memory) error {
+	// call cudnnSpatialTfGridGeneratorBackward
+	return result(C.cudnnSpatialTfGridGeneratorBackward(co.internal, stDesc.internal, unsafe.Pointer(dgrid.Uintptr()), unsafe.Pointer(dtheta.Uintptr())))
+}
+func (co *Context) SpatialTfGridGeneratorForward(stDesc *SpatialTransformer, theta Memory, grid Memory) error {
+	// call cudnnSpatialTfGridGeneratorForward
+	return result(C.cudnnSpatialTfGridGeneratorForward(co.internal, stDesc.internal, unsafe.Pointer(theta.Uintptr()), unsafe.Pointer(grid.Uintptr())))
+}
 func (co *Context) SpatialTfSamplerBackward(stDesc *SpatialTransformer, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory, alphaDgrid Memory, dyDesc *TensorDescriptor, dy Memory, grid Memory, betaDgrid Memory, dgrid Memory) error {
-	// DOUBLECHECK: "cudnnSpatialTfSamplerBackward" returns Memory type in Parameter 13
 	var alphaC, betaC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -732,211 +595,60 @@ func (co *Context) SpatialTfSamplerBackward(stDesc *SpatialTransformer, alpha fl
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnSpatialTfSamplerBackward
-	return result(C.cudnnSpatialTfSamplerBackward(co.internal, stDesc.internal, alphaC, xDesc.internal, x.Pointer(), betaC, dxDesc.internal, dx.Pointer(), alphaDgrid.Pointer(), dyDesc.internal, dy.Pointer(), grid.Pointer(), betaDgrid.Pointer(), dgrid.Pointer()))
+	return result(C.cudnnSpatialTfSamplerBackward(co.internal, stDesc.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr()), unsafe.Pointer(alphaDgrid.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), unsafe.Pointer(grid.Uintptr()), unsafe.Pointer(betaDgrid.Uintptr()), unsafe.Pointer(dgrid.Uintptr())))
 }
-
-// DropoutGetStatesSize is used to query the amount of space required to store the states of the random number generators used by cudnnDropoutForward function.
-func (co *Context) DropoutGetStatesSize() (sizeInBytes uintptr, err error) {
-	var sizeInBytesC C.size_t
-	// call cudnnDropoutGetStatesSize
-	err = result(C.cudnnDropoutGetStatesSize(co.internal, &sizeInBytesC))
-	sizeInBytes = uintptr(sizeInBytesC)
-	return
+func (co *Context) SpatialTfSamplerForward(stDesc *SpatialTransformer, alpha float64, xDesc *TensorDescriptor, x Memory, grid Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch xDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
+	}
+	// call cudnnSpatialTfSamplerForward
+	return result(C.cudnnSpatialTfSamplerForward(co.internal, stDesc.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), unsafe.Pointer(grid.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
 }
-
-// DropoutForward performs forward dropout operation over x returning results in y. If dropout was used as a parameter to cudnnSetDropoutDescriptor, the approximately dropout fraction of x values will be replaces by 0, and the rest will be scaled by 1/(1-dropout) DropoutForward should not be running concurrently with another DropoutForward function using the same states.
-func (co *Context) DropoutForward(dropoutDesc *Dropout, xdesc *TensorDescriptor, x Memory, ydesc *TensorDescriptor, y Memory, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
-	// DOUBLECHECK: "cudnnDropoutForward" returns Memory type in Parameter 6
-	// call cudnnDropoutForward
-	return result(C.cudnnDropoutForward(co.internal, dropoutDesc.internal, xdesc.internal, x.Pointer(), ydesc.internal, y.Pointer(), reserveSpace.Pointer(), C.size_t(reserveSpaceSizeInBytes)))
+func (co *Context) TransformTensor(alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
+	var alphaC, betaC unsafe.Pointer
+	switch xDesc.dataType {
+	case Float, Half:
+		var alphaF, betaF C.float
+		alphaF = C.float(float32(alpha))
+		betaF = C.float(float32(beta))
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	case Double:
+		var alphaF, betaF C.double
+		alphaF = C.double(alpha)
+		betaF = C.double(beta)
+		alphaC = unsafe.Pointer(&alphaF)
+		betaC = unsafe.Pointer(&betaF)
+	default:
+		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
+	}
+	// call cudnnTransformTensor
+	return result(C.cudnnTransformTensor(co.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
 }
-
-// DropoutBackward performs backward dropout operation over dy returning results in dx. If during forward dropout operation value from x was propagated to y then during backward operation value from dy will be propagated to dx, otherwise, dx value will be set to 0.
-func (co *Context) DropoutBackward(dropoutDesc *Dropout, dydesc *TensorDescriptor, dy Memory, dxdesc *TensorDescriptor, dx Memory, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
-	// DOUBLECHECK: "cudnnDropoutBackward" returns Memory type in Parameter 5
-	// call cudnnDropoutBackward
-	return result(C.cudnnDropoutBackward(co.internal, dropoutDesc.internal, dydesc.internal, dy.Pointer(), dxdesc.internal, dx.Pointer(), reserveSpace.Pointer(), C.size_t(reserveSpaceSizeInBytes)))
+func (te *TensorDescriptor) DeriveBNTensorDescriptor(mode BatchNormMode) error {
+	// TODO: xDesc cudnnTensorDescriptor_t
+	// call cudnnDeriveBNTensorDescriptor
+	return result(C.cudnnDeriveBNTensorDescriptor(te.internal, xDesc.internal, mode.C()))
 }
-
-// GetRNNWorkspaceSize is used to query the amount of work space required to execute the RNN described by rnnDesc with inputs dimensions defined by xDesc.
-func (co *Context) GetRNNWorkspaceSize(rnnDesc *RNN, seqLength int, xDesc []*TensorDescriptor) (sizeInBytes uintptr, err error) {
-	var sizeInBytesC C.size_t
-	if len(xDesc) != seqLength {
-		return 0, errors.Errorf("Incorrect xDesc length. Want %d. Got %d", seqLength, len(xDesc))
-	}
-
-	internals := make([]C.cudnnTensorDescriptor_t, len(xDesc))
-	for i := range xDesc {
-		internals[i] = xDesc[i].internal
-	}
-	ptr := (*C.cudnnTensorDescriptor_t)(unsafe.Pointer(&internals[0]))
-
-	// call cudnnGetRNNWorkspaceSize
-	err = result(C.cudnnGetRNNWorkspaceSize(co.internal, rnnDesc.internal, C.int(seqLength), ptr, &sizeInBytesC))
-	sizeInBytes = uintptr(sizeInBytesC)
-	return
-}
-
-// GetRNNTrainingReserveSize is used to query the amount of reserved space required for training the RNN described by rnnDesc with inputs dimensions defined by xDesc. The same reserved space buffer must be passed to cudnnRNNForwardTraining, cudnnRNNBackwardData and cudnnRNNBackwardWeights. Each of these calls overwrites the contents of the reserved space, however it can safely be backed up and restored between calls if reuse of the memory is desired.
-func (co *Context) GetRNNTrainingReserveSize(rnnDesc *RNN, seqLength int, xDesc []*TensorDescriptor) (sizeInBytes uintptr, err error) {
-	var sizeInBytesC C.size_t
-	if len(xDesc) != seqLength {
-		return 0, errors.Errorf("Incorrect xDesc length. Want %d. Got %d", seqLength, len(xDesc))
-	}
-
-	internals := make([]C.cudnnTensorDescriptor_t, len(xDesc))
-	for i := range xDesc {
-		internals[i] = xDesc[i].internal
-	}
-	ptr := (*C.cudnnTensorDescriptor_t)(unsafe.Pointer(&internals[0]))
-
-	// call cudnnGetRNNTrainingReserveSize
-	err = result(C.cudnnGetRNNTrainingReserveSize(co.internal, rnnDesc.internal, C.int(seqLength), ptr, &sizeInBytesC))
-	sizeInBytes = uintptr(sizeInBytesC)
-	return
-}
-
-// GetRNNParamsSize is used to query the amount of parameter space required to execute the RNN described by rnnDesc with inputs dimensions defined by xDesc.
-func (co *Context) GetRNNParamsSize(rnnDesc *RNN, xDesc *TensorDescriptor, dataType DataType) (sizeInBytes uintptr, err error) {
-	var sizeInBytesC C.size_t
-	// call cudnnGetRNNParamsSize
-	err = result(C.cudnnGetRNNParamsSize(co.internal, rnnDesc.internal, xDesc.internal, &sizeInBytesC, dataType.C()))
-	sizeInBytes = uintptr(sizeInBytesC)
-	return
-}
-
-// // GetRNNLinLayerMatrixParams is used to obtain a pointer and a descriptor of every RNN weight matrix in each pseudo-layer within the recurrent network defined by rnnDesc and its input width specified in xDesc.
-// func (co *Context) GetRNNLinLayerMatrixParams(rnnDesc *RNN, layer int, xDesc *TensorDescriptor, wDesc *Filter, w Memory, linLayerID int) (linLayerMatDesc *Filter, linLayerMat TODO, err error) {
-// 	// TODO: linLayerMatDesc cudnnFilterDescriptor_t
-// 	// TODO: linLayerMat void**
-// 	// call cudnnGetRNNLinLayerMatrixParams
-// 	err = result(C.cudnnGetRNNLinLayerMatrixParams(co.internal, rnnDesc.internal, C.int(layer), xDesc.internal, wDesc.internal, w.Pointer(), C.int(linLayerID), linLayerMatDesc.internal, linLayerMat))
-// 	return
-// }
-
-// // GetRNNLinLayerBiasParams is used to obtain a pointer and a descriptor of every RNN bias column vector in each pseudo-layer within the recurrent network defined by rnnDesc and its input width specified in xDesc.
-// func (co *Context) GetRNNLinLayerBiasParams(rnnDesc *RNN, layer int, xDesc *TensorDescriptor, wDesc *Filter, w Memory, linLayerID int) (linLayerBiasDesc *Filter, linLayerBias TODO, err error) {
-// 	// TODO: linLayerBiasDesc cudnnFilterDescriptor_t
-// 	// TODO: linLayerBias void**
-// 	// call cudnnGetRNNLinLayerBiasParams
-// 	err = result(C.cudnnGetRNNLinLayerBiasParams(co.internal, rnnDesc.internal, C.int(layer), xDesc.internal, wDesc.internal, w.Pointer(), C.int(linLayerID), linLayerBiasDesc.internal, linLayerBias))
-// 	return
-// }
-
-// RNNForwardInference executes the recurrent neural network described by rnnDesc with inputs x, hx, cx, weights w and outputs y, hy, cy. workspace is required for intermediate storage. RNNForwardInference does not store intermediate data required for training; cudnnRNNForwardTraining should be used for that purpose.
-func (co *Context) RNNForwardInference(rnnDesc *RNN, seqLength int, xDesc []*TensorDescriptor, x Memory, hxDesc *TensorDescriptor, hx Memory, cxDesc *TensorDescriptor, cx Memory, wDesc *Filter, w Memory, yDesc []*TensorDescriptor, y Memory, hyDesc *TensorDescriptor, hy Memory, cyDesc *TensorDescriptor, cy Memory, workspace Memory, workSpaceSizeInBytes uintptr) error {
-	// DOUBLECHECK: "cudnnRNNForwardInference" returns Memory type in Parameter 16
-	if len(xDesc) != seqLength {
-		return errors.Errorf("Incorrect xDesc length. Want %d. Got %d", seqLength, len(xDesc))
-	}
-
-	internals := make([]C.cudnnTensorDescriptor_t, len(xDesc))
-	for i := range xDesc {
-		internals[i] = xDesc[i].internal
-	}
-	xDescPtr := (*C.cudnnTensorDescriptor_t)(unsafe.Pointer(&internals[0]))
-
-	yDescInternals := make([]C.cudnnTensorDescriptor_t, len(xDesc))
-	for i := range yDesc {
-		yDescInternals[i] = yDesc[i].internal
-	}
-	yDescPtr := (*C.cudnnTensorDescriptor_t)(unsafe.Pointer(&yDescInternals[0]))
-
-	// call cudnnRNNForwardInference
-	return result(C.cudnnRNNForwardInference(co.internal, rnnDesc.internal, C.int(seqLength), xDescPtr, x.Pointer(), hxDesc.internal, hx.Pointer(), cxDesc.internal, cx.Pointer(), wDesc.internal, w.Pointer(), yDescPtr, y.Pointer(), hyDesc.internal, hy.Pointer(), cyDesc.internal, cy.Pointer(), workspace.Pointer(), C.size_t(workSpaceSizeInBytes)))
-}
-
-// RNNForwardTraining executes the recurrent neural network described by rnnDesc with inputs x, hx, cx, weights w and outputs y, hy, cy. workspace is required for intermediate storage. reserveSpace stores data required for training. The same reserveSpace data must be used for future calls to cudnnRNNBackwardData and cudnnRNNBackwardWeights if these execute on the same input data.
-//	reserveSpace is both an input and output
-func (co *Context) RNNForwardTraining(rnnDesc *RNN, seqLength int, xDesc []*TensorDescriptor, x Memory, hxDesc *TensorDescriptor, hx Memory, cxDesc *TensorDescriptor, cx Memory, wDesc *Filter, w Memory, yDesc []*TensorDescriptor, y Memory, hyDesc *TensorDescriptor, hy Memory, cyDesc *TensorDescriptor, cy Memory, workspace Memory, workSpaceSizeInBytes uintptr, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
-	// DOUBLECHECK: "cudnnRNNForwardTraining" returns Memory type in Parameter 16
-	internals := make([]C.cudnnTensorDescriptor_t, len(xDesc))
-	for i := range xDesc {
-		internals[i] = xDesc[i].internal
-	}
-	ptr := (*C.cudnnTensorDescriptor_t)(unsafe.Pointer(&internals[0]))
-
-	yDescInternals := make([]C.cudnnTensorDescriptor_t, len(xDesc))
-	for i := range yDesc {
-		yDescInternals[i] = yDesc[i].internal
-	}
-	yDescPtr := (*C.cudnnTensorDescriptor_t)(unsafe.Pointer(&yDescInternals[0]))
-	// call cudnnRNNForwardTraining
-	return result(C.cudnnRNNForwardTraining(co.internal, rnnDesc.internal, C.int(seqLength), ptr, x.Pointer(), hxDesc.internal, hx.Pointer(), cxDesc.internal, cx.Pointer(), wDesc.internal, w.Pointer(), yDescPtr, y.Pointer(), hyDesc.internal, hy.Pointer(), cyDesc.internal, cy.Pointer(), workspace.Pointer(), C.size_t(workSpaceSizeInBytes), reserveSpace.Pointer(), C.size_t(reserveSpaceSizeInBytes)))
-}
-
-// RNNBackwardData executes the recurrent neural network described by rnnDesc with output gradients dy, dhy, dhc, weights w and input gradients dx, dhx, dcx. workspace is required for intermediate storage. The data in reserveSpace must have previously been generated by cudnnRNNForwardTraining. The same reserveSpace data must be used for future calls to cudnnRNNBackwardWeights if they execute on the same input data.
-//	reserveSpace is both an input and output
-func (co *Context) RNNBackwardData(rnnDesc *RNN, seqLength int, yDesc []*TensorDescriptor, y Memory, dyDesc []*TensorDescriptor, dy Memory, dhyDesc *TensorDescriptor, dhy Memory, dcyDesc *TensorDescriptor, dcy Memory, wDesc *Filter, w Memory, hxDesc *TensorDescriptor, hx Memory, cxDesc *TensorDescriptor, cx Memory, dxDesc []*TensorDescriptor, dx Memory, dhxDesc *TensorDescriptor, dhx Memory, dcxDesc *TensorDescriptor, dcx Memory, workspace Memory, workSpaceSizeInBytes uintptr, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
-	// DOUBLECHECK: "cudnnRNNBackwardData" returns Memory type in Parameter 22
-	internals := make([]C.cudnnTensorDescriptor_t, len(yDesc))
-	for i := range yDesc {
-		internals[i] = yDesc[i].internal
-	}
-	ptr := (*C.cudnnTensorDescriptor_t)(unsafe.Pointer(&internals[0]))
-
-	dyInternals := make([]C.cudnnTensorDescriptor_t, len(dyDesc))
-	for i := range dyDesc {
-		dyInternals[i] = dyDesc[i].internal
-	}
-	dyPtr := (*C.cudnnTensorDescriptor_t)(unsafe.Pointer(&dyInternals[0]))
-
-	dxInternals := make([]C.cudnnTensorDescriptor_t, len(dxDesc))
-	for i := range dyDesc {
-		dxInternals[i] = dxDesc[i].internal
-	}
-	dxPtr := (*C.cudnnTensorDescriptor_t)(unsafe.Pointer(&dxInternals[0]))
-
-	// call cudnnRNNBackwardData
-	return result(C.cudnnRNNBackwardData(co.internal, rnnDesc.internal, C.int(seqLength), ptr, y.Pointer(), dyPtr, dy.Pointer(), dhyDesc.internal, dhy.Pointer(), dcyDesc.internal, dcy.Pointer(), wDesc.internal, w.Pointer(), hxDesc.internal, hx.Pointer(), cxDesc.internal, cx.Pointer(), dxPtr, dx.Pointer(), dhxDesc.internal, dhx.Pointer(), dcxDesc.internal, dcx.Pointer(), workspace.Pointer(), C.size_t(workSpaceSizeInBytes), reserveSpace.Pointer(), C.size_t(reserveSpaceSizeInBytes)))
-}
-
-// RNNBackwardWeights accumulates weight gradients dw from the recurrent neural network described by rnnDesc with inputs x, hx, and outputs y. The mode of operation in this case is additive, the weight gradients calculated will be added to those already existing in dw. workspace is required for intermediate storage. The data in reserveSpace must have previously been generated by cudnnRNNBackwardData.
-//	dw is both an input and output
-func (co *Context) RNNBackwardWeights(rnnDesc *RNN, seqLength int, xDesc []*TensorDescriptor, x Memory, hxDesc *TensorDescriptor, hx Memory, yDesc []*TensorDescriptor, y Memory, workspace Memory, workSpaceSizeInBytes uintptr, dwDesc *Filter, dw Memory, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
-	internals := make([]C.cudnnTensorDescriptor_t, len(xDesc))
-	for i := range xDesc {
-		internals[i] = xDesc[i].internal
-	}
-	ptr := (*C.cudnnTensorDescriptor_t)(unsafe.Pointer(&internals[0]))
-
-	yDescInternals := make([]C.cudnnTensorDescriptor_t, len(xDesc))
-	for i := range yDesc {
-		yDescInternals[i] = yDesc[i].internal
-	}
-	yDescPtr := (*C.cudnnTensorDescriptor_t)(unsafe.Pointer(&yDescInternals[0]))
-
-	// call cudnnRNNBackwardWeights
-	return result(C.cudnnRNNBackwardWeights(co.internal, rnnDesc.internal, C.int(seqLength), ptr, x.Pointer(), hxDesc.internal, hx.Pointer(), yDescPtr, y.Pointer(), workspace.Pointer(), C.size_t(workSpaceSizeInBytes), dwDesc.internal, dw.Pointer(), reserveSpace.Pointer(), C.size_t(reserveSpaceSizeInBytes)))
-}
-
-// CTCLoss returns the ctc costs and gradients, given the probabilities and labels.
-func (co *Context) CTCLoss(probsDesc *TensorDescriptor, probs Memory, labels []int, labelLengths []int, inputLengths []int, costs Memory, gradientsDesc *TensorDescriptor, gradients Memory, algo CTCLossAlgo, ctcLossDesc *CTCLoss, workspace Memory, workSpaceSizeInBytes uintptr) error {
-	// DOUBLECHECK: "cudnnCTCLoss" returns Memory type in Parameter 8
-	labelsPtr, labelsPtrManaged := ints2CIntPtr(labels)
-	defer returnManaged(labelsPtrManaged)
-	labelLengthsPtr, labelLengthsPtrManaged := ints2CIntPtr(labelLengths)
-	defer returnManaged(labelLengthsPtrManaged)
-	inputLengthsPtr, inputLengthsPtrManaged := ints2CIntPtr(inputLengths)
-	defer returnManaged(inputLengthsPtrManaged)
-
-	// call cudnnCTCLoss
-	return result(C.cudnnCTCLoss(co.internal, probsDesc.internal, probs.Pointer(), labelsPtr, labelLengthsPtr, inputLengthsPtr, costs.Pointer(), gradientsDesc.internal, gradients.Pointer(), algo.C(), ctcLossDesc.internal, workspace.Pointer(), C.size_t(workSpaceSizeInBytes)))
-}
-
-// // Derives a secondary tensor descriptor for BatchNormalization scale, invVariance, bnBias, bnScale subtensors from the layer's x data descriptor. Use the tensor descriptor produced by this function as the bnScaleBiasMeanVarDesc and bnScaleBiasDiffDesc parameters in Spatial and Per-Activation Batch Normalization forward and backward functions. Resulting dimensions will be 1xC(x1)x1x1 for BATCHNORM_MODE_SPATIAL and 1xC(xD)xHxW for BATCHNORM_MODE_PER_ACTIVATION (parentheses for 5D). For HALF input data type the resulting tensor descriptor will have a FLOAT type. For other data types it will have the same type as the input data.
-// func (te *TensorDescriptor) DeriveBNTensorDescriptor(xDesc *TensorDescriptor, mode BatchNormMode) (derivedBnDesc *TensorDescriptor, err error) {
-// 	// TODO
-// 	// call cudnnDeriveBNTensorDescriptor
-// 	err = result(C.cudnnDeriveBNTensorDescriptor(te.internal, xDesc.internal, mode.C()))
-// 	return
-// }
-
-// DropoutGetReserveSpaceSize is used to query the amount of reserve needed to run dropout with the input dimensions given by xDesc. The same reserve space is expected to be passed to cudnnDropoutForward and cudnnDropoutBackward, and its contents is expected to remain unchanged between cudnnDropoutForward and cudnnDropoutBackward calls.
-func (te *TensorDescriptor) DropoutGetReserveSpaceSize() (sizeInBytes uintptr, err error) {
-	var sizeInBytesC C.size_t
+func (te *TensorDescriptor) DropoutGetReserveSpaceSize(sizeInBytes uintptr) error {
 	// call cudnnDropoutGetReserveSpaceSize
-	err = result(C.cudnnDropoutGetReserveSpaceSize(te.internal, &sizeInBytesC))
-	sizeInBytes = uintptr(sizeInBytesC)
-	return
+	return result(C.cudnnDropoutGetReserveSpaceSize(te.internal, C.size_t(sizeInBytes)))
+}
+func (dr *Dropout) RestoreDropoutDescriptor(handle *Context, dropout float32, states Memory, stateSizeInBytes uintptr, seed uint64) error {
+	// call cudnnRestoreDropoutDescriptor
+	return result(C.cudnnRestoreDropoutDescriptor(dr.internal, handle.internal, C.float(dropout), unsafe.Pointer(states.Uintptr()), C.size_t(stateSizeInBytes), C.ulonglong(seed)))
 }
