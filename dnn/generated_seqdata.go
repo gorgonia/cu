@@ -4,4 +4,66 @@ package cudnn
 
 // #include <cudnn.h>
 import "C"
+import "runtime"
 
+// SeqData is a representation of cudnnSeqDataDescriptor_t.
+type SeqData struct {
+	internal C.cudnnSeqDataDescriptor_t
+
+	dataType           DataType
+	nbDims             int
+	dimA               TODO
+	axes               SeqDataAxis
+	seqLengthArraySize uintptr
+	seqLengthArray     TODO
+	paddingFill        Memory
+}
+
+// NewSeqData creates a new SeqData.
+func NewSeqData(dataType DataType, nbDims int, dimA TODO, axes SeqDataAxis, seqLengthArraySize uintptr, seqLengthArray TODO, paddingFill Memory) (retVal *SeqData, err error) {
+	var internal C.cudnnSeqDataDescriptor_t
+	if err := result(C.cudnnCreateSeqDataDescriptor(&internal)); err != nil {
+		return nil, err
+	}
+
+	if err := result(C.cudnnSetSeqDataDescriptor(internal, dataType.C(), C.int(nbDims), dimA, axes.C(), C.size_t(seqLengthArraySize), seqLengthArray, paddingFill.Pointer())); err != nil {
+		return nil, err
+	}
+
+	retVal = &SeqData{
+		internal:           internal,
+		dataType:           dataType,
+		nbDims:             nbDims,
+		dimA:               dimA,
+		axes:               axes,
+		seqLengthArraySize: seqLengthArraySize,
+		seqLengthArray:     seqLengthArray,
+		paddingFill:        paddingFill,
+	}
+	runtime.SetFinalizer(retVal, destroySeqData)
+	return retVal, nil
+}
+
+// SeqDataDesc returns the internal seqDataDesc.
+func (s *SeqData) SeqDataDesc() *SeqData { return s.seqDataDesc }
+
+// DataType returns the internal dataType.
+func (s *SeqData) DataType() DataType { return s.dataType }
+
+// NbDims returns the internal nbDims.
+func (s *SeqData) NbDims() int { return s.nbDims }
+
+//TODO: "cudnnSetSeqDataDescriptor": Parameter 3 Skipped "dimA" of const int[] - unmapped type
+
+// Axes returns the internal axes.
+func (s *SeqData) Axes() SeqDataAxis { return s.axes }
+
+// SeqLengthArraySize returns the internal seqLengthArraySize.
+func (s *SeqData) SeqLengthArraySize() uintptr { return s.seqLengthArraySize }
+
+//TODO: "cudnnSetSeqDataDescriptor": Parameter 6 Skipped "seqLengthArray" of const int[] - unmapped type
+
+// PaddingFill returns the internal paddingFill.
+func (s *SeqData) PaddingFill() Memory { return s.paddingFill }
+
+func destroySeqData(obj *SeqData) { C.cudnnDestroySeqDataDescriptor(obj.internal) }

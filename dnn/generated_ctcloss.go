@@ -4,4 +4,24 @@ package cudnn
 
 // #include <cudnn.h>
 import "C"
+import "github.com/pkg/errors"
 
+// CTCLoss is a representation of cudnnCTCLossDescriptor_t.
+type CTCLoss struct {
+	internal C.cudnnCTCLossDescriptor_t
+
+	//TODO
+}
+
+// NewCTCLoss creates a new CTCLoss.
+func NewCTCLoss(compType DataType) (retVal *CTCLoss, err error) {
+	// available "Set" methods:
+	//	cudnnSetCTCLossDescriptor
+	//	cudnnSetCTCLossDescriptorEx
+	//	cudnnSetCTCLossDescriptor_v8
+	return nil, errors.Errorf("TODO: Manual Intervention required")
+}
+
+// TODO: Getters for CTCLoss
+
+func destroyCTCLoss(obj *CTCLoss) { C.cudnnDestroyCTCLossDescriptor(obj.internal) }

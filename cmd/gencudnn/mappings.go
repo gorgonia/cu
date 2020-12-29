@@ -12,7 +12,7 @@ var ignored = map[string]struct{}{
 	"cudnnBackendFinalize":          {},
 	"cudnnBackendGetAttribute":      {},
 	"cudnnBackendInitialize":        {},
-	"cudnnBackendSetAttribute":      {},
+	// "cudnnBackendSetAttribute":      {},
 	// "cudnnBatchNormalizationBackward":{}, //
 	"cudnnBatchNormalizationBackwardEx": {},
 	// "cudnnBatchNormalizationForwardInference":{}, //
@@ -213,12 +213,12 @@ var ignored = map[string]struct{}{
 	"cudnnSaveAlgorithm": {},
 	// "cudnnScaleTensor":{}, //
 	// "cudnnSetActivationDescriptor":{}, //
-	"cudnnSetAlgorithmDescriptor":  {},
-	"cudnnSetAlgorithmPerformance": {},
-	"cudnnSetAttnDescriptor":       {},
+	// "cudnnSetAlgorithmDescriptor":  {}, //
+	// "cudnnSetAlgorithmPerformance": {}, //
+	// "cudnnSetAttnDescriptor":       {}, //
 	// "cudnnSetCTCLossDescriptor":{}, //
-	"cudnnSetCTCLossDescriptorEx":     {},
-	"cudnnSetCTCLossDescriptor_v8":    {},
+	//"cudnnSetCTCLossDescriptorEx":     {},//
+	//"cudnnSetCTCLossDescriptor_v8":    {},//
 	"cudnnSetCallback":                {},
 	"cudnnSetConvolution2dDescriptor": {},
 	"cudnnSetConvolutionGroupCount":   {},
@@ -228,8 +228,8 @@ var ignored = map[string]struct{}{
 	// "cudnnSetDropoutDescriptor":{}, //
 	// "cudnnSetFilter4dDescriptor":{}, //
 	// "cudnnSetFilterNdDescriptor":{}, //
-	"cudnnSetFusedOpsConstParamPackAttribute":   {},
-	"cudnnSetFusedOpsVariantParamPackAttribute": {},
+	// "cudnnSetFusedOpsConstParamPackAttribute":   {}, //
+	// "cudnnSetFusedOpsVariantParamPackAttribute": {}, //
 	// "cudnnSetLRNDescriptor":{}, //
 	// "cudnnSetOpTensorDescriptor":{}, //
 	// "cudnnSetPersistentRNNPlan":{}, //
@@ -237,22 +237,22 @@ var ignored = map[string]struct{}{
 	// "cudnnSetPoolingNdDescriptor":{}, //
 	"cudnnSetRNNAlgorithmDescriptor": {},
 	"cudnnSetRNNBiasMode":            {},
-	"cudnnSetRNNDataDescriptor":      {},
+	//"cudnnSetRNNDataDescriptor":      {}, //
 	// "cudnnSetRNNDescriptor_v6":{}, //
 	"cudnnSetRNNDescriptor_v8": {},
 	// "cudnnSetRNNMatrixMathType":{}, //
 	"cudnnSetRNNPaddingMode":      {},
 	"cudnnSetRNNProjectionLayers": {},
 	// "cudnnSetReduceTensorDescriptor":{}, //
-	"cudnnSetSeqDataDescriptor": {},
+	// "cudnnSetSeqDataDescriptor": {}, //
 	// "cudnnSetSpatialTransformerNdDescriptor":{}, //
-	"cudnnSetStream": {},
+	// "cudnnSetStream": {},//
 	// "cudnnSetTensor":{}, //
 	// "cudnnSetTensor4dDescriptor":{}, //
 	// "cudnnSetTensor4dDescriptorEx":{}, //
 	// "cudnnSetTensorNdDescriptor":{}, //
 	// "cudnnSetTensorNdDescriptorEx":{}, //
-	"cudnnSetTensorTransformDescriptor": {},
+	// "cudnnSetTensorTransformDescriptor": {}, //
 	// "cudnnSoftmaxBackward":{}, //
 	// "cudnnSoftmaxForward":{}, //
 	// "cudnnSpatialTfGridGeneratorBackward":{}, //

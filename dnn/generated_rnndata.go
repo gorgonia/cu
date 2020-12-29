@@ -4,4 +4,67 @@ package cudnn
 
 // #include <cudnn.h>
 import "C"
+import "runtime"
 
+// RNNData is a representation of cudnnRNNDataDescriptor_t.
+type RNNData struct {
+	internal C.cudnnRNNDataDescriptor_t
+
+	dataType       DataType
+	layout         RNNDataLayout
+	maxSeqLength   int
+	batchSize      int
+	vectorSize     int
+	seqLengthArray TODO
+	paddingFill    Memory
+}
+
+// NewRNNData creates a new RNNData.
+func NewRNNData(dataType DataType, layout RNNDataLayout, maxSeqLength int, batchSize int, vectorSize int, seqLengthArray TODO, paddingFill Memory) (retVal *RNNData, err error) {
+	var internal C.cudnnRNNDataDescriptor_t
+	if err := result(C.cudnnCreateRNNDataDescriptor(&internal)); err != nil {
+		return nil, err
+	}
+
+	if err := result(C.cudnnSetRNNDataDescriptor(internal, dataType.C(), layout.C(), C.int(maxSeqLength), C.int(batchSize), C.int(vectorSize), seqLengthArray, paddingFill.Pointer())); err != nil {
+		return nil, err
+	}
+
+	retVal = &RNNData{
+		internal:       internal,
+		dataType:       dataType,
+		layout:         layout,
+		maxSeqLength:   maxSeqLength,
+		batchSize:      batchSize,
+		vectorSize:     vectorSize,
+		seqLengthArray: seqLengthArray,
+		paddingFill:    paddingFill,
+	}
+	runtime.SetFinalizer(retVal, destroyRNNData)
+	return retVal, nil
+}
+
+// RnnDataDesc returns the internal rnnDataDesc.
+func (r *RNNData) RnnDataDesc() *RNNData { return r.rnnDataDesc }
+
+// DataType returns the internal dataType.
+func (r *RNNData) DataType() DataType { return r.dataType }
+
+// Layout returns the internal layout.
+func (r *RNNData) Layout() RNNDataLayout { return r.layout }
+
+// MaxSeqLength returns the internal maxSeqLength.
+func (r *RNNData) MaxSeqLength() int { return r.maxSeqLength }
+
+// BatchSize returns the internal batchSize.
+func (r *RNNData) BatchSize() int { return r.batchSize }
+
+// VectorSize returns the internal vectorSize.
+func (r *RNNData) VectorSize() int { return r.vectorSize }
+
+//TODO: "cudnnSetRNNDataDescriptor": Parameter 6 Skipped "seqLengthArray" of const int[] - unmapped type
+
+// PaddingFill returns the internal paddingFill.
+func (r *RNNData) PaddingFill() Memory { return r.paddingFill }
+
+func destroyRNNData(obj *RNNData) { C.cudnnDestroyRNNDataDescriptor(obj.internal) }

@@ -4,4 +4,45 @@ package cudnn
 
 // #include <cudnn.h>
 import "C"
+import "runtime"
 
+// FusedOpVariantParams is a representation of cudnnFusedOpsVariantParamPack_t.
+type FusedOpVariantParams struct {
+	internal C.cudnnFusedOpsVariantParamPack_t
+
+	paramLabel FusedOpsVariantParamLabel
+	ptr        Memory
+}
+
+// NewFusedOpVariantParams creates a new FusedOpVariantParams.
+func NewFusedOpVariantParams(paramLabel FusedOpsVariantParamLabel, ptr Memory) (retVal *FusedOpVariantParams, err error) {
+	var internal C.cudnnFusedOpsVariantParamPack_t
+	if err := result(C.cudnnCreateFusedOpsVariantParamPack(&internal)); err != nil {
+		return nil, err
+	}
+
+	if err := result(C.cudnnSetFusedOpsVariantParamPackAttribute(internal, paramLabel.C(), ptr.Pointer())); err != nil {
+		return nil, err
+	}
+
+	retVal = &FusedOpVariantParams{
+		internal:   internal,
+		paramLabel: paramLabel,
+		ptr:        ptr,
+	}
+	runtime.SetFinalizer(retVal, destroyFusedOpVariantParams)
+	return retVal, nil
+}
+
+// VarPack returns the internal varPack.
+func (f *FusedOpVariantParams) VarPack() *FusedOpVariantParams { return f.varPack }
+
+// ParamLabel returns the internal paramLabel.
+func (f *FusedOpVariantParams) ParamLabel() FusedOpsVariantParamLabel { return f.paramLabel }
+
+// Ptr returns the internal ptr.
+func (f *FusedOpVariantParams) Ptr() Memory { return f.ptr }
+
+func destroyFusedOpVariantParams(obj *FusedOpVariantParams) {
+	C.cudnnDestroyFusedOpsVariantParamPack(obj.internal)
+}

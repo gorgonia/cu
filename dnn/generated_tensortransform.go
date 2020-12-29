@@ -4,4 +4,59 @@ package cudnn
 
 // #include <cudnn.h>
 import "C"
+import "runtime"
 
+// TensorTransform is a representation of cudnnTensorTransformDescriptor_t.
+type TensorTransform struct {
+	internal C.cudnnTensorTransformDescriptor_t
+
+	nbDims     TODO
+	destFormat TensorFormat
+	padBeforeA TODO
+	padAfterA  TODO
+	foldA      TODO
+	direction  FoldingDirection
+}
+
+// NewTensorTransform creates a new TensorTransform.
+func NewTensorTransform(nbDims TODO, destFormat TensorFormat, padBeforeA TODO, padAfterA TODO, foldA TODO, direction FoldingDirection) (retVal *TensorTransform, err error) {
+	var internal C.cudnnTensorTransformDescriptor_t
+	if err := result(C.cudnnCreateTensorTransformDescriptor(&internal)); err != nil {
+		return nil, err
+	}
+
+	if err := result(C.cudnnSetTensorTransformDescriptor(internal, nbDims, destFormat.C(), padBeforeA, padAfterA, foldA, direction.C())); err != nil {
+		return nil, err
+	}
+
+	retVal = &TensorTransform{
+		internal:   internal,
+		nbDims:     nbDims,
+		destFormat: destFormat,
+		padBeforeA: padBeforeA,
+		padAfterA:  padAfterA,
+		foldA:      foldA,
+		direction:  direction,
+	}
+	runtime.SetFinalizer(retVal, destroyTensorTransform)
+	return retVal, nil
+}
+
+// TransformDesc returns the internal transformDesc.
+func (t *TensorTransform) TransformDesc() *TensorTransform { return t.transformDesc }
+
+//TODO: "cudnnSetTensorTransformDescriptor": Parameter 1 Skipped "nbDims" of const unsigned - unmapped type
+
+// DestFormat returns the internal destFormat.
+func (t *TensorTransform) DestFormat() TensorFormat { return t.destFormat }
+
+//TODO: "cudnnSetTensorTransformDescriptor": Parameter 3 Skipped "padBeforeA" of const int[] - unmapped type
+//TODO: "cudnnSetTensorTransformDescriptor": Parameter 4 Skipped "padAfterA" of const int[] - unmapped type
+//TODO: "cudnnSetTensorTransformDescriptor": Parameter 5 Skipped "foldA" of const unsigned[] - unmapped type
+
+// Direction returns the internal direction.
+func (t *TensorTransform) Direction() FoldingDirection { return t.direction }
+
+func destroyTensorTransform(obj *TensorTransform) {
+	C.cudnnDestroyTensorTransformDescriptor(obj.internal)
+}
