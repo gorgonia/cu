@@ -77,12 +77,12 @@ func main() {
 	// Step 3: generate enums, then edit the file in the dnn package.
 	//generateEnums()
 	//generateEnumStrings()
-	generateStubs(false, pkg) // true/false indicates debug mode
+	//generateStubs(false, pkg) // true/false indicates debug mode
 
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
 
 	// step 5:
-	// generateFunctions(pkg)
+	generateFunctions(pkg)
 
 	// report things that aren't done yet
 	pkg = parsePkg(true)
