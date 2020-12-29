@@ -4,7 +4,9 @@ package cudnn
 
 // #include <cudnn.h>
 import "C"
-import "runtime"
+import (
+	"runtime"
+)
 
 // SpatialTransformer is a representation of cudnnSpatialTransformerDescriptor_t.
 type SpatialTransformer struct {
@@ -13,17 +15,20 @@ type SpatialTransformer struct {
 	samplerType SamplerType
 	dataType    DataType
 	nbDims      int
-	dimA        TODO
+	dimA        []int
 }
 
 // NewSpatialTransformer creates a new SpatialTransformer.
-func NewSpatialTransformer(samplerType SamplerType, dataType DataType, nbDims int, dimA TODO) (retVal *SpatialTransformer, err error) {
+func NewSpatialTransformer(samplerType SamplerType, dataType DataType, nbDims int, dimA []int) (retVal *SpatialTransformer, err error) {
 	var internal C.cudnnSpatialTransformerDescriptor_t
 	if err := result(C.cudnnCreateSpatialTransformerDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetSpatialTransformerNdDescriptor(internal, samplerType.C(), dataType.C(), C.int(nbDims), dimA)); err != nil {
+	dimAC, dimACManaged := ints2CIntPtr(dimA)
+	defer returnManaged(dimACManaged)
+
+	if err := result(C.cudnnSetSpatialTransformerNdDescriptor(internal, samplerType.C(), dataType.C(), C.int(nbDims), dimAC)); err != nil {
 		return nil, err
 	}
 
@@ -38,8 +43,8 @@ func NewSpatialTransformer(samplerType SamplerType, dataType DataType, nbDims in
 	return retVal, nil
 }
 
-// StDesc returns the internal stDesc.
-func (s *SpatialTransformer) StDesc() *SpatialTransformer { return s.stDesc }
+// C() returns the internal C representation of the Spatial Transformer
+func (s *SpatialTransformer) C() C.cudnnSpatialTransformerDescriptor_t { return s.internal }
 
 // SamplerType returns the internal samplerType.
 func (s *SpatialTransformer) SamplerType() SamplerType { return s.samplerType }
@@ -49,8 +54,6 @@ func (s *SpatialTransformer) DataType() DataType { return s.dataType }
 
 // NbDims returns the internal nbDims.
 func (s *SpatialTransformer) NbDims() int { return s.nbDims }
-
-//TODO: "cudnnSetSpatialTransformerNdDescriptor": Parameter 4 Skipped "dimA" of const int[] - unmapped type
 
 func destroySpatialTransformer(obj *SpatialTransformer) {
 	C.cudnnDestroySpatialTransformerDescriptor(obj.internal)
