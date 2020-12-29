@@ -62,7 +62,8 @@ func (s *SeqData) DataType() DataType { return s.dataType }
 // NbDims returns the internal nbDims.
 func (s *SeqData) NbDims() int { return s.nbDims }
 
-//TODO: "cudnnSetSeqDataDescriptor": Parameter 3 Skipped "dimA" of const int[] - unmapped type
+// DimA returns the internal dimA slice.
+func (s *SeqData) DimA() []int { return s.dimA }
 
 // Axes returns the internal axes.
 func (s *SeqData) Axes() SeqDataAxis { return s.axes }
@@ -70,7 +71,8 @@ func (s *SeqData) Axes() SeqDataAxis { return s.axes }
 // SeqLengthArraySize returns the internal seqLengthArraySize.
 func (s *SeqData) SeqLengthArraySize() uintptr { return s.seqLengthArraySize }
 
-//TODO: "cudnnSetSeqDataDescriptor": Parameter 6 Skipped "seqLengthArray" of const int[] - unmapped type
+// SeqLengthArray returns the internal `seqLengthArray` slice.
+func (s *SeqData) SeqLengthArray() []int { return s.seqLengthArray }
 
 // PaddingFill returns the internal paddingFill.
 func (s *SeqData) PaddingFill() Memory { return s.paddingFill }

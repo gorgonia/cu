@@ -71,4 +71,7 @@ func (r *RNNData) VectorSize() int { return r.vectorSize }
 // PaddingFill returns the internal paddingFill.
 func (r *RNNData) PaddingFill() Memory { return r.paddingFill }
 
+// SeqLengthArray returns the internal `seqLengthArray` slice.
+func (r *RNNData) SeqLengthArray() []int { return r.seqLengthArray }
+
 func destroyRNNData(obj *RNNData) { C.cudnnDestroyRNNDataDescriptor(obj.internal) }

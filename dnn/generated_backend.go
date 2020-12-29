@@ -50,7 +50,8 @@ func (b *Backend) AttributeName() BackendAttributeName { return b.attributeName 
 // AttributeType returns the internal attributeType.
 func (b *Backend) AttributeType() BackendAttributeType { return b.attributeType }
 
-//TODO: "cudnnBackendSetAttribute": Parameter 3 Skipped "elementCount" of long - unmapped type
+// ElementCount returns the internal elementCount parameter.
+func (b *Backend) ElementCount() int64 { return b.elementCount }
 
 // ArrayOfElements returns the internal arrayOfElements.
 func (b *Backend) ArrayOfElements() Memory { return b.arrayOfElements }

@@ -55,6 +55,9 @@ func (s *SpatialTransformer) DataType() DataType { return s.dataType }
 // NbDims returns the internal nbDims.
 func (s *SpatialTransformer) NbDims() int { return s.nbDims }
 
+// DimA returns the internal `dimA` slice.
+func (s *SpatialTransformer) DimA() []int { return s.dimA }
+
 func destroySpatialTransformer(obj *SpatialTransformer) {
 	C.cudnnDestroySpatialTransformerDescriptor(obj.internal)
 }
