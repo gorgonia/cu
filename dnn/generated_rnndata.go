@@ -4,7 +4,10 @@ package cudnn
 
 // #include <cudnn.h>
 import "C"
-import "runtime"
+import (
+	"runtime"
+	"unsafe"
+)
 
 // RNNData is a representation of cudnnRNNDataDescriptor_t.
 type RNNData struct {
@@ -15,18 +18,21 @@ type RNNData struct {
 	maxSeqLength   int
 	batchSize      int
 	vectorSize     int
-	seqLengthArray TODO
+	seqLengthArray []int
 	paddingFill    Memory
 }
 
 // NewRNNData creates a new RNNData.
-func NewRNNData(dataType DataType, layout RNNDataLayout, maxSeqLength int, batchSize int, vectorSize int, seqLengthArray TODO, paddingFill Memory) (retVal *RNNData, err error) {
+func NewRNNData(dataType DataType, layout RNNDataLayout, maxSeqLength int, batchSize int, vectorSize int, seqLengthArray []int, paddingFill Memory) (retVal *RNNData, err error) {
 	var internal C.cudnnRNNDataDescriptor_t
 	if err := result(C.cudnnCreateRNNDataDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetRNNDataDescriptor(internal, dataType.C(), layout.C(), C.int(maxSeqLength), C.int(batchSize), C.int(vectorSize), seqLengthArray, paddingFill.Pointer())); err != nil {
+	seqLengthArrayC, seqLengthArrayCManaged := ints2CIntPtr(seqLengthArray)
+	defer returnManaged(seqLengthArrayCManaged)
+
+	if err := result(C.cudnnSetRNNDataDescriptor(internal, dataType.C(), layout.C(), C.int(maxSeqLength), C.int(batchSize), C.int(vectorSize), seqLengthArrayC, unsafe.Pointer(paddingFill.Uintptr()))); err != nil {
 		return nil, err
 	}
 
@@ -44,8 +50,8 @@ func NewRNNData(dataType DataType, layout RNNDataLayout, maxSeqLength int, batch
 	return retVal, nil
 }
 
-// RnnDataDesc returns the internal rnnDataDesc.
-func (r *RNNData) RnnDataDesc() *RNNData { return r.rnnDataDesc }
+// C() returns the internal cgo representation of RNNData
+func (r *RNNData) C() C.cudnnRNNDataDescriptor_t { return r.internal }
 
 // DataType returns the internal dataType.
 func (r *RNNData) DataType() DataType { return r.dataType }
@@ -61,8 +67,6 @@ func (r *RNNData) BatchSize() int { return r.batchSize }
 
 // VectorSize returns the internal vectorSize.
 func (r *RNNData) VectorSize() int { return r.vectorSize }
-
-//TODO: "cudnnSetRNNDataDescriptor": Parameter 6 Skipped "seqLengthArray" of const int[] - unmapped type
 
 // PaddingFill returns the internal paddingFill.
 func (r *RNNData) PaddingFill() Memory { return r.paddingFill }
