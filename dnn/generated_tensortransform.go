@@ -10,22 +10,26 @@ import "runtime"
 type TensorTransform struct {
 	internal C.cudnnTensorTransformDescriptor_t
 
-	nbDims     TODO
+	nbDims     uint32
 	destFormat TensorFormat
-	padBeforeA TODO
-	padAfterA  TODO
-	foldA      TODO
+	padBeforeA []int32
+	padAfterA  []int32
+	foldA      []uint32
 	direction  FoldingDirection
 }
 
 // NewTensorTransform creates a new TensorTransform.
-func NewTensorTransform(nbDims TODO, destFormat TensorFormat, padBeforeA TODO, padAfterA TODO, foldA TODO, direction FoldingDirection) (retVal *TensorTransform, err error) {
+func NewTensorTransform(nbDims uint32, destFormat TensorFormat, padBeforeA []int32, padAfterA []int32, foldA []uint32, direction FoldingDirection) (retVal *TensorTransform, err error) {
 	var internal C.cudnnTensorTransformDescriptor_t
 	if err := result(C.cudnnCreateTensorTransformDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetTensorTransformDescriptor(internal, nbDims, destFormat.C(), padBeforeA, padAfterA, foldA, direction.C())); err != nil {
+	padBeforeAC := int32s2CInt32Ptr(padBeforeA)
+	padAfterAC := int32s2CInt32Ptr(padAfterA)
+	foldAC := uint32s2CUint32Ptr(foldA)
+
+	if err := result(C.cudnnSetTensorTransformDescriptor(internal, C.uint32(nbDims), destFormat.C(), padBeforeAC, padAfterAC, foldAC, direction.C())); err != nil {
 		return nil, err
 	}
 
@@ -42,17 +46,22 @@ func NewTensorTransform(nbDims TODO, destFormat TensorFormat, padBeforeA TODO, p
 	return retVal, nil
 }
 
-// TransformDesc returns the internal transformDesc.
-func (t *TensorTransform) TransformDesc() *TensorTransform { return t.transformDesc }
+// C returns the cgo representation
+func (t *TensorTransform) C() *C.cudnnTensorTransformDescriptor_t { return t.internal }
 
-//TODO: "cudnnSetTensorTransformDescriptor": Parameter 1 Skipped "nbDims" of const unsigned - unmapped type
+func (t *TensorTransform) NDims() uint32 { return t.nbDims }
 
 // DestFormat returns the internal destFormat.
 func (t *TensorTransform) DestFormat() TensorFormat { return t.destFormat }
 
-//TODO: "cudnnSetTensorTransformDescriptor": Parameter 3 Skipped "padBeforeA" of const int[] - unmapped type
-//TODO: "cudnnSetTensorTransformDescriptor": Parameter 4 Skipped "padAfterA" of const int[] - unmapped type
-//TODO: "cudnnSetTensorTransformDescriptor": Parameter 5 Skipped "foldA" of const unsigned[] - unmapped type
+// PadBeforeA returns the internal `padBeforeA` padding slice.
+func (t *TensorTransform) PadBeforeA() []int32 { return t.padBeforeA }
+
+// PadAfterA returns the internal `padAfterA` padding slice.
+func (t *TensorTransform) PadAfterA() []int32 { return t.padAfterA }
+
+// FoldA returns the internal `foldA` slice.
+func (t *TensorTransform) FoldA() []uint32 { return t.foldA }
 
 // Direction returns the internal direction.
 func (t *TensorTransform) Direction() FoldingDirection { return t.direction }
