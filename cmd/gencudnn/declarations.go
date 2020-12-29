@@ -80,6 +80,8 @@ var builtins = map[string]string{
 	"unsigned long long": "uint64",
 
 	"size_t": "uintptr",
+
+	"int64_t": "int64",
 }
 
 var go2cBuiltins = map[string]string{
@@ -91,6 +93,8 @@ var go2cBuiltins = map[string]string{
 	"uint64":  "ulonglong",
 
 	"uintptr": "size_t",
+
+	"int64": "int64_t",
 }
 
 var nonPrimitives = map[string]string{

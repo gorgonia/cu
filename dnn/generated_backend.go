@@ -4,7 +4,10 @@ package cudnn
 
 // #include <cudnn.h>
 import "C"
-import "runtime"
+import (
+	"runtime"
+	"unsafe"
+)
 
 // Backend is a representation of cudnnBackendDescriptor_t.
 type Backend struct {
@@ -12,18 +15,18 @@ type Backend struct {
 
 	attributeName   BackendAttributeName
 	attributeType   BackendAttributeType
-	elementCount    TODO
+	elementCount    int64
 	arrayOfElements Memory
 }
 
 // NewBackend creates a new Backend.
-func NewBackend(attributeName BackendAttributeName, attributeType BackendAttributeType, elementCount TODO, arrayOfElements Memory) (retVal *Backend, err error) {
+func NewBackend(attributeName BackendAttributeName, attributeType BackendAttributeType, elementCount int64, arrayOfElements Memory) (retVal *Backend, err error) {
 	var internal C.cudnnBackendDescriptor_t
 	if err := result(C.cudnnBackendCreateDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
-	if err := result(C.cudnnBackendSetAttribute(internal, attributeName.C(), attributeType.C(), elementCount, arrayOfElements.Pointer())); err != nil {
+	if err := result(C.cudnnBackendSetAttribute(internal, attributeName.C(), attributeType.C(), C.int64_t(elementCount), unsafe.Pointer(arrayOfElements.Uintptr()))); err != nil {
 		return nil, err
 	}
 
@@ -38,8 +41,8 @@ func NewBackend(attributeName BackendAttributeName, attributeType BackendAttribu
 	return retVal, nil
 }
 
-// Descriptor returns the internal descriptor.
-func (b *Backend) Descriptor() *Backend { return b.descriptor }
+// C() returns the internal cgo representation
+func (b *Backend) C() C.cudnnBackendDescriptor_t { return b.internal }
 
 // AttributeName returns the internal attributeName.
 func (b *Backend) AttributeName() BackendAttributeName { return b.attributeName }
