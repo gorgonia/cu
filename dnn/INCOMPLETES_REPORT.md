@@ -155,8 +155,10 @@ These functions have a `*T` return value, but a possible null exception error mi
 * `cudnnFusedOpsPlan_t`
 * `cudnnRuntimeTag_t`
 * `cudnnStatus_t`
-# gorgonia.org/cu/dnn
-open -: no such file or directory
+
+
+# Build Errors/TODO
+```
 # gorgonia.org/cu/dnn
 ./algorithm.go:9:2: type struct {} is not an expression
 ./generated_API.go:13:54: *Activation is not a type
@@ -169,10 +171,10 @@ open -: no such file or directory
 ./generated_API.go:320:145: cannot use _Ctype_int(returnedAlgoCount) (type _Ctype_int) as type *_Ctype_int in assignment
 ./generated_API.go:324:204: cannot use _Ctype_int(returnedAlgoCount) (type _Ctype_int) as type *_Ctype_int in assignment
 ./generated_API.go:328:138: cannot use _Ctype_int(returnedAlgoCount) (type _Ctype_int) as type *_Ctype_int in assignment
-./generated_API.go:328:138: cannot use perfResults.internal (type _Ctype_cudnnConvolutionFwdAlgo_t) as type *_Ctype_struct___4 in assignment
+./generated_API.go:328:138: cannot use perfResults.internal (type _Ctype_cudnnConvolutionFwdAlgo_t) as type *_Ctype_struct_cudnnConvolutionFwdAlgoPerfStruct in assignment
 ./generated_API.go:334:181: undefined: TODO
 ./generated_API.go:332:195: cannot use _Ctype_int(returnedAlgoCount) (type _Ctype_int) as type *_Ctype_int in assignment
-./generated_API.go:332:195: cannot use perfResults.internal (type _Ctype_cudnnConvolutionFwdAlgo_t) as type *_Ctype_struct___4 in assignment
+./generated_API.go:332:195: cannot use perfResults.internal (type _Ctype_cudnnConvolutionFwdAlgo_t) as type *_Ctype_struct_cudnnConvolutionFwdAlgoPerfStruct in assignment
 ./generated_API.go:338:181: undefined: TODO
 ./generated_API.go:344:91: cannot use _Ctype_ulong(sizeInBytes) (type _Ctype_ulong) as type *_Ctype_ulong in assignment
 ./generated_API.go:348:118: cannot use _Ctype_ulong(sizeInBytes) (type _Ctype_ulong) as type *_Ctype_ulong in assignment
@@ -207,18 +209,8 @@ open -: no such file or directory
 ./generated_backend.go:25:49: not enough arguments in call to _Cfunc_cudnnBackendCreateDescriptor
 	have (*_Ctype_cudnnBackendDescriptor_t)
 	want (_Ctype_cudnnBackendDescriptorType_t, *_Ctype_cudnnBackendDescriptor_t)
-./generated_enums.go:126:2: ConvolutionMode redeclared in this block
-	previous declaration at ./convolution.go:126:6
-./generated_enums.go:133:2: PointwiseMode redeclared in this block
-	previous declaration at ./generated_enums.go:25:63
 ./generated_enums.go:259:2: Activation redeclared in this block
 	previous declaration at ./generated_activation.go:10:6
-./generated_enums.go:276:6: DataType redeclared in this block
-	previous declaration at ./generated_enums.go:120:43
-./generated_enums.go:279:2: Float redeclared in this block
-	previous declaration at ./generated_enums.go:123:43
-./generated_enums.go:280:2: Double redeclared in this block
-	previous declaration at ./generated_enums.go:124:43
 ./generated_enums.go:563:2: Activation redeclared in this block
 	previous declaration at ./generated_enums.go:259:31
 ./generated_enums.go:574:2: Activation redeclared in this block
@@ -226,7 +218,7 @@ open -: no such file or directory
 ./generated_enums.go:575:2: AddActivation redeclared in this block
 	previous declaration at ./generated_enums.go:260:31
 ./generated_enums.go:595:6: PointwiseMode redeclared in this block
-	previous declaration at ./generated_enums.go:133:43
+	previous declaration at ./generated_enums.go:25:63
 ./generated_enums.go:598:2: Add redeclared in this block
 	previous declaration at ./generated_enums.go:584:20
 ./generated_enums.go:599:2: Mul redeclared in this block
@@ -248,9 +240,6 @@ open -: no such file or directory
 ./generated_enums.go:796:2: Add redeclared in this block
 	previous declaration at ./generated_enums.go:598:29
 ./generated_enums_strings.go:20:2: type PointwiseMode is not an expression
-./generated_enums_strings.go:110:2: type DataType is not an expression
-./generated_enums_strings.go:113:2: cannot use Float (type DataType) as type BackendAttributeType in map key
-./generated_enums_strings.go:114:2: cannot use Double (type DataType) as type BackendAttributeType in map key
 ./generated_enums_strings.go:195:2: cannot use Count (type RNNAlgo) as type BackendLayoutType in map key
 ./generated_enums_strings.go:222:2: cannot use Activation (type NormOps) as type BatchNormOps in map key
 ./generated_enums_strings.go:223:2: cannot use AddActivation (type NormOps) as type BatchNormOps in map key
@@ -283,3 +272,4 @@ open -: no such file or directory
 ./pooling.go:103:41: *TensorDescriptor is not a type
 ./tensor.go:11:6: TensorDescriptor redeclared in this block
 	previous declaration at ./generated_enums.go:163:71
+```
