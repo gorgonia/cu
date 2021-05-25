@@ -214,11 +214,11 @@ func (e BackendKnobType) C() C.cudnnBackendKnobType_t { return C.cudnnBackendKno
 type BackendLayoutType int
 
 const (
-	BELayoutTypePreferredNchw   BackendLayoutType = C.CUDNN_LAYOUT_TYPE_PREFERRED_NCHW
-	BELayoutTypePreferredNhwc   BackendLayoutType = C.CUDNN_LAYOUT_TYPE_PREFERRED_NHWC
-	BELayoutTypePreferredPad4ck BackendLayoutType = C.CUDNN_LAYOUT_TYPE_PREFERRED_PAD4CK
-	BELayoutTypePreferredPad8ck BackendLayoutType = C.CUDNN_LAYOUT_TYPE_PREFERRED_PAD8CK
-	BELayoutTypeCount           BackendLayoutType = C.CUDNN_LAYOUT_TYPE_COUNT
+	BELayoutPreferredNchw   BackendLayoutType = C.CUDNN_LAYOUT_TYPE_PREFERRED_NCHW
+	BELayoutPreferredNhwc   BackendLayoutType = C.CUDNN_LAYOUT_TYPE_PREFERRED_NHWC
+	BELayoutPreferredPad4ck BackendLayoutType = C.CUDNN_LAYOUT_TYPE_PREFERRED_PAD4CK
+	BELayoutPreferredPad8ck BackendLayoutType = C.CUDNN_LAYOUT_TYPE_PREFERRED_PAD8CK
+	BELayoutCount           BackendLayoutType = C.CUDNN_LAYOUT_TYPE_COUNT
 )
 
 // C returns the C representation of BackendLayoutType
@@ -255,9 +255,9 @@ func (e BatchNormMode) C() C.cudnnBatchNormMode_t { return C.cudnnBatchNormMode_
 type BatchNormOps int
 
 const (
-	BatchNorm                 BatchNormOps = C.CUDNN_BATCHNORM_OPS_BN
-	BatchNormOpsActivation    BatchNormOps = C.CUDNN_BATCHNORM_OPS_BN_ACTIVATION
-	BatchNormOpsAddActivation BatchNormOps = C.CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION
+	BatchNorm              BatchNormOps = C.CUDNN_BATCHNORM_OPS_BN
+	BatchNormActivation    BatchNormOps = C.CUDNN_BATCHNORM_OPS_BN_ACTIVATION
+	BatchNormAddActivation BatchNormOps = C.CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION
 )
 
 // C returns the C representation of BatchNormOps
@@ -498,8 +498,8 @@ func (e LRNMode) C() C.cudnnLRNMode_t { return C.cudnnLRNMode_t(e) }
 type LossNormalizationMode int
 
 const (
-	LossNormModeNone    LossNormalizationMode = C.CUDNN_LOSS_NORMALIZATION_NONE
-	LossNormModeSoftmax LossNormalizationMode = C.CUDNN_LOSS_NORMALIZATION_SOFTMAX
+	LossNormNone    LossNormalizationMode = C.CUDNN_LOSS_NORMALIZATION_NONE
+	LossNormSoftmax LossNormalizationMode = C.CUDNN_LOSS_NORMALIZATION_SOFTMAX
 )
 
 // C returns the C representation of LossNormalizationMode
@@ -550,8 +550,8 @@ func (e NanPropagation) C() C.cudnnNanPropagation_t { return C.cudnnNanPropagati
 type NormAlgo int
 
 const (
-	NormAlgoStandard NormAlgo = C.CUDNN_NORM_ALGO_STANDARD
-	NormAlgoPersist  NormAlgo = C.CUDNN_NORM_ALGO_PERSIST
+	StandardNorm NormAlgo = C.CUDNN_NORM_ALGO_STANDARD
+	PersistNorm  NormAlgo = C.CUDNN_NORM_ALGO_PERSIST
 )
 
 // C returns the C representation of NormAlgo
@@ -560,8 +560,8 @@ func (e NormAlgo) C() C.cudnnNormAlgo_t { return C.cudnnNormAlgo_t(e) }
 type NormMode int
 
 const (
-	NormModeActivation NormMode = C.CUDNN_NORM_PER_ACTIVATION
-	NormModeChannel    NormMode = C.CUDNN_NORM_PER_CHANNEL
+	NormPerActivation NormMode = C.CUDNN_NORM_PER_ACTIVATION
+	NormPerChannel    NormMode = C.CUDNN_NORM_PER_CHANNEL
 )
 
 // C returns the C representation of NormMode
@@ -570,9 +570,9 @@ func (e NormMode) C() C.cudnnNormMode_t { return C.cudnnNormMode_t(e) }
 type NormOps int
 
 const (
-	Norm                 NormOps = C.CUDNN_NORM_OPS_NORM
-	NormOpsActivation    NormOps = C.CUDNN_NORM_OPS_NORM_ACTIVATION
-	NormOpsAddActivation NormOps = C.CUDNN_NORM_OPS_NORM_ADD_ACTIVATION
+	Norm              NormOps = C.CUDNN_NORM_OPS_NORM
+	NormActivation    NormOps = C.CUDNN_NORM_OPS_NORM_ACTIVATION
+	NormAddActivation NormOps = C.CUDNN_NORM_OPS_NORM_ADD_ACTIVATION
 )
 
 // C returns the C representation of NormOps
@@ -581,12 +581,12 @@ func (e NormOps) C() C.cudnnNormOps_t { return C.cudnnNormOps_t(e) }
 type OpTensorOp int
 
 const (
-	OpTensorOpAdd  OpTensorOp = C.CUDNN_OP_TENSOR_ADD
-	OpTensorOpMul  OpTensorOp = C.CUDNN_OP_TENSOR_MUL
-	OpTensorOpMin  OpTensorOp = C.CUDNN_OP_TENSOR_MIN
-	OpTensorOpMax  OpTensorOp = C.CUDNN_OP_TENSOR_MAX
-	OpTensorOpSqrt OpTensorOp = C.CUDNN_OP_TENSOR_SQRT
-	OpTensorOpNot  OpTensorOp = C.CUDNN_OP_TENSOR_NOT
+	TensorAdd  OpTensorOp = C.CUDNN_OP_TENSOR_ADD
+	TensorMul  OpTensorOp = C.CUDNN_OP_TENSOR_MUL
+	TensorMin  OpTensorOp = C.CUDNN_OP_TENSOR_MIN
+	TensorMax  OpTensorOp = C.CUDNN_OP_TENSOR_MAX
+	TensorSqrt OpTensorOp = C.CUDNN_OP_TENSOR_SQRT
+	TensorNot  OpTensorOp = C.CUDNN_OP_TENSOR_NOT
 )
 
 // C returns the C representation of OpTensorOp
@@ -595,15 +595,15 @@ func (e OpTensorOp) C() C.cudnnOpTensorOp_t { return C.cudnnOpTensorOp_t(e) }
 type PointwiseMode int
 
 const (
-	PointWiseModeAdd        PointwiseMode = C.CUDNN_POINTWISE_ADD
-	PointWiseModeMul        PointwiseMode = C.CUDNN_POINTWISE_MUL
-	PointWiseModeMin        PointwiseMode = C.CUDNN_POINTWISE_MIN
-	PointWiseModeMax        PointwiseMode = C.CUDNN_POINTWISE_MAX
-	PointWiseModeSqrt       PointwiseMode = C.CUDNN_POINTWISE_SQRT
-	PointWiseModeReluFwd    PointwiseMode = C.CUDNN_POINTWISE_RELU_FWD
-	PointWiseModeTanhFwd    PointwiseMode = C.CUDNN_POINTWISE_TANH_FWD
-	PointWiseModeSigmoidFwd PointwiseMode = C.CUDNN_POINTWISE_SIGMOID_FWD
-	PointWiseModeEluFwd     PointwiseMode = C.CUDNN_POINTWISE_ELU_FWD
+	PointwiseAdd        PointwiseMode = C.CUDNN_POINTWISE_ADD
+	PointwiseMul        PointwiseMode = C.CUDNN_POINTWISE_MUL
+	PointwiseMin        PointwiseMode = C.CUDNN_POINTWISE_MIN
+	PointwiseMax        PointwiseMode = C.CUDNN_POINTWISE_MAX
+	PointwiseSqrt       PointwiseMode = C.CUDNN_POINTWISE_SQRT
+	PointwiseReluFwd    PointwiseMode = C.CUDNN_POINTWISE_RELU_FWD
+	PointwiseTanhFwd    PointwiseMode = C.CUDNN_POINTWISE_TANH_FWD
+	PointwiseSigmoidFwd PointwiseMode = C.CUDNN_POINTWISE_SIGMOID_FWD
+	PointwiseEluFwd     PointwiseMode = C.CUDNN_POINTWISE_ELU_FWD
 )
 
 // C returns the C representation of PointwiseMode
@@ -624,10 +624,10 @@ func (e PoolingMode) C() C.cudnnPoolingMode_t { return C.cudnnPoolingMode_t(e) }
 type RNNAlgo int
 
 const (
-	RNNAlgoStandard       RNNAlgo = C.CUDNN_RNN_ALGO_STANDARD
-	RNNAlgoPersistStatic  RNNAlgo = C.CUDNN_RNN_ALGO_PERSIST_STATIC
-	RNNAlgoPersistDynamic RNNAlgo = C.CUDNN_RNN_ALGO_PERSIST_DYNAMIC
-	RNNAlgoCount          RNNAlgo = C.CUDNN_RNN_ALGO_COUNT
+	StandardRNN       RNNAlgo = C.CUDNN_RNN_ALGO_STANDARD
+	PersistStaticRNN  RNNAlgo = C.CUDNN_RNN_ALGO_PERSIST_STATIC
+	PersistDynamicRNN RNNAlgo = C.CUDNN_RNN_ALGO_PERSIST_DYNAMIC
+	CountRNN          RNNAlgo = C.CUDNN_RNN_ALGO_COUNT
 )
 
 // C returns the C representation of RNNAlgo
@@ -636,10 +636,10 @@ func (e RNNAlgo) C() C.cudnnRNNAlgo_t { return C.cudnnRNNAlgo_t(e) }
 type RNNBiasMode int
 
 const (
-	RNNBiasModeNoBias        RNNBiasMode = C.CUDNN_RNN_NO_BIAS
-	RNNBiasModeSingleInpBias RNNBiasMode = C.CUDNN_RNN_SINGLE_INP_BIAS
-	RNNBiasModeDoubleBias    RNNBiasMode = C.CUDNN_RNN_DOUBLE_BIAS
-	RNNBiasModeSingleRecBias RNNBiasMode = C.CUDNN_RNN_SINGLE_REC_BIAS
+	RNNNoBias        RNNBiasMode = C.CUDNN_RNN_NO_BIAS
+	RNNSingleInpBias RNNBiasMode = C.CUDNN_RNN_SINGLE_INP_BIAS
+	RNNDoubleBias    RNNBiasMode = C.CUDNN_RNN_DOUBLE_BIAS
+	RNNSingleRecBias RNNBiasMode = C.CUDNN_RNN_SINGLE_REC_BIAS
 )
 
 // C returns the C representation of RNNBiasMode
@@ -648,8 +648,8 @@ func (e RNNBiasMode) C() C.cudnnRNNBiasMode_t { return C.cudnnRNNBiasMode_t(e) }
 type RNNClipMode int
 
 const (
-	RNNClipModeNone   RNNClipMode = C.CUDNN_RNN_CLIP_NONE
-	RNNClipModeMinmax RNNClipMode = C.CUDNN_RNN_CLIP_MINMAX
+	RNNClipNone   RNNClipMode = C.CUDNN_RNN_CLIP_NONE
+	RNNClipMinmax RNNClipMode = C.CUDNN_RNN_CLIP_MINMAX
 )
 
 // C returns the C representation of RNNClipMode

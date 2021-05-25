@@ -136,27 +136,27 @@ func processEnumName(lcp, name string) string {
 
 	switch lcp {
 	case "CUDNN_RNN_CLIP_":
-		lowered = "RNNClipMode" + strings.Title(lowered)
+		lowered = "RNNClip" + strings.Title(lowered)
 	case "CUDNN_RNN_":
-		lowered = "RNNBiasMode" + strings.Title(lowered)
+		lowered = "RNN" + strings.Title(lowered)
 	case "CUDNN_RNN_ALGO_":
-		lowered = "RNNAlgo" + strings.Title(lowered)
+		lowered = strings.Title(lowered) + "RNN"
 	case "CUDNN_POINTWISE_":
-		lowered = "PointWiseMode" + strings.Title(lowered)
+		lowered = "Pointwise" + strings.Title(lowered)
 	case "CUDNN_OP_TENSOR_":
-		lowered = "OpTensorOp" + strings.Title(lowered)
+		lowered = "Tensor" + strings.Title(lowered)
 	case "CUDNN_NORM_OPS_NORM":
-		lowered = "NormOps" + strings.Title(lowered)
+		lowered = "Norm" + strings.Title(lowered)
 	case "CUDNN_NORM_PER_":
-		lowered = "NormMode" + strings.Title(lowered)
+		lowered = "NormPer" + strings.Title(lowered)
 	case "CUDNN_NORM_ALGO_":
-		lowered = "NormAlgo" + strings.Title(lowered)
+		lowered = strings.Title(lowered) + "Norm"
 	case "CUDNN_LOSS_NORMALIZATION_":
-		lowered = "LossNormMode" + strings.Title(lowered)
+		lowered = "LossNorm" + strings.Title(lowered)
 	case "CUDNN_BATCHNORM_OPS_BN":
-		lowered = "BatchNormOps" + strings.Title(lowered)
+		lowered = "BatchNorm" + strings.Title(lowered)
 	case "CUDNN_LAYOUT_TYPE_":
-		lowered = "BELayoutType" + strings.Title(lowered)
+		lowered = "BELayout" + strings.Title(lowered)
 	case "CUDNN_BACKEND_":
 		lowered = "BEDescriptor" + strings.Title(lowered)
 	case "CUDNN_ATTR_":

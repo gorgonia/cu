@@ -188,11 +188,11 @@ var _BackendKnobTypeNames = map[BackendKnobType]string{
 func (e BackendKnobType) String() string { return _BackendKnobTypeNames[e] }
 
 var _BackendLayoutTypeNames = map[BackendLayoutType]string{
-	BELayoutTypePreferredNchw:   "BELayoutTypePreferredNchw",
-	BELayoutTypePreferredNhwc:   "BELayoutTypePreferredNhwc",
-	BELayoutTypePreferredPad4ck: "BELayoutTypePreferredPad4ck",
-	BELayoutTypePreferredPad8ck: "BELayoutTypePreferredPad8ck",
-	BELayoutTypeCount:           "BELayoutTypeCount",
+	BELayoutPreferredNchw:   "BELayoutPreferredNchw",
+	BELayoutPreferredNhwc:   "BELayoutPreferredNhwc",
+	BELayoutPreferredPad4ck: "BELayoutPreferredPad4ck",
+	BELayoutPreferredPad8ck: "BELayoutPreferredPad8ck",
+	BELayoutCount:           "BELayoutCount",
 }
 
 func (e BackendLayoutType) String() string { return _BackendLayoutTypeNames[e] }
@@ -218,9 +218,9 @@ var _BatchNormModeNames = map[BatchNormMode]string{
 func (e BatchNormMode) String() string { return _BatchNormModeNames[e] }
 
 var _BatchNormOpsNames = map[BatchNormOps]string{
-	BatchNorm:                 "BatchNorm",
-	BatchNormOpsActivation:    "BatchNormOpsActivation",
-	BatchNormOpsAddActivation: "BatchNormOpsAddActivation",
+	BatchNorm:              "BatchNorm",
+	BatchNormActivation:    "BatchNormActivation",
+	BatchNormAddActivation: "BatchNormAddActivation",
 }
 
 func (e BatchNormOps) String() string { return _BatchNormOpsNames[e] }
@@ -407,8 +407,8 @@ var _LRNModeNames = map[LRNMode]string{
 func (e LRNMode) String() string { return _LRNModeNames[e] }
 
 var _LossNormalizationModeNames = map[LossNormalizationMode]string{
-	LossNormModeNone:    "LossNormModeNone",
-	LossNormModeSoftmax: "LossNormModeSoftmax",
+	LossNormNone:    "LossNormNone",
+	LossNormSoftmax: "LossNormSoftmax",
 }
 
 func (e LossNormalizationMode) String() string { return _LossNormalizationModeNames[e] }
@@ -443,48 +443,48 @@ var _NanPropagationNames = map[NanPropagation]string{
 func (e NanPropagation) String() string { return _NanPropagationNames[e] }
 
 var _NormAlgoNames = map[NormAlgo]string{
-	NormAlgoStandard: "NormAlgoStandard",
-	NormAlgoPersist:  "NormAlgoPersist",
+	StandardNorm: "StandardNorm",
+	PersistNorm:  "PersistNorm",
 }
 
 func (e NormAlgo) String() string { return _NormAlgoNames[e] }
 
 var _NormModeNames = map[NormMode]string{
-	NormModeActivation: "NormModeActivation",
-	NormModeChannel:    "NormModeChannel",
+	NormPerActivation: "NormPerActivation",
+	NormPerChannel:    "NormPerChannel",
 }
 
 func (e NormMode) String() string { return _NormModeNames[e] }
 
 var _NormOpsNames = map[NormOps]string{
-	Norm:                 "Norm",
-	NormOpsActivation:    "NormOpsActivation",
-	NormOpsAddActivation: "NormOpsAddActivation",
+	Norm:              "Norm",
+	NormActivation:    "NormActivation",
+	NormAddActivation: "NormAddActivation",
 }
 
 func (e NormOps) String() string { return _NormOpsNames[e] }
 
 var _OpTensorOpNames = map[OpTensorOp]string{
-	OpTensorOpAdd:  "OpTensorOpAdd",
-	OpTensorOpMul:  "OpTensorOpMul",
-	OpTensorOpMin:  "OpTensorOpMin",
-	OpTensorOpMax:  "OpTensorOpMax",
-	OpTensorOpSqrt: "OpTensorOpSqrt",
-	OpTensorOpNot:  "OpTensorOpNot",
+	TensorAdd:  "TensorAdd",
+	TensorMul:  "TensorMul",
+	TensorMin:  "TensorMin",
+	TensorMax:  "TensorMax",
+	TensorSqrt: "TensorSqrt",
+	TensorNot:  "TensorNot",
 }
 
 func (e OpTensorOp) String() string { return _OpTensorOpNames[e] }
 
 var _PointwiseModeNames = map[PointwiseMode]string{
-	PointWiseModeAdd:        "PointWiseModeAdd",
-	PointWiseModeMul:        "PointWiseModeMul",
-	PointWiseModeMin:        "PointWiseModeMin",
-	PointWiseModeMax:        "PointWiseModeMax",
-	PointWiseModeSqrt:       "PointWiseModeSqrt",
-	PointWiseModeReluFwd:    "PointWiseModeReluFwd",
-	PointWiseModeTanhFwd:    "PointWiseModeTanhFwd",
-	PointWiseModeSigmoidFwd: "PointWiseModeSigmoidFwd",
-	PointWiseModeEluFwd:     "PointWiseModeEluFwd",
+	PointwiseAdd:        "PointwiseAdd",
+	PointwiseMul:        "PointwiseMul",
+	PointwiseMin:        "PointwiseMin",
+	PointwiseMax:        "PointwiseMax",
+	PointwiseSqrt:       "PointwiseSqrt",
+	PointwiseReluFwd:    "PointwiseReluFwd",
+	PointwiseTanhFwd:    "PointwiseTanhFwd",
+	PointwiseSigmoidFwd: "PointwiseSigmoidFwd",
+	PointwiseEluFwd:     "PointwiseEluFwd",
 }
 
 func (e PointwiseMode) String() string { return _PointwiseModeNames[e] }
@@ -499,26 +499,26 @@ var _PoolingModeNames = map[PoolingMode]string{
 func (e PoolingMode) String() string { return _PoolingModeNames[e] }
 
 var _RNNAlgoNames = map[RNNAlgo]string{
-	RNNAlgoStandard:       "RNNAlgoStandard",
-	RNNAlgoPersistStatic:  "RNNAlgoPersistStatic",
-	RNNAlgoPersistDynamic: "RNNAlgoPersistDynamic",
-	RNNAlgoCount:          "RNNAlgoCount",
+	StandardRNN:       "StandardRNN",
+	PersistStaticRNN:  "PersistStaticRNN",
+	PersistDynamicRNN: "PersistDynamicRNN",
+	CountRNN:          "CountRNN",
 }
 
 func (e RNNAlgo) String() string { return _RNNAlgoNames[e] }
 
 var _RNNBiasModeNames = map[RNNBiasMode]string{
-	RNNBiasModeNoBias:        "RNNBiasModeNoBias",
-	RNNBiasModeSingleInpBias: "RNNBiasModeSingleInpBias",
-	RNNBiasModeDoubleBias:    "RNNBiasModeDoubleBias",
-	RNNBiasModeSingleRecBias: "RNNBiasModeSingleRecBias",
+	RNNNoBias:        "RNNNoBias",
+	RNNSingleInpBias: "RNNSingleInpBias",
+	RNNDoubleBias:    "RNNDoubleBias",
+	RNNSingleRecBias: "RNNSingleRecBias",
 }
 
 func (e RNNBiasMode) String() string { return _RNNBiasModeNames[e] }
 
 var _RNNClipModeNames = map[RNNClipMode]string{
-	RNNClipModeNone:   "RNNClipModeNone",
-	RNNClipModeMinmax: "RNNClipModeMinmax",
+	RNNClipNone:   "RNNClipNone",
+	RNNClipMinmax: "RNNClipMinmax",
 }
 
 func (e RNNClipMode) String() string { return _RNNClipModeNames[e] }
