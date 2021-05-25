@@ -116,23 +116,23 @@ func (e BackendAttributeName) C() C.cudnnBackendAttributeName_t {
 type BackendAttributeType int
 
 const (
-	Handle            BackendAttributeType = C.CUDNN_TYPE_HANDLE
-	DataType          BackendAttributeType = C.CUDNN_TYPE_DATA_TYPE
-	Boolean           BackendAttributeType = C.CUDNN_TYPE_BOOLEAN
-	Int64             BackendAttributeType = C.CUDNN_TYPE_INT64
-	Float             BackendAttributeType = C.CUDNN_TYPE_FLOAT
-	Double            BackendAttributeType = C.CUDNN_TYPE_DOUBLE
-	VoidPtr           BackendAttributeType = C.CUDNN_TYPE_VOID_PTR
-	ConvolutionMode   BackendAttributeType = C.CUDNN_TYPE_CONVOLUTION_MODE
-	HeurMode          BackendAttributeType = C.CUDNN_TYPE_HEUR_MODE
-	KnobType          BackendAttributeType = C.CUDNN_TYPE_KNOB_TYPE
-	NanPropogation    BackendAttributeType = C.CUDNN_TYPE_NAN_PROPOGATION
-	NumericalNote     BackendAttributeType = C.CUDNN_TYPE_NUMERICAL_NOTE
-	LayoutType        BackendAttributeType = C.CUDNN_TYPE_LAYOUT_TYPE
-	AttribName        BackendAttributeType = C.CUDNN_TYPE_ATTRIB_NAME
-	PointwiseMode     BackendAttributeType = C.CUDNN_TYPE_POINTWISE_MODE
-	BackendDescriptor BackendAttributeType = C.CUDNN_TYPE_BACKEND_DESCRIPTOR
-	GenstatsMode      BackendAttributeType = C.CUDNN_TYPE_GENSTATS_MODE
+	BackendAttrHandle            BackendAttributeType = C.CUDNN_TYPE_HANDLE
+	BackendAttrDataType          BackendAttributeType = C.CUDNN_TYPE_DATA_TYPE
+	BackendAttrBoolean           BackendAttributeType = C.CUDNN_TYPE_BOOLEAN
+	BackendAttrInt64             BackendAttributeType = C.CUDNN_TYPE_INT64
+	BackendAttrFloat             BackendAttributeType = C.CUDNN_TYPE_FLOAT
+	BackendAttrDouble            BackendAttributeType = C.CUDNN_TYPE_DOUBLE
+	BackendAttrVoidPtr           BackendAttributeType = C.CUDNN_TYPE_VOID_PTR
+	BackendAttrConvolutionMode   BackendAttributeType = C.CUDNN_TYPE_CONVOLUTION_MODE
+	BackendAttrHeurMode          BackendAttributeType = C.CUDNN_TYPE_HEUR_MODE
+	BackendAttrKnobType          BackendAttributeType = C.CUDNN_TYPE_KNOB_TYPE
+	BackendAttrNanPropogation    BackendAttributeType = C.CUDNN_TYPE_NAN_PROPOGATION
+	BackendAttrNumericalNote     BackendAttributeType = C.CUDNN_TYPE_NUMERICAL_NOTE
+	BackendAttrLayoutType        BackendAttributeType = C.CUDNN_TYPE_LAYOUT_TYPE
+	BackendAttrAttribName        BackendAttributeType = C.CUDNN_TYPE_ATTRIB_NAME
+	BackendAttrPointwiseMode     BackendAttributeType = C.CUDNN_TYPE_POINTWISE_MODE
+	BackendAttrBackendDescriptor BackendAttributeType = C.CUDNN_TYPE_BACKEND_DESCRIPTOR
+	BackendAttrGenstatsMode      BackendAttributeType = C.CUDNN_TYPE_GENSTATS_MODE
 )
 
 // C returns the C representation of BackendAttributeType

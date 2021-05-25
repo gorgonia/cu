@@ -135,6 +135,9 @@ func processEnumName(lcp, name string) string {
 	lowered := strings.ToLower(trimmed)
 
 	switch lcp {
+
+	case "CUDNN_TYPE_":
+		lowered = "BackendAttr" + strings.Title(lowered)
 	case "CUDNN_TENSOR_N":
 		// tensor description
 		lowered = "n" + lowered
