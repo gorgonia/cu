@@ -10,18 +10,37 @@ import "runtime"
 type AlgorithmDescriptor struct {
 	internal C.cudnnAlgorithmDescriptor_t
 
-	algorithm TODO
+	algorithm interface{}
 }
 
 // NewAlgorithmDescriptor creates a new AlgorithmDescriptor.
-func NewAlgorithmDescriptor(algorithm TODO) (retVal *AlgorithmDescriptor, err error) {
+func NewAlgorithmDescriptor(algorithm interface{}) (retVal *AlgorithmDescriptor, err error) {
 	var internal C.cudnnAlgorithmDescriptor_t
 	if err := result(C.cudnnCreateAlgorithmDescriptor(&internal)); err != nil {
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetAlgorithmDescriptor(internal, algorithm)); err != nil {
-		return nil, err
+	switch a := algorithm.(type) {
+	case ConvolutionFwdAlgo:
+		if err := result(C.cudnnSetAlgorithmDescriptor(internal, a.C())); err != nil {
+			return nil, err
+		}
+	case ConvolutionBwdFilterAlgo:
+		if err := result(C.cudnnSetAlgorithmDescriptor(internal, a.C())); err != nil {
+			return nil, err
+		}
+	case ConvolutionBwdDataAlgo:
+		if err := result(C.cudnnSetAlgorithmDescriptor(internal, a.C())); err != nil {
+			return nil, err
+		}
+	case RNNAlgo:
+		if err := result(C.cudnnSetAlgorithmDescriptor(internal, a.C())); err != nil {
+			return nil, err
+		}
+	case CTCLossAlgo:
+		if err := result(C.cudnnSetAlgorithmDescriptor(internal, a.C())); err != nil {
+			return nil, err
+		}
 	}
 
 	retVal = &AlgorithmDescriptor{
@@ -34,8 +53,6 @@ func NewAlgorithmDescriptor(algorithm TODO) (retVal *AlgorithmDescriptor, err er
 
 // C returns the internal cgo representation
 func (a *AlgorithmDescriptor) C() C.cudnnAlgorithmDescriptor_t { return a.internal }
-
-//TODO: "cudnnSetAlgorithmDescriptor": Parameter 1 Skipped "algorithm" of struct{union Algorithm;} - unmapped type
 
 func destroyAlgorithmDescriptor(obj *AlgorithmDescriptor) {
 	C.cudnnDestroyAlgorithmDescriptor(obj.internal)
