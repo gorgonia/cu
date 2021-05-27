@@ -24,7 +24,7 @@ func NewFusedOpVariantParams(paramLabel FusedOpsVariantParamLabel, ptr Memory) (
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetFusedOpsVariantParamPackAttribute(internal, paramLabel.C(), unsafe.Pointer(ptr.Pointer()))); err != nil {
+	if err := result(C.cudnnSetFusedOpsVariantParamPackAttribute(internal, paramLabel.C(), unsafe.Pointer(ptr.Uintptr()))); err != nil {
 		return nil, err
 	}
 
