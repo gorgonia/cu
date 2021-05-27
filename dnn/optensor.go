@@ -48,7 +48,7 @@ func (op *Op) DataType() DataType { return op.dataType }
 func (op *Op) NaNPropagation() NanPropagation { return op.nanPropagation }
 
 // DoOp actually performs the operation.
-func (ctx *Context) DoOp(op *Op,
+func (co *Context) DoOp(op *Op,
 	alpha1 float64, aDesc *TensorDescriptor, aData Memory,
 	alpha2 float64, bDesc *TensorDescriptor, bData Memory,
 	beta float64, cDesc *TensorDescriptor, cData Memory) error {
@@ -100,10 +100,10 @@ func (ctx *Context) DoOp(op *Op,
 		betaC = unsafe.Pointer(&b)
 	}
 
-	res := C.cudnnOpTensor(ctx.internal, op.internal,
-		alpha1C, aDesc.internal, aData.Pointer(),
-		alpha2C, bDesc.internal, bData.Pointer(),
-		betaC, cDesc.internal, cData.Pointer(),
+	res := C.cudnnOpTensor(co.internal, op.internal,
+		alpha1C, aDesc.internal, unsafe.Pointer(aData.Uintptr()),
+		alpha2C, bDesc.internal, unsafe.Pointer(bData.Uintptr()),
+		betaC, cDesc.internal, unsafe.Pointer(cData.Uintptr()),
 	)
 	return result(res)
 }
