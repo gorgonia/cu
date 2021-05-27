@@ -5,8 +5,9 @@ import "C"
 
 type cudnnStatus int
 
-func (err cudnnStatus) Error() string  { return err.String() }
-func (err cudnnStatus) String() string { return resString[err] }
+func (err cudnnStatus) Error() string      { return err.String() }
+func (err cudnnStatus) String() string     { return resString[err] }
+func (err cudnnStatus) C() C.cudnnStatus_t { return err }
 
 func result(x C.cudnnStatus_t) error {
 	err := cudnnStatus(x)
