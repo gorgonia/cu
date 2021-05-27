@@ -144,7 +144,7 @@ func (co *Context) BatchNormalizationForwardTraining(mode BatchNormMode, alpha f
 	// call cudnnBatchNormalizationForwardTraining
 	return result(C.cudnnBatchNormalizationForwardTraining(co.internal, mode.C(), alphaC, betaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), bnScaleBiasMeanVarDesc.internal, unsafe.Pointer(bnScale.Uintptr()), unsafe.Pointer(bnBias.Uintptr()), C.double(exponentialAverageFactor), unsafe.Pointer(resultRunningMean.Uintptr()), unsafe.Pointer(resultRunningVariance.Uintptr()), C.double(epsilon), unsafe.Pointer(resultSaveMean.Uintptr()), unsafe.Pointer(resultSaveInvVariance.Uintptr())))
 }
-func (co *Context) CTCLoss(probsDesc *TensorDescriptor, probs Memory, hostLabels TODO, hostLabelLengths TODO, hostInputLengths TODO, costs Memory, gradientsDesc *TensorDescriptor, gradients Memory, algo CTCLossAlgo, ctcLossDesc *CTCLoss, workspace Memory, workSpaceSizeInBytes uintptr) error {
+func (co *Context) CTCLoss(probsDesc *TensorDescriptor, probs Memory, hostLabels []int, hostLabelLengths []int, hostInputLengths []int, costs Memory, gradientsDesc *TensorDescriptor, gradients Memory, algo CTCLossAlgo, ctcLossDesc *CTCLoss, workspace Memory, workSpaceSizeInBytes uintptr) error {
 	// call cudnnCTCLoss
 	return result(C.cudnnCTCLoss(co.internal, probsDesc.internal, unsafe.Pointer(probs.Uintptr()), hostLabels, hostLabelLengths, hostInputLengths, unsafe.Pointer(costs.Uintptr()), gradientsDesc.internal, unsafe.Pointer(gradients.Uintptr()), algo.C(), ctcLossDesc.internal, unsafe.Pointer(workspace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
 }
@@ -639,9 +639,8 @@ func (co *Context) TransformTensor(alpha float64, xDesc *TensorDescriptor, x Mem
 	// call cudnnTransformTensor
 	return result(C.cudnnTransformTensor(co.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
 }
-func (te *TensorDescriptor) DeriveBNTensorDescriptor(mode BatchNormMode) error {
-	// TODO: xDesc cudnnTensorDescriptor_t
-	// call cudnnDeriveBNTensorDescriptor
+
+func (te *TensorDescriptor) DeriveBNTensorDescriptor(xDesc *TensorDescriptor, mode BatchNormMode) error {
 	return result(C.cudnnDeriveBNTensorDescriptor(te.internal, xDesc.internal, mode.C()))
 }
 func (te *TensorDescriptor) DropoutGetReserveSpaceSize(sizeInBytes uintptr) error {
