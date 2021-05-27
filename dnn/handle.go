@@ -30,15 +30,15 @@ func NewContext() (retVal *Context) {
 }
 
 //  Close destroys the underlying context.
-func (co *Context) Close() error {
+func (ctx *Context) Close() error {
 	var empty C.cudnnHandle_t
-	if co.internal == empty {
+	if ctx.internal == empty {
 		return nil
 	}
 
-	if err := result(C.cudnnDestroy(co.internal)); err != nil {
+	if err := result(C.cudnnDestroy(ctx.internal)); err != nil {
 		return err
 	}
-	co.internal = empty
+	ctx.internal = empty
 	return nil
 }

@@ -11,13 +11,13 @@ type AlgorithmPerformance struct {
 	internal C.cudnnAlgorithmPerformance_t
 
 	algoDesc *AlgorithmDescriptor
-	status   *cudnnStatus
+	status   Status
 	time     float32
 	memory   uintptr
 }
 
 // NewAlgorithmPerformance creates a new AlgorithmPerformance.
-func NewAlgorithmPerformance(algoDesc *AlgorithmDescriptor, status *cudnnStatus, time float32, memory uintptr) (retVal *AlgorithmPerformance, err error) {
+func NewAlgorithmPerformance(algoDesc *AlgorithmDescriptor, status Status, time float32, memory uintptr) (retVal *AlgorithmPerformance, err error) {
 	var internal C.cudnnAlgorithmPerformance_t
 	if err := result(C.cudnnCreateAlgorithmPerformance(&internal)); err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func (a *AlgorithmPerformance) C() C.cudnnAlgorithmPerformance_t { return a.inte
 func (a *AlgorithmPerformance) AlgoDesc() *AlgorithmDescriptor { return a.algoDesc }
 
 // Status returns the internal status.
-func (a *AlgorithmPerformance) Status() *cudnnStatus { return a.status }
+func (a *AlgorithmPerformance) Status() Status { return a.status }
 
 // Time returns the internal time.
 func (a *AlgorithmPerformance) Time() float32 { return a.time }
