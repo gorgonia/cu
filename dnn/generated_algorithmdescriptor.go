@@ -4,17 +4,22 @@ package cudnn
 
 // #include <cudnn.h>
 import "C"
-import "runtime"
+import (
+	"fmt"
+	"runtime"
+)
+
+type Algorithm = interface{}
 
 // AlgorithmDescriptor is a representation of cudnnAlgorithmDescriptor_t.
 type AlgorithmDescriptor struct {
 	internal C.cudnnAlgorithmDescriptor_t
 
-	algorithm interface{}
+	algorithm Algorithm
 }
 
 // NewAlgorithmDescriptor creates a new AlgorithmDescriptor.
-func NewAlgorithmDescriptor(algorithm interface{}) (retVal *AlgorithmDescriptor, err error) {
+func NewAlgorithmDescriptor(algorithm Algorithm) (retVal *AlgorithmDescriptor, err error) {
 	var internal C.cudnnAlgorithmDescriptor_t
 	if err := result(C.cudnnCreateAlgorithmDescriptor(&internal)); err != nil {
 		return nil, err
@@ -41,6 +46,8 @@ func NewAlgorithmDescriptor(algorithm interface{}) (retVal *AlgorithmDescriptor,
 		if err := result(C.cudnnSetAlgorithmDescriptor(internal, a.C())); err != nil {
 			return nil, err
 		}
+	default:
+		return nil, fmt.Errorf(`unknown algorithm specified`)
 	}
 
 	retVal = &AlgorithmDescriptor{
