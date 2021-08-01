@@ -10,7 +10,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (co *Context) ActivationBackward(activationDesc *Activation, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
+func (ctx *Context) ActivationBackward(activationDesc *Activation, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch yDesc.dataType {
 	case Float, Half:
@@ -29,9 +29,9 @@ func (co *Context) ActivationBackward(activationDesc *Activation, alpha float64,
 		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
 	}
 	// call cudnnActivationBackward
-	return result(C.cudnnActivationBackward(co.internal, activationDesc.internal, alphaC, yDesc.internal, unsafe.Pointer(y.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr())))
+	return result(C.cudnnActivationBackward(ctx.internal, activationDesc.internal, alphaC, yDesc.internal, unsafe.Pointer(y.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr())))
 }
-func (co *Context) ActivationForward(activationDesc *Activation, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
+func (ctx *Context) ActivationForward(activationDesc *Activation, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -50,9 +50,9 @@ func (co *Context) ActivationForward(activationDesc *Activation, alpha float64, 
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnActivationForward
-	return result(C.cudnnActivationForward(co.internal, activationDesc.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
+	return result(C.cudnnActivationForward(ctx.internal, activationDesc.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
 }
-func (co *Context) AddTensor(alpha float64, aDesc *TensorDescriptor, A Memory, beta float64, cDesc *TensorDescriptor, C_ Memory) error {
+func (ctx *Context) AddTensor(alpha float64, aDesc *TensorDescriptor, A Memory, beta float64, cDesc *TensorDescriptor, C_ Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch aDesc.dataType {
 	case Float, Half:
@@ -71,9 +71,9 @@ func (co *Context) AddTensor(alpha float64, aDesc *TensorDescriptor, A Memory, b
 		return errors.Errorf("Unsupported data type: %v", aDesc.dataType)
 	}
 	// call cudnnAddTensor
-	return result(C.cudnnAddTensor(co.internal, alphaC, aDesc.internal, unsafe.Pointer(A.Uintptr()), betaC, cDesc.internal, unsafe.Pointer(C_.Uintptr())))
+	return result(C.cudnnAddTensor(ctx.internal, alphaC, aDesc.internal, unsafe.Pointer(A.Uintptr()), betaC, cDesc.internal, unsafe.Pointer(C_.Uintptr())))
 }
-func (co *Context) BatchNormalizationBackward(mode BatchNormMode, alphaDataDiff float64, betaDataDiff float64, alphaParamDiff float64, betaParamDiff float64, xDesc *TensorDescriptor, x Memory, dyDesc *TensorDescriptor, dy Memory, dxDesc *TensorDescriptor, dx Memory, dBnScaleBiasDesc *TensorDescriptor, bnScale Memory, dBnScaleResult Memory, dBnBiasResult Memory, epsilon float64, savedMean Memory, savedInvVariance Memory) error {
+func (ctx *Context) BatchNormalizationBackward(mode BatchNormMode, alphaDataDiff float64, betaDataDiff float64, alphaParamDiff float64, betaParamDiff float64, xDesc *TensorDescriptor, x Memory, dyDesc *TensorDescriptor, dy Memory, dxDesc *TensorDescriptor, dx Memory, dBnScaleBiasDesc *TensorDescriptor, bnScale Memory, dBnScaleResult Memory, dBnBiasResult Memory, epsilon float64, savedMean Memory, savedInvVariance Memory) error {
 	var alphaDataDiffC, betaDataDiffC, alphaParamDiffC, betaParamDiffC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -100,9 +100,9 @@ func (co *Context) BatchNormalizationBackward(mode BatchNormMode, alphaDataDiff 
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnBatchNormalizationBackward
-	return result(C.cudnnBatchNormalizationBackward(co.internal, mode.C(), alphaDataDiffC, betaDataDiffC, alphaParamDiffC, betaParamDiffC, xDesc.internal, unsafe.Pointer(x.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), dxDesc.internal, unsafe.Pointer(dx.Uintptr()), dBnScaleBiasDesc.internal, unsafe.Pointer(bnScale.Uintptr()), unsafe.Pointer(dBnScaleResult.Uintptr()), unsafe.Pointer(dBnBiasResult.Uintptr()), C.double(epsilon), unsafe.Pointer(savedMean.Uintptr()), unsafe.Pointer(savedInvVariance.Uintptr())))
+	return result(C.cudnnBatchNormalizationBackward(ctx.internal, mode.C(), alphaDataDiffC, betaDataDiffC, alphaParamDiffC, betaParamDiffC, xDesc.internal, unsafe.Pointer(x.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), dxDesc.internal, unsafe.Pointer(dx.Uintptr()), dBnScaleBiasDesc.internal, unsafe.Pointer(bnScale.Uintptr()), unsafe.Pointer(dBnScaleResult.Uintptr()), unsafe.Pointer(dBnBiasResult.Uintptr()), C.double(epsilon), unsafe.Pointer(savedMean.Uintptr()), unsafe.Pointer(savedInvVariance.Uintptr())))
 }
-func (co *Context) BatchNormalizationForwardInference(mode BatchNormMode, alpha float64, beta float64, xDesc *TensorDescriptor, x Memory, yDesc *TensorDescriptor, y Memory, bnScaleBiasMeanVarDesc *TensorDescriptor, bnScale Memory, bnBias Memory, estimatedMean Memory, estimatedVariance Memory, epsilon float64) error {
+func (ctx *Context) BatchNormalizationForwardInference(mode BatchNormMode, alpha float64, beta float64, xDesc *TensorDescriptor, x Memory, yDesc *TensorDescriptor, y Memory, bnScaleBiasMeanVarDesc *TensorDescriptor, bnScale Memory, bnBias Memory, estimatedMean Memory, estimatedVariance Memory, epsilon float64) error {
 	var alphaC, betaC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -121,9 +121,9 @@ func (co *Context) BatchNormalizationForwardInference(mode BatchNormMode, alpha 
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnBatchNormalizationForwardInference
-	return result(C.cudnnBatchNormalizationForwardInference(co.internal, mode.C(), alphaC, betaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), bnScaleBiasMeanVarDesc.internal, unsafe.Pointer(bnScale.Uintptr()), unsafe.Pointer(bnBias.Uintptr()), unsafe.Pointer(estimatedMean.Uintptr()), unsafe.Pointer(estimatedVariance.Uintptr()), C.double(epsilon)))
+	return result(C.cudnnBatchNormalizationForwardInference(ctx.internal, mode.C(), alphaC, betaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), bnScaleBiasMeanVarDesc.internal, unsafe.Pointer(bnScale.Uintptr()), unsafe.Pointer(bnBias.Uintptr()), unsafe.Pointer(estimatedMean.Uintptr()), unsafe.Pointer(estimatedVariance.Uintptr()), C.double(epsilon)))
 }
-func (co *Context) BatchNormalizationForwardTraining(mode BatchNormMode, alpha float64, beta float64, xDesc *TensorDescriptor, x Memory, yDesc *TensorDescriptor, y Memory, bnScaleBiasMeanVarDesc *TensorDescriptor, bnScale Memory, bnBias Memory, exponentialAverageFactor float64, resultRunningMean Memory, resultRunningVariance Memory, epsilon float64, resultSaveMean Memory, resultSaveInvVariance Memory) error {
+func (ctx *Context) BatchNormalizationForwardTraining(mode BatchNormMode, alpha float64, beta float64, xDesc *TensorDescriptor, x Memory, yDesc *TensorDescriptor, y Memory, bnScaleBiasMeanVarDesc *TensorDescriptor, bnScale Memory, bnBias Memory, exponentialAverageFactor float64, resultRunningMean Memory, resultRunningVariance Memory, epsilon float64, resultSaveMean Memory, resultSaveInvVariance Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -142,13 +142,20 @@ func (co *Context) BatchNormalizationForwardTraining(mode BatchNormMode, alpha f
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnBatchNormalizationForwardTraining
-	return result(C.cudnnBatchNormalizationForwardTraining(co.internal, mode.C(), alphaC, betaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), bnScaleBiasMeanVarDesc.internal, unsafe.Pointer(bnScale.Uintptr()), unsafe.Pointer(bnBias.Uintptr()), C.double(exponentialAverageFactor), unsafe.Pointer(resultRunningMean.Uintptr()), unsafe.Pointer(resultRunningVariance.Uintptr()), C.double(epsilon), unsafe.Pointer(resultSaveMean.Uintptr()), unsafe.Pointer(resultSaveInvVariance.Uintptr())))
+	return result(C.cudnnBatchNormalizationForwardTraining(ctx.internal, mode.C(), alphaC, betaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), bnScaleBiasMeanVarDesc.internal, unsafe.Pointer(bnScale.Uintptr()), unsafe.Pointer(bnBias.Uintptr()), C.double(exponentialAverageFactor), unsafe.Pointer(resultRunningMean.Uintptr()), unsafe.Pointer(resultRunningVariance.Uintptr()), C.double(epsilon), unsafe.Pointer(resultSaveMean.Uintptr()), unsafe.Pointer(resultSaveInvVariance.Uintptr())))
 }
-func (co *Context) CTCLoss(probsDesc *TensorDescriptor, probs Memory, hostLabels TODO, hostLabelLengths TODO, hostInputLengths TODO, costs Memory, gradientsDesc *TensorDescriptor, gradients Memory, algo CTCLossAlgo, ctcLossDesc *CTCLoss, workspace Memory, workSpaceSizeInBytes uintptr) error {
+func (ctx *Context) CTCLoss(probsDesc *TensorDescriptor, probs Memory, hostLabels []int, hostLabelLengths []int, hostInputLengths []int, costs Memory, gradientsDesc *TensorDescriptor, gradients Memory, algo CTCLossAlgo, ctcLossDesc *CTCLoss, workspace Memory, workSpaceSizeInBytes uintptr) error {
 	// call cudnnCTCLoss
-	return result(C.cudnnCTCLoss(co.internal, probsDesc.internal, unsafe.Pointer(probs.Uintptr()), hostLabels, hostLabelLengths, hostInputLengths, unsafe.Pointer(costs.Uintptr()), gradientsDesc.internal, unsafe.Pointer(gradients.Uintptr()), algo.C(), ctcLossDesc.internal, unsafe.Pointer(workspace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
+	hostLabelsC, hostLabelsCManaged := ints2CIntPtr(hostLabels)
+	defer returnManaged(hostLabelsCManaged)
+	hostLabelLengthsC, hostLabelLengthsCManaged := ints2CIntPtr(hostLabelLengths)
+	defer returnManaged(hostLabelLengthsCManaged)
+	hostInputLengthsC, hostInputLengthsCManaged := ints2CIntPtr(hostInputLengths)
+	defer returnManaged(hostInputLengthsCManaged)
+
+	return result(C.cudnnCTCLoss(ctx.internal, probsDesc.internal, unsafe.Pointer(probs.Uintptr()), hostLabelsC, hostLabelLengthsC, hostInputLengthsC, unsafe.Pointer(costs.Uintptr()), gradientsDesc.internal, unsafe.Pointer(gradients.Uintptr()), algo.C(), ctcLossDesc.internal, unsafe.Pointer(workspace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
 }
-func (co *Context) ConvolutionBackwardBias(alpha float64, dyDesc *TensorDescriptor, dy Memory, beta float64, dbDesc *TensorDescriptor, db Memory) error {
+func (ctx *Context) ConvolutionBackwardBias(alpha float64, dyDesc *TensorDescriptor, dy Memory, beta float64, dbDesc *TensorDescriptor, db Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch dyDesc.dataType {
 	case Float, Half:
@@ -167,9 +174,9 @@ func (co *Context) ConvolutionBackwardBias(alpha float64, dyDesc *TensorDescript
 		return errors.Errorf("Unsupported data type: %v", dyDesc.dataType)
 	}
 	// call cudnnConvolutionBackwardBias
-	return result(C.cudnnConvolutionBackwardBias(co.internal, alphaC, dyDesc.internal, unsafe.Pointer(dy.Uintptr()), betaC, dbDesc.internal, unsafe.Pointer(db.Uintptr())))
+	return result(C.cudnnConvolutionBackwardBias(ctx.internal, alphaC, dyDesc.internal, unsafe.Pointer(dy.Uintptr()), betaC, dbDesc.internal, unsafe.Pointer(db.Uintptr())))
 }
-func (co *Context) ConvolutionBackwardData(alpha float64, wDesc *Filter, w Memory, dyDesc *TensorDescriptor, dy Memory, convDesc *Convolution, algo ConvolutionBwdDataAlgo, workSpace Memory, workSpaceSizeInBytes uintptr, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
+func (ctx *Context) ConvolutionBackwardData(alpha float64, wDesc *Filter, w Memory, dyDesc *TensorDescriptor, dy Memory, convDesc *Convolution, algo ConvolutionBwdDataAlgo, workSpace Memory, workSpaceSizeInBytes uintptr, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch dyDesc.dataType {
 	case Float, Half:
@@ -188,9 +195,9 @@ func (co *Context) ConvolutionBackwardData(alpha float64, wDesc *Filter, w Memor
 		return errors.Errorf("Unsupported data type: %v", dyDesc.dataType)
 	}
 	// call cudnnConvolutionBackwardData
-	return result(C.cudnnConvolutionBackwardData(co.internal, alphaC, wDesc.internal, unsafe.Pointer(w.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), convDesc.internal, algo.C(), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr())))
+	return result(C.cudnnConvolutionBackwardData(ctx.internal, alphaC, wDesc.internal, unsafe.Pointer(w.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), convDesc.internal, algo.C(), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr())))
 }
-func (co *Context) ConvolutionBackwardFilter(alpha float64, xDesc *TensorDescriptor, x Memory, dyDesc *TensorDescriptor, dy Memory, convDesc *Convolution, algo ConvolutionBwdFilterAlgo, workSpace Memory, workSpaceSizeInBytes uintptr, beta float64, dwDesc *Filter, dw Memory) error {
+func (ctx *Context) ConvolutionBackwardFilter(alpha float64, xDesc *TensorDescriptor, x Memory, dyDesc *TensorDescriptor, dy Memory, convDesc *Convolution, algo ConvolutionBwdFilterAlgo, workSpace Memory, workSpaceSizeInBytes uintptr, beta float64, dwDesc *Filter, dw Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -209,9 +216,9 @@ func (co *Context) ConvolutionBackwardFilter(alpha float64, xDesc *TensorDescrip
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnConvolutionBackwardFilter
-	return result(C.cudnnConvolutionBackwardFilter(co.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), convDesc.internal, algo.C(), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), betaC, dwDesc.internal, unsafe.Pointer(dw.Uintptr())))
+	return result(C.cudnnConvolutionBackwardFilter(ctx.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), convDesc.internal, algo.C(), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), betaC, dwDesc.internal, unsafe.Pointer(dw.Uintptr())))
 }
-func (co *Context) ConvolutionBiasActivationForward(alpha1 float64, xDesc *TensorDescriptor, x Memory, wDesc *Filter, w Memory, convDesc *Convolution, algo ConvolutionFwdAlgo, workSpace Memory, workSpaceSizeInBytes uintptr, alpha2 float64, zDesc *TensorDescriptor, z Memory, biasDesc *TensorDescriptor, bias Memory, activationDesc *Activation, yDesc *TensorDescriptor, y Memory) error {
+func (ctx *Context) ConvolutionBiasActivationForward(alpha1 float64, xDesc *TensorDescriptor, x Memory, wDesc *Filter, w Memory, convDesc *Convolution, algo ConvolutionFwdAlgo, workSpace Memory, workSpaceSizeInBytes uintptr, alpha2 float64, zDesc *TensorDescriptor, z Memory, biasDesc *TensorDescriptor, bias Memory, activationDesc *Activation, yDesc *TensorDescriptor, y Memory) error {
 	var alpha1C, alpha2C unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -230,9 +237,9 @@ func (co *Context) ConvolutionBiasActivationForward(alpha1 float64, xDesc *Tenso
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnConvolutionBiasActivationForward
-	return result(C.cudnnConvolutionBiasActivationForward(co.internal, alpha1C, xDesc.internal, unsafe.Pointer(x.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), convDesc.internal, algo.C(), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), alpha2C, zDesc.internal, unsafe.Pointer(z.Uintptr()), biasDesc.internal, unsafe.Pointer(bias.Uintptr()), activationDesc.internal, yDesc.internal, unsafe.Pointer(y.Uintptr())))
+	return result(C.cudnnConvolutionBiasActivationForward(ctx.internal, alpha1C, xDesc.internal, unsafe.Pointer(x.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), convDesc.internal, algo.C(), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), alpha2C, zDesc.internal, unsafe.Pointer(z.Uintptr()), biasDesc.internal, unsafe.Pointer(bias.Uintptr()), activationDesc.internal, yDesc.internal, unsafe.Pointer(y.Uintptr())))
 }
-func (co *Context) ConvolutionForward(alpha float64, xDesc *TensorDescriptor, x Memory, wDesc *Filter, w Memory, convDesc *Convolution, algo ConvolutionFwdAlgo, workSpace Memory, workSpaceSizeInBytes uintptr, beta float64, yDesc *TensorDescriptor, y Memory) error {
+func (ctx *Context) ConvolutionForward(alpha float64, xDesc *TensorDescriptor, x Memory, wDesc *Filter, w Memory, convDesc *Convolution, algo ConvolutionFwdAlgo, workSpace Memory, workSpaceSizeInBytes uintptr, beta float64, yDesc *TensorDescriptor, y Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -251,9 +258,9 @@ func (co *Context) ConvolutionForward(alpha float64, xDesc *TensorDescriptor, x 
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnConvolutionForward
-	return result(C.cudnnConvolutionForward(co.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), convDesc.internal, algo.C(), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
+	return result(C.cudnnConvolutionForward(ctx.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), convDesc.internal, algo.C(), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
 }
-func (co *Context) DivisiveNormalizationBackward(normDesc *LRN, mode DivNormMode, alpha float64, xDesc *TensorDescriptor, x Memory, means Memory, dy Memory, temp Memory, temp2 Memory, beta float64, dXdMeansDesc *TensorDescriptor, dx Memory, dMeans Memory) error {
+func (ctx *Context) DivisiveNormalizationBackward(normDesc *LRN, mode DivNormMode, alpha float64, xDesc *TensorDescriptor, x Memory, means Memory, dy Memory, temp Memory, temp2 Memory, beta float64, dXdMeansDesc *TensorDescriptor, dx Memory, dMeans Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -272,9 +279,9 @@ func (co *Context) DivisiveNormalizationBackward(normDesc *LRN, mode DivNormMode
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnDivisiveNormalizationBackward
-	return result(C.cudnnDivisiveNormalizationBackward(co.internal, normDesc.internal, mode.C(), alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), unsafe.Pointer(means.Uintptr()), unsafe.Pointer(dy.Uintptr()), unsafe.Pointer(temp.Uintptr()), unsafe.Pointer(temp2.Uintptr()), betaC, dXdMeansDesc.internal, unsafe.Pointer(dx.Uintptr()), unsafe.Pointer(dMeans.Uintptr())))
+	return result(C.cudnnDivisiveNormalizationBackward(ctx.internal, normDesc.internal, mode.C(), alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), unsafe.Pointer(means.Uintptr()), unsafe.Pointer(dy.Uintptr()), unsafe.Pointer(temp.Uintptr()), unsafe.Pointer(temp2.Uintptr()), betaC, dXdMeansDesc.internal, unsafe.Pointer(dx.Uintptr()), unsafe.Pointer(dMeans.Uintptr())))
 }
-func (co *Context) DivisiveNormalizationForward(normDesc *LRN, mode DivNormMode, alpha float64, xDesc *TensorDescriptor, x Memory, means Memory, temp Memory, temp2 Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
+func (ctx *Context) DivisiveNormalizationForward(normDesc *LRN, mode DivNormMode, alpha float64, xDesc *TensorDescriptor, x Memory, means Memory, temp Memory, temp2 Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -293,77 +300,70 @@ func (co *Context) DivisiveNormalizationForward(normDesc *LRN, mode DivNormMode,
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnDivisiveNormalizationForward
-	return result(C.cudnnDivisiveNormalizationForward(co.internal, normDesc.internal, mode.C(), alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), unsafe.Pointer(means.Uintptr()), unsafe.Pointer(temp.Uintptr()), unsafe.Pointer(temp2.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
+	return result(C.cudnnDivisiveNormalizationForward(ctx.internal, normDesc.internal, mode.C(), alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), unsafe.Pointer(means.Uintptr()), unsafe.Pointer(temp.Uintptr()), unsafe.Pointer(temp2.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
 }
-func (co *Context) DropoutBackward(dropoutDesc *Dropout, dydesc *TensorDescriptor, dy Memory, dxdesc *TensorDescriptor, dx Memory, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
+func (ctx *Context) DropoutBackward(dropoutDesc *Dropout, dydesc *TensorDescriptor, dy Memory, dxdesc *TensorDescriptor, dx Memory, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
 	// call cudnnDropoutBackward
-	return result(C.cudnnDropoutBackward(co.internal, dropoutDesc.internal, dydesc.internal, unsafe.Pointer(dy.Uintptr()), dxdesc.internal, unsafe.Pointer(dx.Uintptr()), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
+	return result(C.cudnnDropoutBackward(ctx.internal, dropoutDesc.internal, dydesc.internal, unsafe.Pointer(dy.Uintptr()), dxdesc.internal, unsafe.Pointer(dx.Uintptr()), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
 }
-func (co *Context) DropoutForward(dropoutDesc *Dropout, xdesc *TensorDescriptor, x Memory, ydesc *TensorDescriptor, y Memory, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
+func (ctx *Context) DropoutForward(dropoutDesc *Dropout, xdesc *TensorDescriptor, x Memory, ydesc *TensorDescriptor, y Memory, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
 	// call cudnnDropoutForward
-	return result(C.cudnnDropoutForward(co.internal, dropoutDesc.internal, xdesc.internal, unsafe.Pointer(x.Uintptr()), ydesc.internal, unsafe.Pointer(y.Uintptr()), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
+	return result(C.cudnnDropoutForward(ctx.internal, dropoutDesc.internal, xdesc.internal, unsafe.Pointer(x.Uintptr()), ydesc.internal, unsafe.Pointer(y.Uintptr()), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
 }
-func (co *Context) DropoutGetStatesSize(sizeInBytes uintptr) error {
+func (ctx *Context) DropoutGetStatesSize(sizeInBytes uintptr) error {
 	// call cudnnDropoutGetStatesSize
-	return result(C.cudnnDropoutGetStatesSize(co.internal, C.size_t(sizeInBytes)))
+	return result(C.cudnnDropoutGetStatesSize(ctx.internal, C.size_t(sizeInBytes)))
 }
-func (co *Context) FindConvolutionBackwardDataAlgorithm(wDesc *Filter, dyDesc *TensorDescriptor, convDesc *Convolution, dxDesc *TensorDescriptor, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionBwdDataPerf) error {
+func (ctx *Context) FindConvolutionBackwardDataAlgorithm(wDesc *Filter, dyDesc *TensorDescriptor, convDesc *Convolution, dxDesc *TensorDescriptor, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionBwdDataPerf) error {
 	// call cudnnFindConvolutionBackwardDataAlgorithm
-	return result(C.cudnnFindConvolutionBackwardDataAlgorithm(co.internal, wDesc.internal, dyDesc.internal, convDesc.internal, dxDesc.internal, C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal))
+	return result(C.cudnnFindConvolutionBackwardDataAlgorithm(ctx.internal, wDesc.internal, dyDesc.internal, convDesc.internal, dxDesc.internal, C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal))
 }
-func (co *Context) FindConvolutionBackwardDataAlgorithmEx(wDesc *Filter, w Memory, dyDesc *TensorDescriptor, dy Memory, convDesc *Convolution, dxDesc *TensorDescriptor, dx Memory, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionBwdDataPerf, workSpace Memory, workSpaceSizeInBytes uintptr) error {
+func (ctx *Context) FindConvolutionBackwardDataAlgorithmEx(wDesc *Filter, w Memory, dyDesc *TensorDescriptor, dy Memory, convDesc *Convolution, dxDesc *TensorDescriptor, dx Memory, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionBwdDataPerf, workSpace Memory, workSpaceSizeInBytes uintptr) error {
 	// call cudnnFindConvolutionBackwardDataAlgorithmEx
-	return result(C.cudnnFindConvolutionBackwardDataAlgorithmEx(co.internal, wDesc.internal, unsafe.Pointer(w.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), convDesc.internal, dxDesc.internal, unsafe.Pointer(dx.Uintptr()), C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal, unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
+	return result(C.cudnnFindConvolutionBackwardDataAlgorithmEx(ctx.internal, wDesc.internal, unsafe.Pointer(w.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), convDesc.internal, dxDesc.internal, unsafe.Pointer(dx.Uintptr()), C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal, unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
 }
-func (co *Context) FindConvolutionBackwardFilterAlgorithm(xDesc *TensorDescriptor, dyDesc *TensorDescriptor, convDesc *Convolution, dwDesc *Filter, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionBwdPerf) error {
+func (ctx *Context) FindConvolutionBackwardFilterAlgorithm(xDesc *TensorDescriptor, dyDesc *TensorDescriptor, convDesc *Convolution, dwDesc *Filter, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionBwdPerf) error {
 	// call cudnnFindConvolutionBackwardFilterAlgorithm
-	return result(C.cudnnFindConvolutionBackwardFilterAlgorithm(co.internal, xDesc.internal, dyDesc.internal, convDesc.internal, dwDesc.internal, C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal))
+	return result(C.cudnnFindConvolutionBackwardFilterAlgorithm(ctx.internal, xDesc.internal, dyDesc.internal, convDesc.internal, dwDesc.internal, C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal))
 }
-func (co *Context) FindConvolutionBackwardFilterAlgorithmEx(xDesc *TensorDescriptor, x Memory, dyDesc *TensorDescriptor, y Memory, convDesc *Convolution, dwDesc *Filter, dw Memory, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionBwdPerf, workSpace Memory, workSpaceSizeInBytes uintptr) error {
+func (ctx *Context) FindConvolutionBackwardFilterAlgorithmEx(xDesc *TensorDescriptor, x Memory, dyDesc *TensorDescriptor, y Memory, convDesc *Convolution, dwDesc *Filter, dw Memory, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionBwdPerf, workSpace Memory, workSpaceSizeInBytes uintptr) error {
 	// call cudnnFindConvolutionBackwardFilterAlgorithmEx
-	return result(C.cudnnFindConvolutionBackwardFilterAlgorithmEx(co.internal, xDesc.internal, unsafe.Pointer(x.Uintptr()), dyDesc.internal, unsafe.Pointer(y.Uintptr()), convDesc.internal, dwDesc.internal, unsafe.Pointer(dw.Uintptr()), C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal, unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
+	return result(C.cudnnFindConvolutionBackwardFilterAlgorithmEx(ctx.internal, xDesc.internal, unsafe.Pointer(x.Uintptr()), dyDesc.internal, unsafe.Pointer(y.Uintptr()), convDesc.internal, dwDesc.internal, unsafe.Pointer(dw.Uintptr()), C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal, unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
 }
-func (co *Context) FindConvolutionForwardAlgorithm(xDesc *TensorDescriptor, wDesc *Filter, convDesc *Convolution, yDesc *TensorDescriptor, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionFwdPerf) error {
+func (ctx *Context) FindConvolutionForwardAlgorithm(xDesc *TensorDescriptor, wDesc *Filter, convDesc *Convolution, yDesc *TensorDescriptor, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionFwdPerf) error {
 	// call cudnnFindConvolutionForwardAlgorithm
-	return result(C.cudnnFindConvolutionForwardAlgorithm(co.internal, xDesc.internal, wDesc.internal, convDesc.internal, yDesc.internal, C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal))
+	return result(C.cudnnFindConvolutionForwardAlgorithm(ctx.internal, xDesc.internal, wDesc.internal, convDesc.internal, yDesc.internal, C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal))
 }
-func (co *Context) FindConvolutionForwardAlgorithmEx(xDesc *TensorDescriptor, x Memory, wDesc *Filter, w Memory, convDesc *Convolution, yDesc *TensorDescriptor, y Memory, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionFwdPerf, workSpace Memory, workSpaceSizeInBytes uintptr) error {
+func (ctx *Context) FindConvolutionForwardAlgorithmEx(xDesc *TensorDescriptor, x Memory, wDesc *Filter, w Memory, convDesc *Convolution, yDesc *TensorDescriptor, y Memory, requestedAlgoCount int, returnedAlgoCount int, perfResults *ConvolutionFwdPerf, workSpace Memory, workSpaceSizeInBytes uintptr) error {
 	// call cudnnFindConvolutionForwardAlgorithmEx
-	return result(C.cudnnFindConvolutionForwardAlgorithmEx(co.internal, xDesc.internal, unsafe.Pointer(x.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), convDesc.internal, yDesc.internal, unsafe.Pointer(y.Uintptr()), C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal, unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
+	return result(C.cudnnFindConvolutionForwardAlgorithmEx(ctx.internal, xDesc.internal, unsafe.Pointer(x.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), convDesc.internal, yDesc.internal, unsafe.Pointer(y.Uintptr()), C.int(requestedAlgoCount), C.int(returnedAlgoCount), perfResults.internal, unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
 }
-func (co *Context) GetRNNLinLayerBiasParams(rnnDesc *RNN, pseudoLayer int, xDesc *TensorDescriptor, wDesc *Filter, w Memory, linLayerID int, linLayerBiasDesc *Filter, linLayerBias TODO) error {
-	// call cudnnGetRNNLinLayerBiasParams
-	return result(C.cudnnGetRNNLinLayerBiasParams(co.internal, rnnDesc.internal, C.int(pseudoLayer), xDesc.internal, wDesc.internal, unsafe.Pointer(w.Uintptr()), C.int(linLayerID), linLayerBiasDesc.internal, linLayerBias))
-}
-func (co *Context) GetRNNLinLayerMatrixParams(rnnDesc *RNN, pseudoLayer int, xDesc *TensorDescriptor, wDesc *Filter, w Memory, linLayerID int, linLayerMatDesc *Filter, linLayerMat TODO) error {
-	// call cudnnGetRNNLinLayerMatrixParams
-	return result(C.cudnnGetRNNLinLayerMatrixParams(co.internal, rnnDesc.internal, C.int(pseudoLayer), xDesc.internal, wDesc.internal, unsafe.Pointer(w.Uintptr()), C.int(linLayerID), linLayerMatDesc.internal, linLayerMat))
-}
-func (co *Context) GetRNNParamsSize(rnnDesc *RNN, xDesc *TensorDescriptor, sizeInBytes uintptr, dataType DataType) error {
+
+func (ctx *Context) GetRNNParamsSize(rnnDesc *RNN, xDesc *TensorDescriptor, sizeInBytes uintptr, dataType DataType) error {
 	// call cudnnGetRNNParamsSize
-	return result(C.cudnnGetRNNParamsSize(co.internal, rnnDesc.internal, xDesc.internal, C.size_t(sizeInBytes), dataType.C()))
+	return result(C.cudnnGetRNNParamsSize(ctx.internal, rnnDesc.internal, xDesc.internal, C.size_t(sizeInBytes), dataType.C()))
 }
-func (co *Context) GetRNNTrainingReserveSize(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, sizeInBytes uintptr) error {
+func (ctx *Context) GetRNNTrainingReserveSize(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, sizeInBytes uintptr) error {
 	// call cudnnGetRNNTrainingReserveSize
-	return result(C.cudnnGetRNNTrainingReserveSize(co.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, C.size_t(sizeInBytes)))
+	return result(C.cudnnGetRNNTrainingReserveSize(ctx.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, C.size_t(sizeInBytes)))
 }
-func (co *Context) GetRNNWorkspaceSize(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, sizeInBytes uintptr) error {
+func (ctx *Context) GetRNNWorkspaceSize(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, sizeInBytes uintptr) error {
 	// call cudnnGetRNNWorkspaceSize
-	return result(C.cudnnGetRNNWorkspaceSize(co.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, C.size_t(sizeInBytes)))
+	return result(C.cudnnGetRNNWorkspaceSize(ctx.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, C.size_t(sizeInBytes)))
 }
-func (co *Context) GetReductionIndicesSize(reduceTensorDesc *Reduction, aDesc *TensorDescriptor, cDesc *TensorDescriptor, sizeInBytes uintptr) error {
+func (ctx *Context) GetReductionIndicesSize(reduceTensorDesc *Reduction, aDesc *TensorDescriptor, cDesc *TensorDescriptor, sizeInBytes uintptr) error {
 	// call cudnnGetReductionIndicesSize
-	return result(C.cudnnGetReductionIndicesSize(co.internal, reduceTensorDesc.internal, aDesc.internal, cDesc.internal, C.size_t(sizeInBytes)))
+	return result(C.cudnnGetReductionIndicesSize(ctx.internal, reduceTensorDesc.internal, aDesc.internal, cDesc.internal, C.size_t(sizeInBytes)))
 }
-func (co *Context) GetReductionWorkspaceSize(reduceTensorDesc *Reduction, aDesc *TensorDescriptor, cDesc *TensorDescriptor, sizeInBytes uintptr) error {
+func (ctx *Context) GetReductionWorkspaceSize(reduceTensorDesc *Reduction, aDesc *TensorDescriptor, cDesc *TensorDescriptor, sizeInBytes uintptr) error {
 	// call cudnnGetReductionWorkspaceSize
-	return result(C.cudnnGetReductionWorkspaceSize(co.internal, reduceTensorDesc.internal, aDesc.internal, cDesc.internal, C.size_t(sizeInBytes)))
+	return result(C.cudnnGetReductionWorkspaceSize(ctx.internal, reduceTensorDesc.internal, aDesc.internal, cDesc.internal, C.size_t(sizeInBytes)))
 }
-func (co *Context) Im2Col(xDesc *TensorDescriptor, x Memory, wDesc *Filter, convDesc *Convolution, colBuffer Memory) error {
+func (ctx *Context) Im2Col(xDesc *TensorDescriptor, x Memory, wDesc *Filter, convDesc *Convolution, colBuffer Memory) error {
 	// call cudnnIm2Col
-	return result(C.cudnnIm2Col(co.internal, xDesc.internal, unsafe.Pointer(x.Uintptr()), wDesc.internal, convDesc.internal, unsafe.Pointer(colBuffer.Uintptr())))
+	return result(C.cudnnIm2Col(ctx.internal, xDesc.internal, unsafe.Pointer(x.Uintptr()), wDesc.internal, convDesc.internal, unsafe.Pointer(colBuffer.Uintptr())))
 }
-func (co *Context) LRNCrossChannelBackward(normDesc *LRN, lrnMode LRNMode, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
+func (ctx *Context) LRNCrossChannelBackward(normDesc *LRN, lrnMode LRNMode, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch yDesc.dataType {
 	case Float, Half:
@@ -382,9 +382,9 @@ func (co *Context) LRNCrossChannelBackward(normDesc *LRN, lrnMode LRNMode, alpha
 		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
 	}
 	// call cudnnLRNCrossChannelBackward
-	return result(C.cudnnLRNCrossChannelBackward(co.internal, normDesc.internal, lrnMode.C(), alphaC, yDesc.internal, unsafe.Pointer(y.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr())))
+	return result(C.cudnnLRNCrossChannelBackward(ctx.internal, normDesc.internal, lrnMode.C(), alphaC, yDesc.internal, unsafe.Pointer(y.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr())))
 }
-func (co *Context) LRNCrossChannelForward(normDesc *LRN, lrnMode LRNMode, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
+func (ctx *Context) LRNCrossChannelForward(normDesc *LRN, lrnMode LRNMode, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -403,9 +403,9 @@ func (co *Context) LRNCrossChannelForward(normDesc *LRN, lrnMode LRNMode, alpha 
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnLRNCrossChannelForward
-	return result(C.cudnnLRNCrossChannelForward(co.internal, normDesc.internal, lrnMode.C(), alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
+	return result(C.cudnnLRNCrossChannelForward(ctx.internal, normDesc.internal, lrnMode.C(), alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
 }
-func (co *Context) OpTensor(opTensorDesc *Op, alpha1 float64, aDesc *TensorDescriptor, A Memory, alpha2 float64, bDesc *TensorDescriptor, B Memory, beta float64, cDesc *TensorDescriptor, C_ Memory) error {
+func (ctx *Context) OpTensor(opTensorDesc *Op, alpha1 float64, aDesc *TensorDescriptor, A Memory, alpha2 float64, bDesc *TensorDescriptor, B Memory, beta float64, cDesc *TensorDescriptor, C_ Memory) error {
 	var alpha1C, alpha2C, betaC unsafe.Pointer
 	switch aDesc.dataType {
 	case Float, Half:
@@ -428,9 +428,9 @@ func (co *Context) OpTensor(opTensorDesc *Op, alpha1 float64, aDesc *TensorDescr
 		return errors.Errorf("Unsupported data type: %v", aDesc.dataType)
 	}
 	// call cudnnOpTensor
-	return result(C.cudnnOpTensor(co.internal, opTensorDesc.internal, alpha1C, aDesc.internal, unsafe.Pointer(A.Uintptr()), alpha2C, bDesc.internal, unsafe.Pointer(B.Uintptr()), betaC, cDesc.internal, unsafe.Pointer(C_.Uintptr())))
+	return result(C.cudnnOpTensor(ctx.internal, opTensorDesc.internal, alpha1C, aDesc.internal, unsafe.Pointer(A.Uintptr()), alpha2C, bDesc.internal, unsafe.Pointer(B.Uintptr()), betaC, cDesc.internal, unsafe.Pointer(C_.Uintptr())))
 }
-func (co *Context) PoolingBackward(poolingDesc *Pooling, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
+func (ctx *Context) PoolingBackward(poolingDesc *Pooling, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch yDesc.dataType {
 	case Float, Half:
@@ -449,9 +449,9 @@ func (co *Context) PoolingBackward(poolingDesc *Pooling, alpha float64, yDesc *T
 		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
 	}
 	// call cudnnPoolingBackward
-	return result(C.cudnnPoolingBackward(co.internal, poolingDesc.internal, alphaC, yDesc.internal, unsafe.Pointer(y.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr())))
+	return result(C.cudnnPoolingBackward(ctx.internal, poolingDesc.internal, alphaC, yDesc.internal, unsafe.Pointer(y.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr())))
 }
-func (co *Context) PoolingForward(poolingDesc *Pooling, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
+func (ctx *Context) PoolingForward(poolingDesc *Pooling, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -470,25 +470,25 @@ func (co *Context) PoolingForward(poolingDesc *Pooling, alpha float64, xDesc *Te
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnPoolingForward
-	return result(C.cudnnPoolingForward(co.internal, poolingDesc.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
+	return result(C.cudnnPoolingForward(ctx.internal, poolingDesc.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
 }
-func (co *Context) RNNBackwardData(rnnDesc *RNN, seqLength int, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, dhyDesc *TensorDescriptor, dhy Memory, dcyDesc *TensorDescriptor, dcy Memory, wDesc *Filter, w Memory, hxDesc *TensorDescriptor, hx Memory, cxDesc *TensorDescriptor, cx Memory, dxDesc *TensorDescriptor, dx Memory, dhxDesc *TensorDescriptor, dhx Memory, dcxDesc *TensorDescriptor, dcx Memory, workSpace Memory, workSpaceSizeInBytes uintptr, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
+func (ctx *Context) RNNBackwardData(rnnDesc *RNN, seqLength int, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, dhyDesc *TensorDescriptor, dhy Memory, dcyDesc *TensorDescriptor, dcy Memory, wDesc *Filter, w Memory, hxDesc *TensorDescriptor, hx Memory, cxDesc *TensorDescriptor, cx Memory, dxDesc *TensorDescriptor, dx Memory, dhxDesc *TensorDescriptor, dhx Memory, dcxDesc *TensorDescriptor, dcx Memory, workSpace Memory, workSpaceSizeInBytes uintptr, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
 	// call cudnnRNNBackwardData
-	return result(C.cudnnRNNBackwardData(co.internal, rnnDesc.internal, C.int(seqLength), yDesc.internal, unsafe.Pointer(y.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), dhyDesc.internal, unsafe.Pointer(dhy.Uintptr()), dcyDesc.internal, unsafe.Pointer(dcy.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), hxDesc.internal, unsafe.Pointer(hx.Uintptr()), cxDesc.internal, unsafe.Pointer(cx.Uintptr()), dxDesc.internal, unsafe.Pointer(dx.Uintptr()), dhxDesc.internal, unsafe.Pointer(dhx.Uintptr()), dcxDesc.internal, unsafe.Pointer(dcx.Uintptr()), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
+	return result(C.cudnnRNNBackwardData(ctx.internal, rnnDesc.internal, C.int(seqLength), yDesc.internal, unsafe.Pointer(y.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), dhyDesc.internal, unsafe.Pointer(dhy.Uintptr()), dcyDesc.internal, unsafe.Pointer(dcy.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), hxDesc.internal, unsafe.Pointer(hx.Uintptr()), cxDesc.internal, unsafe.Pointer(cx.Uintptr()), dxDesc.internal, unsafe.Pointer(dx.Uintptr()), dhxDesc.internal, unsafe.Pointer(dhx.Uintptr()), dcxDesc.internal, unsafe.Pointer(dcx.Uintptr()), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
 }
-func (co *Context) RNNBackwardWeights(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, x Memory, hxDesc *TensorDescriptor, hx Memory, yDesc *TensorDescriptor, y Memory, workSpace Memory, workSpaceSizeInBytes uintptr, dwDesc *Filter, dw Memory, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
+func (ctx *Context) RNNBackwardWeights(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, x Memory, hxDesc *TensorDescriptor, hx Memory, yDesc *TensorDescriptor, y Memory, workSpace Memory, workSpaceSizeInBytes uintptr, dwDesc *Filter, dw Memory, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
 	// call cudnnRNNBackwardWeights
-	return result(C.cudnnRNNBackwardWeights(co.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, unsafe.Pointer(x.Uintptr()), hxDesc.internal, unsafe.Pointer(hx.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), dwDesc.internal, unsafe.Pointer(dw.Uintptr()), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
+	return result(C.cudnnRNNBackwardWeights(ctx.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, unsafe.Pointer(x.Uintptr()), hxDesc.internal, unsafe.Pointer(hx.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), dwDesc.internal, unsafe.Pointer(dw.Uintptr()), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
 }
-func (co *Context) RNNForwardInference(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, x Memory, hxDesc *TensorDescriptor, hx Memory, cxDesc *TensorDescriptor, cx Memory, wDesc *Filter, w Memory, yDesc *TensorDescriptor, y Memory, hyDesc *TensorDescriptor, hy Memory, cyDesc *TensorDescriptor, cy Memory, workSpace Memory, workSpaceSizeInBytes uintptr) error {
+func (ctx *Context) RNNForwardInference(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, x Memory, hxDesc *TensorDescriptor, hx Memory, cxDesc *TensorDescriptor, cx Memory, wDesc *Filter, w Memory, yDesc *TensorDescriptor, y Memory, hyDesc *TensorDescriptor, hy Memory, cyDesc *TensorDescriptor, cy Memory, workSpace Memory, workSpaceSizeInBytes uintptr) error {
 	// call cudnnRNNForwardInference
-	return result(C.cudnnRNNForwardInference(co.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, unsafe.Pointer(x.Uintptr()), hxDesc.internal, unsafe.Pointer(hx.Uintptr()), cxDesc.internal, unsafe.Pointer(cx.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), hyDesc.internal, unsafe.Pointer(hy.Uintptr()), cyDesc.internal, unsafe.Pointer(cy.Uintptr()), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
+	return result(C.cudnnRNNForwardInference(ctx.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, unsafe.Pointer(x.Uintptr()), hxDesc.internal, unsafe.Pointer(hx.Uintptr()), cxDesc.internal, unsafe.Pointer(cx.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), hyDesc.internal, unsafe.Pointer(hy.Uintptr()), cyDesc.internal, unsafe.Pointer(cy.Uintptr()), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
 }
-func (co *Context) RNNForwardTraining(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, x Memory, hxDesc *TensorDescriptor, hx Memory, cxDesc *TensorDescriptor, cx Memory, wDesc *Filter, w Memory, yDesc *TensorDescriptor, y Memory, hyDesc *TensorDescriptor, hy Memory, cyDesc *TensorDescriptor, cy Memory, workSpace Memory, workSpaceSizeInBytes uintptr, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
+func (ctx *Context) RNNForwardTraining(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, x Memory, hxDesc *TensorDescriptor, hx Memory, cxDesc *TensorDescriptor, cx Memory, wDesc *Filter, w Memory, yDesc *TensorDescriptor, y Memory, hyDesc *TensorDescriptor, hy Memory, cyDesc *TensorDescriptor, cy Memory, workSpace Memory, workSpaceSizeInBytes uintptr, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
 	// call cudnnRNNForwardTraining
-	return result(C.cudnnRNNForwardTraining(co.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, unsafe.Pointer(x.Uintptr()), hxDesc.internal, unsafe.Pointer(hx.Uintptr()), cxDesc.internal, unsafe.Pointer(cx.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), hyDesc.internal, unsafe.Pointer(hy.Uintptr()), cyDesc.internal, unsafe.Pointer(cy.Uintptr()), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
+	return result(C.cudnnRNNForwardTraining(ctx.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, unsafe.Pointer(x.Uintptr()), hxDesc.internal, unsafe.Pointer(hx.Uintptr()), cxDesc.internal, unsafe.Pointer(cx.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), hyDesc.internal, unsafe.Pointer(hy.Uintptr()), cyDesc.internal, unsafe.Pointer(cy.Uintptr()), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
 }
-func (co *Context) ReduceTensor(reduceTensorDesc *Reduction, indices Memory, indicesSizeInBytes uintptr, workspace Memory, workspaceSizeInBytes uintptr, alpha float64, aDesc *TensorDescriptor, A Memory, beta float64, cDesc *TensorDescriptor, C_ Memory) error {
+func (ctx *Context) ReduceTensor(reduceTensorDesc *Reduction, indices Memory, indicesSizeInBytes uintptr, workspace Memory, workspaceSizeInBytes uintptr, alpha float64, aDesc *TensorDescriptor, A Memory, beta float64, cDesc *TensorDescriptor, C_ Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch aDesc.dataType {
 	case Float, Half:
@@ -507,9 +507,9 @@ func (co *Context) ReduceTensor(reduceTensorDesc *Reduction, indices Memory, ind
 		return errors.Errorf("Unsupported data type: %v", aDesc.dataType)
 	}
 	// call cudnnReduceTensor
-	return result(C.cudnnReduceTensor(co.internal, reduceTensorDesc.internal, unsafe.Pointer(indices.Uintptr()), C.size_t(indicesSizeInBytes), unsafe.Pointer(workspace.Uintptr()), C.size_t(workspaceSizeInBytes), alphaC, aDesc.internal, unsafe.Pointer(A.Uintptr()), betaC, cDesc.internal, unsafe.Pointer(C_.Uintptr())))
+	return result(C.cudnnReduceTensor(ctx.internal, reduceTensorDesc.internal, unsafe.Pointer(indices.Uintptr()), C.size_t(indicesSizeInBytes), unsafe.Pointer(workspace.Uintptr()), C.size_t(workspaceSizeInBytes), alphaC, aDesc.internal, unsafe.Pointer(A.Uintptr()), betaC, cDesc.internal, unsafe.Pointer(C_.Uintptr())))
 }
-func (co *Context) ScaleTensor(yDesc *TensorDescriptor, y Memory, alpha float64) error {
+func (ctx *Context) ScaleTensor(yDesc *TensorDescriptor, y Memory, alpha float64) error {
 	var alphaC unsafe.Pointer
 	switch yDesc.dataType {
 	case Float, Half:
@@ -524,9 +524,9 @@ func (co *Context) ScaleTensor(yDesc *TensorDescriptor, y Memory, alpha float64)
 		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
 	}
 	// call cudnnScaleTensor
-	return result(C.cudnnScaleTensor(co.internal, yDesc.internal, unsafe.Pointer(y.Uintptr()), alphaC))
+	return result(C.cudnnScaleTensor(ctx.internal, yDesc.internal, unsafe.Pointer(y.Uintptr()), alphaC))
 }
-func (co *Context) SoftmaxBackward(algo SoftmaxAlgorithm, mode SoftmaxMode, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
+func (ctx *Context) SoftmaxBackward(algo SoftmaxAlgorithm, mode SoftmaxMode, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch yDesc.dataType {
 	case Float, Half:
@@ -545,9 +545,9 @@ func (co *Context) SoftmaxBackward(algo SoftmaxAlgorithm, mode SoftmaxMode, alph
 		return errors.Errorf("Unsupported data type: %v", yDesc.dataType)
 	}
 	// call cudnnSoftmaxBackward
-	return result(C.cudnnSoftmaxBackward(co.internal, algo.C(), mode.C(), alphaC, yDesc.internal, unsafe.Pointer(y.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr())))
+	return result(C.cudnnSoftmaxBackward(ctx.internal, algo.C(), mode.C(), alphaC, yDesc.internal, unsafe.Pointer(y.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr())))
 }
-func (co *Context) SoftmaxForward(algo SoftmaxAlgorithm, mode SoftmaxMode, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
+func (ctx *Context) SoftmaxForward(algo SoftmaxAlgorithm, mode SoftmaxMode, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -566,17 +566,17 @@ func (co *Context) SoftmaxForward(algo SoftmaxAlgorithm, mode SoftmaxMode, alpha
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnSoftmaxForward
-	return result(C.cudnnSoftmaxForward(co.internal, algo.C(), mode.C(), alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
+	return result(C.cudnnSoftmaxForward(ctx.internal, algo.C(), mode.C(), alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
 }
-func (co *Context) SpatialTfGridGeneratorBackward(stDesc *SpatialTransformer, dgrid Memory, dtheta Memory) error {
+func (ctx *Context) SpatialTfGridGeneratorBackward(stDesc *SpatialTransformer, dgrid Memory, dtheta Memory) error {
 	// call cudnnSpatialTfGridGeneratorBackward
-	return result(C.cudnnSpatialTfGridGeneratorBackward(co.internal, stDesc.internal, unsafe.Pointer(dgrid.Uintptr()), unsafe.Pointer(dtheta.Uintptr())))
+	return result(C.cudnnSpatialTfGridGeneratorBackward(ctx.internal, stDesc.internal, unsafe.Pointer(dgrid.Uintptr()), unsafe.Pointer(dtheta.Uintptr())))
 }
-func (co *Context) SpatialTfGridGeneratorForward(stDesc *SpatialTransformer, theta Memory, grid Memory) error {
+func (ctx *Context) SpatialTfGridGeneratorForward(stDesc *SpatialTransformer, theta Memory, grid Memory) error {
 	// call cudnnSpatialTfGridGeneratorForward
-	return result(C.cudnnSpatialTfGridGeneratorForward(co.internal, stDesc.internal, unsafe.Pointer(theta.Uintptr()), unsafe.Pointer(grid.Uintptr())))
+	return result(C.cudnnSpatialTfGridGeneratorForward(ctx.internal, stDesc.internal, unsafe.Pointer(theta.Uintptr()), unsafe.Pointer(grid.Uintptr())))
 }
-func (co *Context) SpatialTfSamplerBackward(stDesc *SpatialTransformer, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory, alphaDgrid Memory, dyDesc *TensorDescriptor, dy Memory, grid Memory, betaDgrid Memory, dgrid Memory) error {
+func (ctx *Context) SpatialTfSamplerBackward(stDesc *SpatialTransformer, alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory, alphaDgrid Memory, dyDesc *TensorDescriptor, dy Memory, grid Memory, betaDgrid Memory, dgrid Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -595,9 +595,9 @@ func (co *Context) SpatialTfSamplerBackward(stDesc *SpatialTransformer, alpha fl
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnSpatialTfSamplerBackward
-	return result(C.cudnnSpatialTfSamplerBackward(co.internal, stDesc.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr()), unsafe.Pointer(alphaDgrid.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), unsafe.Pointer(grid.Uintptr()), unsafe.Pointer(betaDgrid.Uintptr()), unsafe.Pointer(dgrid.Uintptr())))
+	return result(C.cudnnSpatialTfSamplerBackward(ctx.internal, stDesc.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, dxDesc.internal, unsafe.Pointer(dx.Uintptr()), unsafe.Pointer(alphaDgrid.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), unsafe.Pointer(grid.Uintptr()), unsafe.Pointer(betaDgrid.Uintptr()), unsafe.Pointer(dgrid.Uintptr())))
 }
-func (co *Context) SpatialTfSamplerForward(stDesc *SpatialTransformer, alpha float64, xDesc *TensorDescriptor, x Memory, grid Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
+func (ctx *Context) SpatialTfSamplerForward(stDesc *SpatialTransformer, alpha float64, xDesc *TensorDescriptor, x Memory, grid Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -616,9 +616,9 @@ func (co *Context) SpatialTfSamplerForward(stDesc *SpatialTransformer, alpha flo
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnSpatialTfSamplerForward
-	return result(C.cudnnSpatialTfSamplerForward(co.internal, stDesc.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), unsafe.Pointer(grid.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
+	return result(C.cudnnSpatialTfSamplerForward(ctx.internal, stDesc.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), unsafe.Pointer(grid.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
 }
-func (co *Context) TransformTensor(alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
+func (ctx *Context) TransformTensor(alpha float64, xDesc *TensorDescriptor, x Memory, beta float64, yDesc *TensorDescriptor, y Memory) error {
 	var alphaC, betaC unsafe.Pointer
 	switch xDesc.dataType {
 	case Float, Half:
@@ -637,11 +637,10 @@ func (co *Context) TransformTensor(alpha float64, xDesc *TensorDescriptor, x Mem
 		return errors.Errorf("Unsupported data type: %v", xDesc.dataType)
 	}
 	// call cudnnTransformTensor
-	return result(C.cudnnTransformTensor(co.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
+	return result(C.cudnnTransformTensor(ctx.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
 }
-func (te *TensorDescriptor) DeriveBNTensorDescriptor(mode BatchNormMode) error {
-	// TODO: xDesc cudnnTensorDescriptor_t
-	// call cudnnDeriveBNTensorDescriptor
+
+func (te *TensorDescriptor) DeriveBNTensorDescriptor(xDesc *TensorDescriptor, mode BatchNormMode) error {
 	return result(C.cudnnDeriveBNTensorDescriptor(te.internal, xDesc.internal, mode.C()))
 }
 func (te *TensorDescriptor) DropoutGetReserveSpaceSize(sizeInBytes uintptr) error {

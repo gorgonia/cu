@@ -17,135 +17,135 @@ var _ActivationModeNames = map[ActivationMode]string{
 func (e ActivationMode) String() string { return _ActivationModeNames[e] }
 
 var _BackendAttributeNameNames = map[BackendAttributeName]string{
-	PointwiseMode:                         "PointwiseMode",
-	PointwiseMathPrec:                     "PointwiseMathPrec",
-	PointwiseNanPropagation:               "PointwiseNanPropagation",
-	PointwiseReluLowerClip:                "PointwiseReluLowerClip",
-	PointwiseReluUpperClip:                "PointwiseReluUpperClip",
-	ConvolutionCompType:                   "ConvolutionCompType",
-	ConvolutionConvMode:                   "ConvolutionConvMode",
-	ConvolutionDilations:                  "ConvolutionDilations",
-	ConvolutionFilterStrides:              "ConvolutionFilterStrides",
-	ConvolutionPostPaddings:               "ConvolutionPostPaddings",
-	ConvolutionPrePaddings:                "ConvolutionPrePaddings",
-	ConvolutionSpatialDims:                "ConvolutionSpatialDims",
-	EngineheurMode:                        "EngineheurMode",
-	EngineheurOperationGraph:              "EngineheurOperationGraph",
-	EngineheurResults:                     "EngineheurResults",
-	EnginecfgEngine:                       "EnginecfgEngine",
-	EnginecfgIntermediateInfo:             "EnginecfgIntermediateInfo",
-	EnginecfgKnobChoices:                  "EnginecfgKnobChoices",
-	ExecutionPlanHandle:                   "ExecutionPlanHandle",
-	ExecutionPlanEngineConfig:             "ExecutionPlanEngineConfig",
-	ExecutionPlanWorkspaceSize:            "ExecutionPlanWorkspaceSize",
-	ExecutionPlanComputedIntermediateUids: "ExecutionPlanComputedIntermediateUids",
-	ExecutionPlanRunOnlyIntermediateUids:  "ExecutionPlanRunOnlyIntermediateUids",
-	IntermediateInfoUniqueId:              "IntermediateInfoUniqueId",
-	IntermediateInfoSize:                  "IntermediateInfoSize",
-	IntermediateInfoDependentDataUids:     "IntermediateInfoDependentDataUids",
-	IntermediateInfoDependentAttributes:   "IntermediateInfoDependentAttributes",
-	KnobChoiceKnobType:                    "KnobChoiceKnobType",
-	KnobChoiceKnobValue:                   "KnobChoiceKnobValue",
-	OperationConvolutionForwardAlpha:      "OperationConvolutionForwardAlpha",
-	OperationConvolutionForwardBeta:       "OperationConvolutionForwardBeta",
-	OperationConvolutionForwardConvDesc:   "OperationConvolutionForwardConvDesc",
-	OperationConvolutionForwardW:          "OperationConvolutionForwardW",
-	OperationConvolutionForwardX:          "OperationConvolutionForwardX",
-	OperationConvolutionForwardY:          "OperationConvolutionForwardY",
-	OperationConvolutionBwdDataAlpha:      "OperationConvolutionBwdDataAlpha",
-	OperationConvolutionBwdDataBeta:       "OperationConvolutionBwdDataBeta",
-	OperationConvolutionBwdDataConvDesc:   "OperationConvolutionBwdDataConvDesc",
-	OperationConvolutionBwdDataW:          "OperationConvolutionBwdDataW",
-	OperationConvolutionBwdDataDx:         "OperationConvolutionBwdDataDx",
-	OperationConvolutionBwdDataDy:         "OperationConvolutionBwdDataDy",
-	OperationConvolutionBwdFilterAlpha:    "OperationConvolutionBwdFilterAlpha",
-	OperationConvolutionBwdFilterBeta:     "OperationConvolutionBwdFilterBeta",
-	OperationConvolutionBwdFilterConvDesc: "OperationConvolutionBwdFilterConvDesc",
-	OperationConvolutionBwdFilterDw:       "OperationConvolutionBwdFilterDw",
-	OperationConvolutionBwdFilterX:        "OperationConvolutionBwdFilterX",
-	OperationConvolutionBwdFilterDy:       "OperationConvolutionBwdFilterDy",
-	OperationPointwisePwDescriptor:        "OperationPointwisePwDescriptor",
-	OperationPointwiseXdesc:               "OperationPointwiseXdesc",
-	OperationPointwiseBdesc:               "OperationPointwiseBdesc",
-	OperationPointwiseYdesc:               "OperationPointwiseYdesc",
-	OperationPointwiseAlpha1:              "OperationPointwiseAlpha1",
-	OperationPointwiseAlpha2:              "OperationPointwiseAlpha2",
-	OperationGenstatsMode:                 "OperationGenstatsMode",
-	OperationGenstatsMathPrec:             "OperationGenstatsMathPrec",
-	OperationGenstatsXdesc:                "OperationGenstatsXdesc",
-	OperationGenstatsSumdesc:              "OperationGenstatsSumdesc",
-	OperationGenstatsSqsumdesc:            "OperationGenstatsSqsumdesc",
-	OperationgraphHandle:                  "OperationgraphHandle",
-	OperationgraphOps:                     "OperationgraphOps",
-	OperationgraphEngineGlobalCount:       "OperationgraphEngineGlobalCount",
-	TensorByteAlignment:                   "TensorByteAlignment",
-	TensorDataType:                        "TensorDataType",
-	TensorDimensions:                      "TensorDimensions",
-	TensorStrides:                         "TensorStrides",
-	TensorVectorCount:                     "TensorVectorCount",
-	TensorVectorizedDimension:             "TensorVectorizedDimension",
-	TensorUniqueId:                        "TensorUniqueId",
-	TensorIsVirtual:                       "TensorIsVirtual",
-	VariantPackUniqueIds:                  "VariantPackUniqueIds",
-	VariantPackDataPointers:               "VariantPackDataPointers",
-	VariantPackIntermediates:              "VariantPackIntermediates",
-	VariantPackWorkspace:                  "VariantPackWorkspace",
-	LayoutInfoTensorUid:                   "LayoutInfoTensorUid",
-	LayoutInfoTypes:                       "LayoutInfoTypes",
-	KnobInfoType:                          "KnobInfoType",
-	KnobInfoMaximumValue:                  "KnobInfoMaximumValue",
-	KnobInfoMinimumValue:                  "KnobInfoMinimumValue",
-	KnobInfoStride:                        "KnobInfoStride",
-	EngineOperationGraph:                  "EngineOperationGraph",
-	EngineGlobalIndex:                     "EngineGlobalIndex",
-	EngineKnobInfo:                        "EngineKnobInfo",
-	EngineNumericalNote:                   "EngineNumericalNote",
-	EngineLayoutInfo:                      "EngineLayoutInfo",
+	BEAttrNamePointwiseMode:                         "BEAttrNamePointwiseMode",
+	BEAttrNamePointwiseMathPrec:                     "BEAttrNamePointwiseMathPrec",
+	BEAttrNamePointwiseNanPropagation:               "BEAttrNamePointwiseNanPropagation",
+	BEAttrNamePointwiseReluLowerClip:                "BEAttrNamePointwiseReluLowerClip",
+	BEAttrNamePointwiseReluUpperClip:                "BEAttrNamePointwiseReluUpperClip",
+	BEAttrNameConvolutionCompType:                   "BEAttrNameConvolutionCompType",
+	BEAttrNameConvolutionConvMode:                   "BEAttrNameConvolutionConvMode",
+	BEAttrNameConvolutionDilations:                  "BEAttrNameConvolutionDilations",
+	BEAttrNameConvolutionFilterStrides:              "BEAttrNameConvolutionFilterStrides",
+	BEAttrNameConvolutionPostPaddings:               "BEAttrNameConvolutionPostPaddings",
+	BEAttrNameConvolutionPrePaddings:                "BEAttrNameConvolutionPrePaddings",
+	BEAttrNameConvolutionSpatialDims:                "BEAttrNameConvolutionSpatialDims",
+	BEAttrNameEngineheurMode:                        "BEAttrNameEngineheurMode",
+	BEAttrNameEngineheurOperationGraph:              "BEAttrNameEngineheurOperationGraph",
+	BEAttrNameEngineheurResults:                     "BEAttrNameEngineheurResults",
+	BEAttrNameEnginecfgEngine:                       "BEAttrNameEnginecfgEngine",
+	BEAttrNameEnginecfgIntermediateInfo:             "BEAttrNameEnginecfgIntermediateInfo",
+	BEAttrNameEnginecfgKnobChoices:                  "BEAttrNameEnginecfgKnobChoices",
+	BEAttrNameExecutionPlanHandle:                   "BEAttrNameExecutionPlanHandle",
+	BEAttrNameExecutionPlanEngineConfig:             "BEAttrNameExecutionPlanEngineConfig",
+	BEAttrNameExecutionPlanWorkspaceSize:            "BEAttrNameExecutionPlanWorkspaceSize",
+	BEAttrNameExecutionPlanComputedIntermediateUids: "BEAttrNameExecutionPlanComputedIntermediateUids",
+	BEAttrNameExecutionPlanRunOnlyIntermediateUids:  "BEAttrNameExecutionPlanRunOnlyIntermediateUids",
+	BEAttrNameIntermediateInfoUniqueId:              "BEAttrNameIntermediateInfoUniqueId",
+	BEAttrNameIntermediateInfoSize:                  "BEAttrNameIntermediateInfoSize",
+	BEAttrNameIntermediateInfoDependentDataUids:     "BEAttrNameIntermediateInfoDependentDataUids",
+	BEAttrNameIntermediateInfoDependentAttributes:   "BEAttrNameIntermediateInfoDependentAttributes",
+	BEAttrNameKnobChoiceKnobType:                    "BEAttrNameKnobChoiceKnobType",
+	BEAttrNameKnobChoiceKnobValue:                   "BEAttrNameKnobChoiceKnobValue",
+	BEAttrNameOperationConvolutionForwardAlpha:      "BEAttrNameOperationConvolutionForwardAlpha",
+	BEAttrNameOperationConvolutionForwardBeta:       "BEAttrNameOperationConvolutionForwardBeta",
+	BEAttrNameOperationConvolutionForwardConvDesc:   "BEAttrNameOperationConvolutionForwardConvDesc",
+	BEAttrNameOperationConvolutionForwardW:          "BEAttrNameOperationConvolutionForwardW",
+	BEAttrNameOperationConvolutionForwardX:          "BEAttrNameOperationConvolutionForwardX",
+	BEAttrNameOperationConvolutionForwardY:          "BEAttrNameOperationConvolutionForwardY",
+	BEAttrNameOperationConvolutionBwdDataAlpha:      "BEAttrNameOperationConvolutionBwdDataAlpha",
+	BEAttrNameOperationConvolutionBwdDataBeta:       "BEAttrNameOperationConvolutionBwdDataBeta",
+	BEAttrNameOperationConvolutionBwdDataConvDesc:   "BEAttrNameOperationConvolutionBwdDataConvDesc",
+	BEAttrNameOperationConvolutionBwdDataW:          "BEAttrNameOperationConvolutionBwdDataW",
+	BEAttrNameOperationConvolutionBwdDataDx:         "BEAttrNameOperationConvolutionBwdDataDx",
+	BEAttrNameOperationConvolutionBwdDataDy:         "BEAttrNameOperationConvolutionBwdDataDy",
+	BEAttrNameOperationConvolutionBwdFilterAlpha:    "BEAttrNameOperationConvolutionBwdFilterAlpha",
+	BEAttrNameOperationConvolutionBwdFilterBeta:     "BEAttrNameOperationConvolutionBwdFilterBeta",
+	BEAttrNameOperationConvolutionBwdFilterConvDesc: "BEAttrNameOperationConvolutionBwdFilterConvDesc",
+	BEAttrNameOperationConvolutionBwdFilterDw:       "BEAttrNameOperationConvolutionBwdFilterDw",
+	BEAttrNameOperationConvolutionBwdFilterX:        "BEAttrNameOperationConvolutionBwdFilterX",
+	BEAttrNameOperationConvolutionBwdFilterDy:       "BEAttrNameOperationConvolutionBwdFilterDy",
+	BEAttrNameOperationPointwisePwDescriptor:        "BEAttrNameOperationPointwisePwDescriptor",
+	BEAttrNameOperationPointwiseXdesc:               "BEAttrNameOperationPointwiseXdesc",
+	BEAttrNameOperationPointwiseBdesc:               "BEAttrNameOperationPointwiseBdesc",
+	BEAttrNameOperationPointwiseYdesc:               "BEAttrNameOperationPointwiseYdesc",
+	BEAttrNameOperationPointwiseAlpha1:              "BEAttrNameOperationPointwiseAlpha1",
+	BEAttrNameOperationPointwiseAlpha2:              "BEAttrNameOperationPointwiseAlpha2",
+	BEAttrNameOperationGenstatsMode:                 "BEAttrNameOperationGenstatsMode",
+	BEAttrNameOperationGenstatsMathPrec:             "BEAttrNameOperationGenstatsMathPrec",
+	BEAttrNameOperationGenstatsXdesc:                "BEAttrNameOperationGenstatsXdesc",
+	BEAttrNameOperationGenstatsSumdesc:              "BEAttrNameOperationGenstatsSumdesc",
+	BEAttrNameOperationGenstatsSqsumdesc:            "BEAttrNameOperationGenstatsSqsumdesc",
+	BEAttrNameOperationgraphHandle:                  "BEAttrNameOperationgraphHandle",
+	BEAttrNameOperationgraphOps:                     "BEAttrNameOperationgraphOps",
+	BEAttrNameOperationgraphEngineGlobalCount:       "BEAttrNameOperationgraphEngineGlobalCount",
+	BEAttrNameTensorByteAlignment:                   "BEAttrNameTensorByteAlignment",
+	BEAttrNameTensorDataType:                        "BEAttrNameTensorDataType",
+	BEAttrNameTensorDimensions:                      "BEAttrNameTensorDimensions",
+	BEAttrNameTensorStrides:                         "BEAttrNameTensorStrides",
+	BEAttrNameTensorVectorCount:                     "BEAttrNameTensorVectorCount",
+	BEAttrNameTensorVectorizedDimension:             "BEAttrNameTensorVectorizedDimension",
+	BEAttrNameTensorUniqueId:                        "BEAttrNameTensorUniqueId",
+	BEAttrNameTensorIsVirtual:                       "BEAttrNameTensorIsVirtual",
+	BEAttrNameVariantPackUniqueIds:                  "BEAttrNameVariantPackUniqueIds",
+	BEAttrNameVariantPackDataPointers:               "BEAttrNameVariantPackDataPointers",
+	BEAttrNameVariantPackIntermediates:              "BEAttrNameVariantPackIntermediates",
+	BEAttrNameVariantPackWorkspace:                  "BEAttrNameVariantPackWorkspace",
+	BEAttrNameLayoutInfoTensorUid:                   "BEAttrNameLayoutInfoTensorUid",
+	BEAttrNameLayoutInfoTypes:                       "BEAttrNameLayoutInfoTypes",
+	BEAttrNameKnobInfoType:                          "BEAttrNameKnobInfoType",
+	BEAttrNameKnobInfoMaximumValue:                  "BEAttrNameKnobInfoMaximumValue",
+	BEAttrNameKnobInfoMinimumValue:                  "BEAttrNameKnobInfoMinimumValue",
+	BEAttrNameKnobInfoStride:                        "BEAttrNameKnobInfoStride",
+	BEAttrNameEngineOperationGraph:                  "BEAttrNameEngineOperationGraph",
+	BEAttrNameEngineGlobalIndex:                     "BEAttrNameEngineGlobalIndex",
+	BEAttrNameEngineKnobInfo:                        "BEAttrNameEngineKnobInfo",
+	BEAttrNameEngineNumericalNote:                   "BEAttrNameEngineNumericalNote",
+	BEAttrNameEngineLayoutInfo:                      "BEAttrNameEngineLayoutInfo",
 }
 
 func (e BackendAttributeName) String() string { return _BackendAttributeNameNames[e] }
 
 var _BackendAttributeTypeNames = map[BackendAttributeType]string{
-	BackendAttrHandle:            "BackendAttrHandle",
-	BackendAttrDataType:          "BackendAttrDataType",
-	BackendAttrBoolean:           "BackendAttrBoolean",
-	BackendAttrInt64:             "BackendAttrInt64",
-	BackendAttrFloat:             "BackendAttrFloat",
-	BackendAttrDouble:            "BackendAttrDouble",
-	BackendAttrVoidPtr:           "BackendAttrVoidPtr",
-	BackendAttrConvolutionMode:   "BackendAttrConvolutionMode",
-	BackendAttrHeurMode:          "BackendAttrHeurMode",
-	BackendAttrKnobType:          "BackendAttrKnobType",
-	BackendAttrNanPropogation:    "BackendAttrNanPropogation",
-	BackendAttrNumericalNote:     "BackendAttrNumericalNote",
-	BackendAttrLayoutType:        "BackendAttrLayoutType",
-	BackendAttrAttribName:        "BackendAttrAttribName",
-	BackendAttrPointwiseMode:     "BackendAttrPointwiseMode",
-	BackendAttrBackendDescriptor: "BackendAttrBackendDescriptor",
-	BackendAttrGenstatsMode:      "BackendAttrGenstatsMode",
+	BEAttrHandle:            "BEAttrHandle",
+	BEAttrDataType:          "BEAttrDataType",
+	BEAttrBoolean:           "BEAttrBoolean",
+	BEAttrInt64:             "BEAttrInt64",
+	BEAttrFloat:             "BEAttrFloat",
+	BEAttrDouble:            "BEAttrDouble",
+	BEAttrVoidPtr:           "BEAttrVoidPtr",
+	BEAttrConvolutionMode:   "BEAttrConvolutionMode",
+	BEAttrHeurMode:          "BEAttrHeurMode",
+	BEAttrKnobType:          "BEAttrKnobType",
+	BEAttrNanPropogation:    "BEAttrNanPropogation",
+	BEAttrNumericalNote:     "BEAttrNumericalNote",
+	BEAttrLayoutType:        "BEAttrLayoutType",
+	BEAttrAttribName:        "BEAttrAttribName",
+	BEAttrPointwiseMode:     "BEAttrPointwiseMode",
+	BEAttrBackendDescriptor: "BEAttrBackendDescriptor",
+	BEAttrGenstatsMode:      "BEAttrGenstatsMode",
 }
 
 func (e BackendAttributeType) String() string { return _BackendAttributeTypeNames[e] }
 
 var _BackendDescriptorTypeNames = map[BackendDescriptorType]string{
-	PointwiseDescriptor:                          "PointwiseDescriptor",
-	ConvolutionDescriptor:                        "ConvolutionDescriptor",
-	EngineDescriptor:                             "EngineDescriptor",
-	EnginecfgDescriptor:                          "EnginecfgDescriptor",
-	EngineheurDescriptor:                         "EngineheurDescriptor",
-	ExecutionPlanDescriptor:                      "ExecutionPlanDescriptor",
-	IntermediateInfoDescriptor:                   "IntermediateInfoDescriptor",
-	KnobChoiceDescriptor:                         "KnobChoiceDescriptor",
-	KnobInfoDescriptor:                           "KnobInfoDescriptor",
-	LayoutInfoDescriptor:                         "LayoutInfoDescriptor",
-	OperationConvolutionForwardDescriptor:        "OperationConvolutionForwardDescriptor",
-	OperationConvolutionBackwardFilterDescriptor: "OperationConvolutionBackwardFilterDescriptor",
-	OperationConvolutionBackwardDataDescriptor:   "OperationConvolutionBackwardDataDescriptor",
-	OperationPointwiseDescriptor:                 "OperationPointwiseDescriptor",
-	OperationGenStatsDescriptor:                  "OperationGenStatsDescriptor",
-	OperationgraphDescriptor:                     "OperationgraphDescriptor",
-	VariantPackDescriptor:                        "VariantPackDescriptor",
-	TensorDescriptor:                             "TensorDescriptor",
+	BEDescriptorPointwiseDescriptor:                          "BEDescriptorPointwiseDescriptor",
+	BEDescriptorConvolutionDescriptor:                        "BEDescriptorConvolutionDescriptor",
+	BEDescriptorEngineDescriptor:                             "BEDescriptorEngineDescriptor",
+	BEDescriptorEnginecfgDescriptor:                          "BEDescriptorEnginecfgDescriptor",
+	BEDescriptorEngineheurDescriptor:                         "BEDescriptorEngineheurDescriptor",
+	BEDescriptorExecutionPlanDescriptor:                      "BEDescriptorExecutionPlanDescriptor",
+	BEDescriptorIntermediateInfoDescriptor:                   "BEDescriptorIntermediateInfoDescriptor",
+	BEDescriptorKnobChoiceDescriptor:                         "BEDescriptorKnobChoiceDescriptor",
+	BEDescriptorKnobInfoDescriptor:                           "BEDescriptorKnobInfoDescriptor",
+	BEDescriptorLayoutInfoDescriptor:                         "BEDescriptorLayoutInfoDescriptor",
+	BEDescriptorOperationConvolutionForwardDescriptor:        "BEDescriptorOperationConvolutionForwardDescriptor",
+	BEDescriptorOperationConvolutionBackwardFilterDescriptor: "BEDescriptorOperationConvolutionBackwardFilterDescriptor",
+	BEDescriptorOperationConvolutionBackwardDataDescriptor:   "BEDescriptorOperationConvolutionBackwardDataDescriptor",
+	BEDescriptorOperationPointwiseDescriptor:                 "BEDescriptorOperationPointwiseDescriptor",
+	BEDescriptorOperationGenStatsDescriptor:                  "BEDescriptorOperationGenStatsDescriptor",
+	BEDescriptorOperationgraphDescriptor:                     "BEDescriptorOperationgraphDescriptor",
+	BEDescriptorVariantPackDescriptor:                        "BEDescriptorVariantPackDescriptor",
+	BEDescriptorTensorDescriptor:                             "BEDescriptorTensorDescriptor",
 }
 
 func (e BackendDescriptorType) String() string { return _BackendDescriptorTypeNames[e] }
@@ -188,11 +188,11 @@ var _BackendKnobTypeNames = map[BackendKnobType]string{
 func (e BackendKnobType) String() string { return _BackendKnobTypeNames[e] }
 
 var _BackendLayoutTypeNames = map[BackendLayoutType]string{
-	PreferredNchw:   "PreferredNchw",
-	PreferredNhwc:   "PreferredNhwc",
-	PreferredPad4ck: "PreferredPad4ck",
-	PreferredPad8ck: "PreferredPad8ck",
-	Count:           "Count",
+	BELayoutPreferredNchw:   "BELayoutPreferredNchw",
+	BELayoutPreferredNhwc:   "BELayoutPreferredNhwc",
+	BELayoutPreferredPad4ck: "BELayoutPreferredPad4ck",
+	BELayoutPreferredPad8ck: "BELayoutPreferredPad8ck",
+	BELayoutCount:           "BELayoutCount",
 }
 
 func (e BackendLayoutType) String() string { return _BackendLayoutTypeNames[e] }
@@ -218,9 +218,9 @@ var _BatchNormModeNames = map[BatchNormMode]string{
 func (e BatchNormMode) String() string { return _BatchNormModeNames[e] }
 
 var _BatchNormOpsNames = map[BatchNormOps]string{
-	BatchNorm:     "BatchNorm",
-	Activation:    "Activation",
-	AddActivation: "AddActivation",
+	BatchNorm:              "BatchNorm",
+	BatchNormActivation:    "BatchNormActivation",
+	BatchNormAddActivation: "BatchNormAddActivation",
 }
 
 func (e BatchNormOps) String() string { return _BatchNormOpsNames[e] }
@@ -407,8 +407,8 @@ var _LRNModeNames = map[LRNMode]string{
 func (e LRNMode) String() string { return _LRNModeNames[e] }
 
 var _LossNormalizationModeNames = map[LossNormalizationMode]string{
-	None:    "None",
-	Softmax: "Softmax",
+	LossNormNone:    "LossNormNone",
+	LossNormSoftmax: "LossNormSoftmax",
 }
 
 func (e LossNormalizationMode) String() string { return _LossNormalizationModeNames[e] }
@@ -443,48 +443,48 @@ var _NanPropagationNames = map[NanPropagation]string{
 func (e NanPropagation) String() string { return _NanPropagationNames[e] }
 
 var _NormAlgoNames = map[NormAlgo]string{
-	Standard: "Standard",
-	Persist:  "Persist",
+	StandardNorm: "StandardNorm",
+	PersistNorm:  "PersistNorm",
 }
 
 func (e NormAlgo) String() string { return _NormAlgoNames[e] }
 
 var _NormModeNames = map[NormMode]string{
-	Activation: "Activation",
-	Channel:    "Channel",
+	NormPerActivation: "NormPerActivation",
+	NormPerChannel:    "NormPerChannel",
 }
 
 func (e NormMode) String() string { return _NormModeNames[e] }
 
 var _NormOpsNames = map[NormOps]string{
-	Norm:          "Norm",
-	Activation:    "Activation",
-	AddActivation: "AddActivation",
+	Norm:              "Norm",
+	NormActivation:    "NormActivation",
+	NormAddActivation: "NormAddActivation",
 }
 
 func (e NormOps) String() string { return _NormOpsNames[e] }
 
 var _OpTensorOpNames = map[OpTensorOp]string{
-	Add:  "Add",
-	Mul:  "Mul",
-	Min:  "Min",
-	Max:  "Max",
-	Sqrt: "Sqrt",
-	Not:  "Not",
+	TensorAdd:  "TensorAdd",
+	TensorMul:  "TensorMul",
+	TensorMin:  "TensorMin",
+	TensorMax:  "TensorMax",
+	TensorSqrt: "TensorSqrt",
+	TensorNot:  "TensorNot",
 }
 
 func (e OpTensorOp) String() string { return _OpTensorOpNames[e] }
 
 var _PointwiseModeNames = map[PointwiseMode]string{
-	Add:        "Add",
-	Mul:        "Mul",
-	Min:        "Min",
-	Max:        "Max",
-	Sqrt:       "Sqrt",
-	ReluFwd:    "ReluFwd",
-	TanhFwd:    "TanhFwd",
-	SigmoidFwd: "SigmoidFwd",
-	EluFwd:     "EluFwd",
+	PointwiseAdd:        "PointwiseAdd",
+	PointwiseMul:        "PointwiseMul",
+	PointwiseMin:        "PointwiseMin",
+	PointwiseMax:        "PointwiseMax",
+	PointwiseSqrt:       "PointwiseSqrt",
+	PointwiseReluFwd:    "PointwiseReluFwd",
+	PointwiseTanhFwd:    "PointwiseTanhFwd",
+	PointwiseSigmoidFwd: "PointwiseSigmoidFwd",
+	PointwiseEluFwd:     "PointwiseEluFwd",
 }
 
 func (e PointwiseMode) String() string { return _PointwiseModeNames[e] }
@@ -499,26 +499,26 @@ var _PoolingModeNames = map[PoolingMode]string{
 func (e PoolingMode) String() string { return _PoolingModeNames[e] }
 
 var _RNNAlgoNames = map[RNNAlgo]string{
-	Standard:       "Standard",
-	PersistStatic:  "PersistStatic",
-	PersistDynamic: "PersistDynamic",
-	Count:          "Count",
+	StandardRNN:       "StandardRNN",
+	PersistStaticRNN:  "PersistStaticRNN",
+	PersistDynamicRNN: "PersistDynamicRNN",
+	CountRNN:          "CountRNN",
 }
 
 func (e RNNAlgo) String() string { return _RNNAlgoNames[e] }
 
 var _RNNBiasModeNames = map[RNNBiasMode]string{
-	NoBias:        "NoBias",
-	SingleInpBias: "SingleInpBias",
-	DoubleBias:    "DoubleBias",
-	SingleRecBias: "SingleRecBias",
+	RNNNoBias:        "RNNNoBias",
+	RNNSingleInpBias: "RNNSingleInpBias",
+	RNNDoubleBias:    "RNNDoubleBias",
+	RNNSingleRecBias: "RNNSingleRecBias",
 }
 
 func (e RNNBiasMode) String() string { return _RNNBiasModeNames[e] }
 
 var _RNNClipModeNames = map[RNNClipMode]string{
-	None:   "None",
-	Minmax: "Minmax",
+	RNNClipNone:   "RNNClipNone",
+	RNNClipMinmax: "RNNClipMinmax",
 }
 
 func (e RNNClipMode) String() string { return _RNNClipModeNames[e] }

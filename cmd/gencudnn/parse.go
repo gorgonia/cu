@@ -135,9 +135,34 @@ func processEnumName(lcp, name string) string {
 	lowered := strings.ToLower(trimmed)
 
 	switch lcp {
-
+	case "CUDNN_RNN_CLIP_":
+		lowered = "RNNClip" + strings.Title(lowered)
+	case "CUDNN_RNN_":
+		lowered = "RNN" + strings.Title(lowered)
+	case "CUDNN_RNN_ALGO_":
+		lowered = strings.Title(lowered) + "RNN"
+	case "CUDNN_POINTWISE_":
+		lowered = "Pointwise" + strings.Title(lowered)
+	case "CUDNN_OP_TENSOR_":
+		lowered = "Tensor" + strings.Title(lowered)
+	case "CUDNN_NORM_OPS_NORM":
+		lowered = "Norm" + strings.Title(lowered)
+	case "CUDNN_NORM_PER_":
+		lowered = "NormPer" + strings.Title(lowered)
+	case "CUDNN_NORM_ALGO_":
+		lowered = strings.Title(lowered) + "Norm"
+	case "CUDNN_LOSS_NORMALIZATION_":
+		lowered = "LossNorm" + strings.Title(lowered)
+	case "CUDNN_BATCHNORM_OPS_BN":
+		lowered = "BatchNorm" + strings.Title(lowered)
+	case "CUDNN_LAYOUT_TYPE_":
+		lowered = "BELayout" + strings.Title(lowered)
+	case "CUDNN_BACKEND_":
+		lowered = "BEDescriptor" + strings.Title(lowered)
+	case "CUDNN_ATTR_":
+		lowered = "BEAttrName" + strings.Title(lowered)
 	case "CUDNN_TYPE_":
-		lowered = "BackendAttr" + strings.Title(lowered)
+		lowered = "BEAttr" + strings.Title(lowered)
 	case "CUDNN_TENSOR_N":
 		// tensor description
 		lowered = "n" + lowered

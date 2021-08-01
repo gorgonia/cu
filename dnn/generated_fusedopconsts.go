@@ -4,7 +4,10 @@ package cudnn
 
 // #include <cudnn.h>
 import "C"
-import "runtime"
+import (
+	"runtime"
+	"unsafe"
+)
 
 // FusedOpConsts is a representation of cudnnFusedOpsConstParamPack_t.
 type FusedOpConsts struct {
@@ -21,7 +24,7 @@ func NewFusedOpConsts(paramLabel FusedOpsConstParamLabel, param Memory) (retVal 
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetFusedOpsConstParamPackAttribute(internal, paramLabel.C(), param.Pointer())); err != nil {
+	if err := result(C.cudnnSetFusedOpsConstParamPackAttribute(internal, paramLabel.C(), unsafe.Pointer(param.Uintptr()))); err != nil {
 		return nil, err
 	}
 

@@ -153,10 +153,10 @@ var ignored = map[string]struct{}{
 	"cudnnGetRNNDescriptor_v8":                                 {},
 	"cudnnGetRNNForwardInferenceAlgorithmMaxCount":             {},
 	"cudnnGetRNNForwardTrainingAlgorithmMaxCount":              {},
-	// "cudnnGetRNNLinLayerBiasParams":{}, //
-	// "cudnnGetRNNLinLayerMatrixParams":{}, //
-	"cudnnGetRNNMatrixMathType": {},
-	"cudnnGetRNNPaddingMode":    {},
+	"cudnnGetRNNLinLayerBiasParams":                            {}, //
+	"cudnnGetRNNLinLayerMatrixParams":                          {}, //
+	"cudnnGetRNNMatrixMathType":                                {},
+	"cudnnGetRNNPaddingMode":                                   {},
 	// "cudnnGetRNNParamsSize":{}, //
 	"cudnnGetRNNProjectionLayers": {},
 	"cudnnGetRNNTempSpaceSizes":   {},

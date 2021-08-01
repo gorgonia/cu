@@ -4,8 +4,6 @@ package cudnn
 import "C"
 import (
 	"runtime"
-
-	"github.com/pkg/errors"
 )
 
 type TensorDescriptor struct {
@@ -40,14 +38,15 @@ func NewTensorDescriptor(format TensorFormat, dt DataType, shape, strides []int)
 }
 
 func (t *TensorDescriptor) set(internal C.cudnnTensorDescriptor_t) error {
+
 	switch len(t.shape) {
 	case 4:
-		N, C, H, W := t.shape[0], t.shape[1], t.shape[2], t.shape[3]
+		n, c, h, w := t.shape[0], t.shape[1], t.shape[2], t.shape[3]
 		if len(t.strides) == 4 {
 			// use explicit
 			NStrides, CStrides, HStrides, WStrides := t.strides[0], t.strides[1], t.strides[2], t.strides[3]
 			res := C.cudnnSetTensor4dDescriptorEx(internal, t.dataType.C(),
-				C.int(N), C.int(C), C.int(H), C.int(W),
+				C.int(n), C.int(c), C.int(h), C.int(w),
 				C.int(NStrides), C.int(CStrides), C.int(HStrides), C.int(WStrides),
 			)
 			return result(res)
@@ -55,7 +54,7 @@ func (t *TensorDescriptor) set(internal C.cudnnTensorDescriptor_t) error {
 
 		// otherwise the strides will be calculated by cudnn
 		res := C.cudnnSetTensor4dDescriptor(internal, t.format.C(), t.dataType.C(),
-			C.int(N), C.int(C), C.int(H), C.int(W),
+			C.int(n), C.int(c), C.int(h), C.int(w),
 		)
 		return result(res)
 	default:
@@ -75,8 +74,6 @@ func (t *TensorDescriptor) set(internal C.cudnnTensorDescriptor_t) error {
 			C.int(len(t.shape)), dimA)
 		return result(res)
 	}
-
-	return errors.Errorf(nyi, "set for len == ", len(t.shape))
 }
 
 func (t *TensorDescriptor) Format() TensorFormat { return t.format }

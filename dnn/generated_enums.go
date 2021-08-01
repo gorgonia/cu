@@ -22,90 +22,90 @@ func (e ActivationMode) C() C.cudnnActivationMode_t { return C.cudnnActivationMo
 type BackendAttributeName int
 
 const (
-	PointwiseMode                         BackendAttributeName = C.CUDNN_ATTR_POINTWISE_MODE
-	PointwiseMathPrec                     BackendAttributeName = C.CUDNN_ATTR_POINTWISE_MATH_PREC
-	PointwiseNanPropagation               BackendAttributeName = C.CUDNN_ATTR_POINTWISE_NAN_PROPAGATION
-	PointwiseReluLowerClip                BackendAttributeName = C.CUDNN_ATTR_POINTWISE_RELU_LOWER_CLIP
-	PointwiseReluUpperClip                BackendAttributeName = C.CUDNN_ATTR_POINTWISE_RELU_UPPER_CLIP
-	ConvolutionCompType                   BackendAttributeName = C.CUDNN_ATTR_CONVOLUTION_COMP_TYPE
-	ConvolutionConvMode                   BackendAttributeName = C.CUDNN_ATTR_CONVOLUTION_CONV_MODE
-	ConvolutionDilations                  BackendAttributeName = C.CUDNN_ATTR_CONVOLUTION_DILATIONS
-	ConvolutionFilterStrides              BackendAttributeName = C.CUDNN_ATTR_CONVOLUTION_FILTER_STRIDES
-	ConvolutionPostPaddings               BackendAttributeName = C.CUDNN_ATTR_CONVOLUTION_POST_PADDINGS
-	ConvolutionPrePaddings                BackendAttributeName = C.CUDNN_ATTR_CONVOLUTION_PRE_PADDINGS
-	ConvolutionSpatialDims                BackendAttributeName = C.CUDNN_ATTR_CONVOLUTION_SPATIAL_DIMS
-	EngineheurMode                        BackendAttributeName = C.CUDNN_ATTR_ENGINEHEUR_MODE
-	EngineheurOperationGraph              BackendAttributeName = C.CUDNN_ATTR_ENGINEHEUR_OPERATION_GRAPH
-	EngineheurResults                     BackendAttributeName = C.CUDNN_ATTR_ENGINEHEUR_RESULTS
-	EnginecfgEngine                       BackendAttributeName = C.CUDNN_ATTR_ENGINECFG_ENGINE
-	EnginecfgIntermediateInfo             BackendAttributeName = C.CUDNN_ATTR_ENGINECFG_INTERMEDIATE_INFO
-	EnginecfgKnobChoices                  BackendAttributeName = C.CUDNN_ATTR_ENGINECFG_KNOB_CHOICES
-	ExecutionPlanHandle                   BackendAttributeName = C.CUDNN_ATTR_EXECUTION_PLAN_HANDLE
-	ExecutionPlanEngineConfig             BackendAttributeName = C.CUDNN_ATTR_EXECUTION_PLAN_ENGINE_CONFIG
-	ExecutionPlanWorkspaceSize            BackendAttributeName = C.CUDNN_ATTR_EXECUTION_PLAN_WORKSPACE_SIZE
-	ExecutionPlanComputedIntermediateUids BackendAttributeName = C.CUDNN_ATTR_EXECUTION_PLAN_COMPUTED_INTERMEDIATE_UIDS
-	ExecutionPlanRunOnlyIntermediateUids  BackendAttributeName = C.CUDNN_ATTR_EXECUTION_PLAN_RUN_ONLY_INTERMEDIATE_UIDS
-	IntermediateInfoUniqueId              BackendAttributeName = C.CUDNN_ATTR_INTERMEDIATE_INFO_UNIQUE_ID
-	IntermediateInfoSize                  BackendAttributeName = C.CUDNN_ATTR_INTERMEDIATE_INFO_SIZE
-	IntermediateInfoDependentDataUids     BackendAttributeName = C.CUDNN_ATTR_INTERMEDIATE_INFO_DEPENDENT_DATA_UIDS
-	IntermediateInfoDependentAttributes   BackendAttributeName = C.CUDNN_ATTR_INTERMEDIATE_INFO_DEPENDENT_ATTRIBUTES
-	KnobChoiceKnobType                    BackendAttributeName = C.CUDNN_ATTR_KNOB_CHOICE_KNOB_TYPE
-	KnobChoiceKnobValue                   BackendAttributeName = C.CUDNN_ATTR_KNOB_CHOICE_KNOB_VALUE
-	OperationConvolutionForwardAlpha      BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_FORWARD_ALPHA
-	OperationConvolutionForwardBeta       BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_FORWARD_BETA
-	OperationConvolutionForwardConvDesc   BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_FORWARD_CONV_DESC
-	OperationConvolutionForwardW          BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_FORWARD_W
-	OperationConvolutionForwardX          BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_FORWARD_X
-	OperationConvolutionForwardY          BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_FORWARD_Y
-	OperationConvolutionBwdDataAlpha      BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_DATA_ALPHA
-	OperationConvolutionBwdDataBeta       BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_DATA_BETA
-	OperationConvolutionBwdDataConvDesc   BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_DATA_CONV_DESC
-	OperationConvolutionBwdDataW          BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_DATA_W
-	OperationConvolutionBwdDataDx         BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_DATA_DX
-	OperationConvolutionBwdDataDy         BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_DATA_DY
-	OperationConvolutionBwdFilterAlpha    BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_FILTER_ALPHA
-	OperationConvolutionBwdFilterBeta     BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_FILTER_BETA
-	OperationConvolutionBwdFilterConvDesc BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_FILTER_CONV_DESC
-	OperationConvolutionBwdFilterDw       BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_FILTER_DW
-	OperationConvolutionBwdFilterX        BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_FILTER_X
-	OperationConvolutionBwdFilterDy       BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_FILTER_DY
-	OperationPointwisePwDescriptor        BackendAttributeName = C.CUDNN_ATTR_OPERATION_POINTWISE_PW_DESCRIPTOR
-	OperationPointwiseXdesc               BackendAttributeName = C.CUDNN_ATTR_OPERATION_POINTWISE_XDESC
-	OperationPointwiseBdesc               BackendAttributeName = C.CUDNN_ATTR_OPERATION_POINTWISE_BDESC
-	OperationPointwiseYdesc               BackendAttributeName = C.CUDNN_ATTR_OPERATION_POINTWISE_YDESC
-	OperationPointwiseAlpha1              BackendAttributeName = C.CUDNN_ATTR_OPERATION_POINTWISE_ALPHA1
-	OperationPointwiseAlpha2              BackendAttributeName = C.CUDNN_ATTR_OPERATION_POINTWISE_ALPHA2
-	OperationGenstatsMode                 BackendAttributeName = C.CUDNN_ATTR_OPERATION_GENSTATS_MODE
-	OperationGenstatsMathPrec             BackendAttributeName = C.CUDNN_ATTR_OPERATION_GENSTATS_MATH_PREC
-	OperationGenstatsXdesc                BackendAttributeName = C.CUDNN_ATTR_OPERATION_GENSTATS_XDESC
-	OperationGenstatsSumdesc              BackendAttributeName = C.CUDNN_ATTR_OPERATION_GENSTATS_SUMDESC
-	OperationGenstatsSqsumdesc            BackendAttributeName = C.CUDNN_ATTR_OPERATION_GENSTATS_SQSUMDESC
-	OperationgraphHandle                  BackendAttributeName = C.CUDNN_ATTR_OPERATIONGRAPH_HANDLE
-	OperationgraphOps                     BackendAttributeName = C.CUDNN_ATTR_OPERATIONGRAPH_OPS
-	OperationgraphEngineGlobalCount       BackendAttributeName = C.CUDNN_ATTR_OPERATIONGRAPH_ENGINE_GLOBAL_COUNT
-	TensorByteAlignment                   BackendAttributeName = C.CUDNN_ATTR_TENSOR_BYTE_ALIGNMENT
-	TensorDataType                        BackendAttributeName = C.CUDNN_ATTR_TENSOR_DATA_TYPE
-	TensorDimensions                      BackendAttributeName = C.CUDNN_ATTR_TENSOR_DIMENSIONS
-	TensorStrides                         BackendAttributeName = C.CUDNN_ATTR_TENSOR_STRIDES
-	TensorVectorCount                     BackendAttributeName = C.CUDNN_ATTR_TENSOR_VECTOR_COUNT
-	TensorVectorizedDimension             BackendAttributeName = C.CUDNN_ATTR_TENSOR_VECTORIZED_DIMENSION
-	TensorUniqueId                        BackendAttributeName = C.CUDNN_ATTR_TENSOR_UNIQUE_ID
-	TensorIsVirtual                       BackendAttributeName = C.CUDNN_ATTR_TENSOR_IS_VIRTUAL
-	VariantPackUniqueIds                  BackendAttributeName = C.CUDNN_ATTR_VARIANT_PACK_UNIQUE_IDS
-	VariantPackDataPointers               BackendAttributeName = C.CUDNN_ATTR_VARIANT_PACK_DATA_POINTERS
-	VariantPackIntermediates              BackendAttributeName = C.CUDNN_ATTR_VARIANT_PACK_INTERMEDIATES
-	VariantPackWorkspace                  BackendAttributeName = C.CUDNN_ATTR_VARIANT_PACK_WORKSPACE
-	LayoutInfoTensorUid                   BackendAttributeName = C.CUDNN_ATTR_LAYOUT_INFO_TENSOR_UID
-	LayoutInfoTypes                       BackendAttributeName = C.CUDNN_ATTR_LAYOUT_INFO_TYPES
-	KnobInfoType                          BackendAttributeName = C.CUDNN_ATTR_KNOB_INFO_TYPE
-	KnobInfoMaximumValue                  BackendAttributeName = C.CUDNN_ATTR_KNOB_INFO_MAXIMUM_VALUE
-	KnobInfoMinimumValue                  BackendAttributeName = C.CUDNN_ATTR_KNOB_INFO_MINIMUM_VALUE
-	KnobInfoStride                        BackendAttributeName = C.CUDNN_ATTR_KNOB_INFO_STRIDE
-	EngineOperationGraph                  BackendAttributeName = C.CUDNN_ATTR_ENGINE_OPERATION_GRAPH
-	EngineGlobalIndex                     BackendAttributeName = C.CUDNN_ATTR_ENGINE_GLOBAL_INDEX
-	EngineKnobInfo                        BackendAttributeName = C.CUDNN_ATTR_ENGINE_KNOB_INFO
-	EngineNumericalNote                   BackendAttributeName = C.CUDNN_ATTR_ENGINE_NUMERICAL_NOTE
-	EngineLayoutInfo                      BackendAttributeName = C.CUDNN_ATTR_ENGINE_LAYOUT_INFO
+	BEAttrNamePointwiseMode                         BackendAttributeName = C.CUDNN_ATTR_POINTWISE_MODE
+	BEAttrNamePointwiseMathPrec                     BackendAttributeName = C.CUDNN_ATTR_POINTWISE_MATH_PREC
+	BEAttrNamePointwiseNanPropagation               BackendAttributeName = C.CUDNN_ATTR_POINTWISE_NAN_PROPAGATION
+	BEAttrNamePointwiseReluLowerClip                BackendAttributeName = C.CUDNN_ATTR_POINTWISE_RELU_LOWER_CLIP
+	BEAttrNamePointwiseReluUpperClip                BackendAttributeName = C.CUDNN_ATTR_POINTWISE_RELU_UPPER_CLIP
+	BEAttrNameConvolutionCompType                   BackendAttributeName = C.CUDNN_ATTR_CONVOLUTION_COMP_TYPE
+	BEAttrNameConvolutionConvMode                   BackendAttributeName = C.CUDNN_ATTR_CONVOLUTION_CONV_MODE
+	BEAttrNameConvolutionDilations                  BackendAttributeName = C.CUDNN_ATTR_CONVOLUTION_DILATIONS
+	BEAttrNameConvolutionFilterStrides              BackendAttributeName = C.CUDNN_ATTR_CONVOLUTION_FILTER_STRIDES
+	BEAttrNameConvolutionPostPaddings               BackendAttributeName = C.CUDNN_ATTR_CONVOLUTION_POST_PADDINGS
+	BEAttrNameConvolutionPrePaddings                BackendAttributeName = C.CUDNN_ATTR_CONVOLUTION_PRE_PADDINGS
+	BEAttrNameConvolutionSpatialDims                BackendAttributeName = C.CUDNN_ATTR_CONVOLUTION_SPATIAL_DIMS
+	BEAttrNameEngineheurMode                        BackendAttributeName = C.CUDNN_ATTR_ENGINEHEUR_MODE
+	BEAttrNameEngineheurOperationGraph              BackendAttributeName = C.CUDNN_ATTR_ENGINEHEUR_OPERATION_GRAPH
+	BEAttrNameEngineheurResults                     BackendAttributeName = C.CUDNN_ATTR_ENGINEHEUR_RESULTS
+	BEAttrNameEnginecfgEngine                       BackendAttributeName = C.CUDNN_ATTR_ENGINECFG_ENGINE
+	BEAttrNameEnginecfgIntermediateInfo             BackendAttributeName = C.CUDNN_ATTR_ENGINECFG_INTERMEDIATE_INFO
+	BEAttrNameEnginecfgKnobChoices                  BackendAttributeName = C.CUDNN_ATTR_ENGINECFG_KNOB_CHOICES
+	BEAttrNameExecutionPlanHandle                   BackendAttributeName = C.CUDNN_ATTR_EXECUTION_PLAN_HANDLE
+	BEAttrNameExecutionPlanEngineConfig             BackendAttributeName = C.CUDNN_ATTR_EXECUTION_PLAN_ENGINE_CONFIG
+	BEAttrNameExecutionPlanWorkspaceSize            BackendAttributeName = C.CUDNN_ATTR_EXECUTION_PLAN_WORKSPACE_SIZE
+	BEAttrNameExecutionPlanComputedIntermediateUids BackendAttributeName = C.CUDNN_ATTR_EXECUTION_PLAN_COMPUTED_INTERMEDIATE_UIDS
+	BEAttrNameExecutionPlanRunOnlyIntermediateUids  BackendAttributeName = C.CUDNN_ATTR_EXECUTION_PLAN_RUN_ONLY_INTERMEDIATE_UIDS
+	BEAttrNameIntermediateInfoUniqueId              BackendAttributeName = C.CUDNN_ATTR_INTERMEDIATE_INFO_UNIQUE_ID
+	BEAttrNameIntermediateInfoSize                  BackendAttributeName = C.CUDNN_ATTR_INTERMEDIATE_INFO_SIZE
+	BEAttrNameIntermediateInfoDependentDataUids     BackendAttributeName = C.CUDNN_ATTR_INTERMEDIATE_INFO_DEPENDENT_DATA_UIDS
+	BEAttrNameIntermediateInfoDependentAttributes   BackendAttributeName = C.CUDNN_ATTR_INTERMEDIATE_INFO_DEPENDENT_ATTRIBUTES
+	BEAttrNameKnobChoiceKnobType                    BackendAttributeName = C.CUDNN_ATTR_KNOB_CHOICE_KNOB_TYPE
+	BEAttrNameKnobChoiceKnobValue                   BackendAttributeName = C.CUDNN_ATTR_KNOB_CHOICE_KNOB_VALUE
+	BEAttrNameOperationConvolutionForwardAlpha      BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_FORWARD_ALPHA
+	BEAttrNameOperationConvolutionForwardBeta       BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_FORWARD_BETA
+	BEAttrNameOperationConvolutionForwardConvDesc   BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_FORWARD_CONV_DESC
+	BEAttrNameOperationConvolutionForwardW          BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_FORWARD_W
+	BEAttrNameOperationConvolutionForwardX          BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_FORWARD_X
+	BEAttrNameOperationConvolutionForwardY          BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_FORWARD_Y
+	BEAttrNameOperationConvolutionBwdDataAlpha      BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_DATA_ALPHA
+	BEAttrNameOperationConvolutionBwdDataBeta       BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_DATA_BETA
+	BEAttrNameOperationConvolutionBwdDataConvDesc   BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_DATA_CONV_DESC
+	BEAttrNameOperationConvolutionBwdDataW          BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_DATA_W
+	BEAttrNameOperationConvolutionBwdDataDx         BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_DATA_DX
+	BEAttrNameOperationConvolutionBwdDataDy         BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_DATA_DY
+	BEAttrNameOperationConvolutionBwdFilterAlpha    BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_FILTER_ALPHA
+	BEAttrNameOperationConvolutionBwdFilterBeta     BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_FILTER_BETA
+	BEAttrNameOperationConvolutionBwdFilterConvDesc BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_FILTER_CONV_DESC
+	BEAttrNameOperationConvolutionBwdFilterDw       BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_FILTER_DW
+	BEAttrNameOperationConvolutionBwdFilterX        BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_FILTER_X
+	BEAttrNameOperationConvolutionBwdFilterDy       BackendAttributeName = C.CUDNN_ATTR_OPERATION_CONVOLUTION_BWD_FILTER_DY
+	BEAttrNameOperationPointwisePwDescriptor        BackendAttributeName = C.CUDNN_ATTR_OPERATION_POINTWISE_PW_DESCRIPTOR
+	BEAttrNameOperationPointwiseXdesc               BackendAttributeName = C.CUDNN_ATTR_OPERATION_POINTWISE_XDESC
+	BEAttrNameOperationPointwiseBdesc               BackendAttributeName = C.CUDNN_ATTR_OPERATION_POINTWISE_BDESC
+	BEAttrNameOperationPointwiseYdesc               BackendAttributeName = C.CUDNN_ATTR_OPERATION_POINTWISE_YDESC
+	BEAttrNameOperationPointwiseAlpha1              BackendAttributeName = C.CUDNN_ATTR_OPERATION_POINTWISE_ALPHA1
+	BEAttrNameOperationPointwiseAlpha2              BackendAttributeName = C.CUDNN_ATTR_OPERATION_POINTWISE_ALPHA2
+	BEAttrNameOperationGenstatsMode                 BackendAttributeName = C.CUDNN_ATTR_OPERATION_GENSTATS_MODE
+	BEAttrNameOperationGenstatsMathPrec             BackendAttributeName = C.CUDNN_ATTR_OPERATION_GENSTATS_MATH_PREC
+	BEAttrNameOperationGenstatsXdesc                BackendAttributeName = C.CUDNN_ATTR_OPERATION_GENSTATS_XDESC
+	BEAttrNameOperationGenstatsSumdesc              BackendAttributeName = C.CUDNN_ATTR_OPERATION_GENSTATS_SUMDESC
+	BEAttrNameOperationGenstatsSqsumdesc            BackendAttributeName = C.CUDNN_ATTR_OPERATION_GENSTATS_SQSUMDESC
+	BEAttrNameOperationgraphHandle                  BackendAttributeName = C.CUDNN_ATTR_OPERATIONGRAPH_HANDLE
+	BEAttrNameOperationgraphOps                     BackendAttributeName = C.CUDNN_ATTR_OPERATIONGRAPH_OPS
+	BEAttrNameOperationgraphEngineGlobalCount       BackendAttributeName = C.CUDNN_ATTR_OPERATIONGRAPH_ENGINE_GLOBAL_COUNT
+	BEAttrNameTensorByteAlignment                   BackendAttributeName = C.CUDNN_ATTR_TENSOR_BYTE_ALIGNMENT
+	BEAttrNameTensorDataType                        BackendAttributeName = C.CUDNN_ATTR_TENSOR_DATA_TYPE
+	BEAttrNameTensorDimensions                      BackendAttributeName = C.CUDNN_ATTR_TENSOR_DIMENSIONS
+	BEAttrNameTensorStrides                         BackendAttributeName = C.CUDNN_ATTR_TENSOR_STRIDES
+	BEAttrNameTensorVectorCount                     BackendAttributeName = C.CUDNN_ATTR_TENSOR_VECTOR_COUNT
+	BEAttrNameTensorVectorizedDimension             BackendAttributeName = C.CUDNN_ATTR_TENSOR_VECTORIZED_DIMENSION
+	BEAttrNameTensorUniqueId                        BackendAttributeName = C.CUDNN_ATTR_TENSOR_UNIQUE_ID
+	BEAttrNameTensorIsVirtual                       BackendAttributeName = C.CUDNN_ATTR_TENSOR_IS_VIRTUAL
+	BEAttrNameVariantPackUniqueIds                  BackendAttributeName = C.CUDNN_ATTR_VARIANT_PACK_UNIQUE_IDS
+	BEAttrNameVariantPackDataPointers               BackendAttributeName = C.CUDNN_ATTR_VARIANT_PACK_DATA_POINTERS
+	BEAttrNameVariantPackIntermediates              BackendAttributeName = C.CUDNN_ATTR_VARIANT_PACK_INTERMEDIATES
+	BEAttrNameVariantPackWorkspace                  BackendAttributeName = C.CUDNN_ATTR_VARIANT_PACK_WORKSPACE
+	BEAttrNameLayoutInfoTensorUid                   BackendAttributeName = C.CUDNN_ATTR_LAYOUT_INFO_TENSOR_UID
+	BEAttrNameLayoutInfoTypes                       BackendAttributeName = C.CUDNN_ATTR_LAYOUT_INFO_TYPES
+	BEAttrNameKnobInfoType                          BackendAttributeName = C.CUDNN_ATTR_KNOB_INFO_TYPE
+	BEAttrNameKnobInfoMaximumValue                  BackendAttributeName = C.CUDNN_ATTR_KNOB_INFO_MAXIMUM_VALUE
+	BEAttrNameKnobInfoMinimumValue                  BackendAttributeName = C.CUDNN_ATTR_KNOB_INFO_MINIMUM_VALUE
+	BEAttrNameKnobInfoStride                        BackendAttributeName = C.CUDNN_ATTR_KNOB_INFO_STRIDE
+	BEAttrNameEngineOperationGraph                  BackendAttributeName = C.CUDNN_ATTR_ENGINE_OPERATION_GRAPH
+	BEAttrNameEngineGlobalIndex                     BackendAttributeName = C.CUDNN_ATTR_ENGINE_GLOBAL_INDEX
+	BEAttrNameEngineKnobInfo                        BackendAttributeName = C.CUDNN_ATTR_ENGINE_KNOB_INFO
+	BEAttrNameEngineNumericalNote                   BackendAttributeName = C.CUDNN_ATTR_ENGINE_NUMERICAL_NOTE
+	BEAttrNameEngineLayoutInfo                      BackendAttributeName = C.CUDNN_ATTR_ENGINE_LAYOUT_INFO
 )
 
 // C returns the C representation of BackendAttributeName
@@ -116,23 +116,23 @@ func (e BackendAttributeName) C() C.cudnnBackendAttributeName_t {
 type BackendAttributeType int
 
 const (
-	BackendAttrHandle            BackendAttributeType = C.CUDNN_TYPE_HANDLE
-	BackendAttrDataType          BackendAttributeType = C.CUDNN_TYPE_DATA_TYPE
-	BackendAttrBoolean           BackendAttributeType = C.CUDNN_TYPE_BOOLEAN
-	BackendAttrInt64             BackendAttributeType = C.CUDNN_TYPE_INT64
-	BackendAttrFloat             BackendAttributeType = C.CUDNN_TYPE_FLOAT
-	BackendAttrDouble            BackendAttributeType = C.CUDNN_TYPE_DOUBLE
-	BackendAttrVoidPtr           BackendAttributeType = C.CUDNN_TYPE_VOID_PTR
-	BackendAttrConvolutionMode   BackendAttributeType = C.CUDNN_TYPE_CONVOLUTION_MODE
-	BackendAttrHeurMode          BackendAttributeType = C.CUDNN_TYPE_HEUR_MODE
-	BackendAttrKnobType          BackendAttributeType = C.CUDNN_TYPE_KNOB_TYPE
-	BackendAttrNanPropogation    BackendAttributeType = C.CUDNN_TYPE_NAN_PROPOGATION
-	BackendAttrNumericalNote     BackendAttributeType = C.CUDNN_TYPE_NUMERICAL_NOTE
-	BackendAttrLayoutType        BackendAttributeType = C.CUDNN_TYPE_LAYOUT_TYPE
-	BackendAttrAttribName        BackendAttributeType = C.CUDNN_TYPE_ATTRIB_NAME
-	BackendAttrPointwiseMode     BackendAttributeType = C.CUDNN_TYPE_POINTWISE_MODE
-	BackendAttrBackendDescriptor BackendAttributeType = C.CUDNN_TYPE_BACKEND_DESCRIPTOR
-	BackendAttrGenstatsMode      BackendAttributeType = C.CUDNN_TYPE_GENSTATS_MODE
+	BEAttrHandle            BackendAttributeType = C.CUDNN_TYPE_HANDLE
+	BEAttrDataType          BackendAttributeType = C.CUDNN_TYPE_DATA_TYPE
+	BEAttrBoolean           BackendAttributeType = C.CUDNN_TYPE_BOOLEAN
+	BEAttrInt64             BackendAttributeType = C.CUDNN_TYPE_INT64
+	BEAttrFloat             BackendAttributeType = C.CUDNN_TYPE_FLOAT
+	BEAttrDouble            BackendAttributeType = C.CUDNN_TYPE_DOUBLE
+	BEAttrVoidPtr           BackendAttributeType = C.CUDNN_TYPE_VOID_PTR
+	BEAttrConvolutionMode   BackendAttributeType = C.CUDNN_TYPE_CONVOLUTION_MODE
+	BEAttrHeurMode          BackendAttributeType = C.CUDNN_TYPE_HEUR_MODE
+	BEAttrKnobType          BackendAttributeType = C.CUDNN_TYPE_KNOB_TYPE
+	BEAttrNanPropogation    BackendAttributeType = C.CUDNN_TYPE_NAN_PROPOGATION
+	BEAttrNumericalNote     BackendAttributeType = C.CUDNN_TYPE_NUMERICAL_NOTE
+	BEAttrLayoutType        BackendAttributeType = C.CUDNN_TYPE_LAYOUT_TYPE
+	BEAttrAttribName        BackendAttributeType = C.CUDNN_TYPE_ATTRIB_NAME
+	BEAttrPointwiseMode     BackendAttributeType = C.CUDNN_TYPE_POINTWISE_MODE
+	BEAttrBackendDescriptor BackendAttributeType = C.CUDNN_TYPE_BACKEND_DESCRIPTOR
+	BEAttrGenstatsMode      BackendAttributeType = C.CUDNN_TYPE_GENSTATS_MODE
 )
 
 // C returns the C representation of BackendAttributeType
@@ -143,24 +143,24 @@ func (e BackendAttributeType) C() C.cudnnBackendAttributeType_t {
 type BackendDescriptorType int
 
 const (
-	PointwiseDescriptor                          BackendDescriptorType = C.CUDNN_BACKEND_POINTWISE_DESCRIPTOR
-	ConvolutionDescriptor                        BackendDescriptorType = C.CUDNN_BACKEND_CONVOLUTION_DESCRIPTOR
-	EngineDescriptor                             BackendDescriptorType = C.CUDNN_BACKEND_ENGINE_DESCRIPTOR
-	EnginecfgDescriptor                          BackendDescriptorType = C.CUDNN_BACKEND_ENGINECFG_DESCRIPTOR
-	EngineheurDescriptor                         BackendDescriptorType = C.CUDNN_BACKEND_ENGINEHEUR_DESCRIPTOR
-	ExecutionPlanDescriptor                      BackendDescriptorType = C.CUDNN_BACKEND_EXECUTION_PLAN_DESCRIPTOR
-	IntermediateInfoDescriptor                   BackendDescriptorType = C.CUDNN_BACKEND_INTERMEDIATE_INFO_DESCRIPTOR
-	KnobChoiceDescriptor                         BackendDescriptorType = C.CUDNN_BACKEND_KNOB_CHOICE_DESCRIPTOR
-	KnobInfoDescriptor                           BackendDescriptorType = C.CUDNN_BACKEND_KNOB_INFO_DESCRIPTOR
-	LayoutInfoDescriptor                         BackendDescriptorType = C.CUDNN_BACKEND_LAYOUT_INFO_DESCRIPTOR
-	OperationConvolutionForwardDescriptor        BackendDescriptorType = C.CUDNN_BACKEND_OPERATION_CONVOLUTION_FORWARD_DESCRIPTOR
-	OperationConvolutionBackwardFilterDescriptor BackendDescriptorType = C.CUDNN_BACKEND_OPERATION_CONVOLUTION_BACKWARD_FILTER_DESCRIPTOR
-	OperationConvolutionBackwardDataDescriptor   BackendDescriptorType = C.CUDNN_BACKEND_OPERATION_CONVOLUTION_BACKWARD_DATA_DESCRIPTOR
-	OperationPointwiseDescriptor                 BackendDescriptorType = C.CUDNN_BACKEND_OPERATION_POINTWISE_DESCRIPTOR
-	OperationGenStatsDescriptor                  BackendDescriptorType = C.CUDNN_BACKEND_OPERATION_GEN_STATS_DESCRIPTOR
-	OperationgraphDescriptor                     BackendDescriptorType = C.CUDNN_BACKEND_OPERATIONGRAPH_DESCRIPTOR
-	VariantPackDescriptor                        BackendDescriptorType = C.CUDNN_BACKEND_VARIANT_PACK_DESCRIPTOR
-	TensorDescriptor                             BackendDescriptorType = C.CUDNN_BACKEND_TENSOR_DESCRIPTOR
+	BEDescriptorPointwiseDescriptor                          BackendDescriptorType = C.CUDNN_BACKEND_POINTWISE_DESCRIPTOR
+	BEDescriptorConvolutionDescriptor                        BackendDescriptorType = C.CUDNN_BACKEND_CONVOLUTION_DESCRIPTOR
+	BEDescriptorEngineDescriptor                             BackendDescriptorType = C.CUDNN_BACKEND_ENGINE_DESCRIPTOR
+	BEDescriptorEnginecfgDescriptor                          BackendDescriptorType = C.CUDNN_BACKEND_ENGINECFG_DESCRIPTOR
+	BEDescriptorEngineheurDescriptor                         BackendDescriptorType = C.CUDNN_BACKEND_ENGINEHEUR_DESCRIPTOR
+	BEDescriptorExecutionPlanDescriptor                      BackendDescriptorType = C.CUDNN_BACKEND_EXECUTION_PLAN_DESCRIPTOR
+	BEDescriptorIntermediateInfoDescriptor                   BackendDescriptorType = C.CUDNN_BACKEND_INTERMEDIATE_INFO_DESCRIPTOR
+	BEDescriptorKnobChoiceDescriptor                         BackendDescriptorType = C.CUDNN_BACKEND_KNOB_CHOICE_DESCRIPTOR
+	BEDescriptorKnobInfoDescriptor                           BackendDescriptorType = C.CUDNN_BACKEND_KNOB_INFO_DESCRIPTOR
+	BEDescriptorLayoutInfoDescriptor                         BackendDescriptorType = C.CUDNN_BACKEND_LAYOUT_INFO_DESCRIPTOR
+	BEDescriptorOperationConvolutionForwardDescriptor        BackendDescriptorType = C.CUDNN_BACKEND_OPERATION_CONVOLUTION_FORWARD_DESCRIPTOR
+	BEDescriptorOperationConvolutionBackwardFilterDescriptor BackendDescriptorType = C.CUDNN_BACKEND_OPERATION_CONVOLUTION_BACKWARD_FILTER_DESCRIPTOR
+	BEDescriptorOperationConvolutionBackwardDataDescriptor   BackendDescriptorType = C.CUDNN_BACKEND_OPERATION_CONVOLUTION_BACKWARD_DATA_DESCRIPTOR
+	BEDescriptorOperationPointwiseDescriptor                 BackendDescriptorType = C.CUDNN_BACKEND_OPERATION_POINTWISE_DESCRIPTOR
+	BEDescriptorOperationGenStatsDescriptor                  BackendDescriptorType = C.CUDNN_BACKEND_OPERATION_GEN_STATS_DESCRIPTOR
+	BEDescriptorOperationgraphDescriptor                     BackendDescriptorType = C.CUDNN_BACKEND_OPERATIONGRAPH_DESCRIPTOR
+	BEDescriptorVariantPackDescriptor                        BackendDescriptorType = C.CUDNN_BACKEND_VARIANT_PACK_DESCRIPTOR
+	BEDescriptorTensorDescriptor                             BackendDescriptorType = C.CUDNN_BACKEND_TENSOR_DESCRIPTOR
 )
 
 // C returns the C representation of BackendDescriptorType
@@ -214,11 +214,11 @@ func (e BackendKnobType) C() C.cudnnBackendKnobType_t { return C.cudnnBackendKno
 type BackendLayoutType int
 
 const (
-	PreferredNchw   BackendLayoutType = C.CUDNN_LAYOUT_TYPE_PREFERRED_NCHW
-	PreferredNhwc   BackendLayoutType = C.CUDNN_LAYOUT_TYPE_PREFERRED_NHWC
-	PreferredPad4ck BackendLayoutType = C.CUDNN_LAYOUT_TYPE_PREFERRED_PAD4CK
-	PreferredPad8ck BackendLayoutType = C.CUDNN_LAYOUT_TYPE_PREFERRED_PAD8CK
-	Count           BackendLayoutType = C.CUDNN_LAYOUT_TYPE_COUNT
+	BELayoutPreferredNchw   BackendLayoutType = C.CUDNN_LAYOUT_TYPE_PREFERRED_NCHW
+	BELayoutPreferredNhwc   BackendLayoutType = C.CUDNN_LAYOUT_TYPE_PREFERRED_NHWC
+	BELayoutPreferredPad4ck BackendLayoutType = C.CUDNN_LAYOUT_TYPE_PREFERRED_PAD4CK
+	BELayoutPreferredPad8ck BackendLayoutType = C.CUDNN_LAYOUT_TYPE_PREFERRED_PAD8CK
+	BELayoutCount           BackendLayoutType = C.CUDNN_LAYOUT_TYPE_COUNT
 )
 
 // C returns the C representation of BackendLayoutType
@@ -255,9 +255,9 @@ func (e BatchNormMode) C() C.cudnnBatchNormMode_t { return C.cudnnBatchNormMode_
 type BatchNormOps int
 
 const (
-	BatchNorm     BatchNormOps = C.CUDNN_BATCHNORM_OPS_BN
-	Activation    BatchNormOps = C.CUDNN_BATCHNORM_OPS_BN_ACTIVATION
-	AddActivation BatchNormOps = C.CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION
+	BatchNorm              BatchNormOps = C.CUDNN_BATCHNORM_OPS_BN
+	BatchNormActivation    BatchNormOps = C.CUDNN_BATCHNORM_OPS_BN_ACTIVATION
+	BatchNormAddActivation BatchNormOps = C.CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION
 )
 
 // C returns the C representation of BatchNormOps
@@ -498,8 +498,8 @@ func (e LRNMode) C() C.cudnnLRNMode_t { return C.cudnnLRNMode_t(e) }
 type LossNormalizationMode int
 
 const (
-	None    LossNormalizationMode = C.CUDNN_LOSS_NORMALIZATION_NONE
-	Softmax LossNormalizationMode = C.CUDNN_LOSS_NORMALIZATION_SOFTMAX
+	LossNormNone    LossNormalizationMode = C.CUDNN_LOSS_NORMALIZATION_NONE
+	LossNormSoftmax LossNormalizationMode = C.CUDNN_LOSS_NORMALIZATION_SOFTMAX
 )
 
 // C returns the C representation of LossNormalizationMode
@@ -550,8 +550,8 @@ func (e NanPropagation) C() C.cudnnNanPropagation_t { return C.cudnnNanPropagati
 type NormAlgo int
 
 const (
-	Standard NormAlgo = C.CUDNN_NORM_ALGO_STANDARD
-	Persist  NormAlgo = C.CUDNN_NORM_ALGO_PERSIST
+	StandardNorm NormAlgo = C.CUDNN_NORM_ALGO_STANDARD
+	PersistNorm  NormAlgo = C.CUDNN_NORM_ALGO_PERSIST
 )
 
 // C returns the C representation of NormAlgo
@@ -560,8 +560,8 @@ func (e NormAlgo) C() C.cudnnNormAlgo_t { return C.cudnnNormAlgo_t(e) }
 type NormMode int
 
 const (
-	Activation NormMode = C.CUDNN_NORM_PER_ACTIVATION
-	Channel    NormMode = C.CUDNN_NORM_PER_CHANNEL
+	NormPerActivation NormMode = C.CUDNN_NORM_PER_ACTIVATION
+	NormPerChannel    NormMode = C.CUDNN_NORM_PER_CHANNEL
 )
 
 // C returns the C representation of NormMode
@@ -570,9 +570,9 @@ func (e NormMode) C() C.cudnnNormMode_t { return C.cudnnNormMode_t(e) }
 type NormOps int
 
 const (
-	Norm          NormOps = C.CUDNN_NORM_OPS_NORM
-	Activation    NormOps = C.CUDNN_NORM_OPS_NORM_ACTIVATION
-	AddActivation NormOps = C.CUDNN_NORM_OPS_NORM_ADD_ACTIVATION
+	Norm              NormOps = C.CUDNN_NORM_OPS_NORM
+	NormActivation    NormOps = C.CUDNN_NORM_OPS_NORM_ACTIVATION
+	NormAddActivation NormOps = C.CUDNN_NORM_OPS_NORM_ADD_ACTIVATION
 )
 
 // C returns the C representation of NormOps
@@ -581,12 +581,12 @@ func (e NormOps) C() C.cudnnNormOps_t { return C.cudnnNormOps_t(e) }
 type OpTensorOp int
 
 const (
-	Add  OpTensorOp = C.CUDNN_OP_TENSOR_ADD
-	Mul  OpTensorOp = C.CUDNN_OP_TENSOR_MUL
-	Min  OpTensorOp = C.CUDNN_OP_TENSOR_MIN
-	Max  OpTensorOp = C.CUDNN_OP_TENSOR_MAX
-	Sqrt OpTensorOp = C.CUDNN_OP_TENSOR_SQRT
-	Not  OpTensorOp = C.CUDNN_OP_TENSOR_NOT
+	TensorAdd  OpTensorOp = C.CUDNN_OP_TENSOR_ADD
+	TensorMul  OpTensorOp = C.CUDNN_OP_TENSOR_MUL
+	TensorMin  OpTensorOp = C.CUDNN_OP_TENSOR_MIN
+	TensorMax  OpTensorOp = C.CUDNN_OP_TENSOR_MAX
+	TensorSqrt OpTensorOp = C.CUDNN_OP_TENSOR_SQRT
+	TensorNot  OpTensorOp = C.CUDNN_OP_TENSOR_NOT
 )
 
 // C returns the C representation of OpTensorOp
@@ -595,15 +595,15 @@ func (e OpTensorOp) C() C.cudnnOpTensorOp_t { return C.cudnnOpTensorOp_t(e) }
 type PointwiseMode int
 
 const (
-	Add        PointwiseMode = C.CUDNN_POINTWISE_ADD
-	Mul        PointwiseMode = C.CUDNN_POINTWISE_MUL
-	Min        PointwiseMode = C.CUDNN_POINTWISE_MIN
-	Max        PointwiseMode = C.CUDNN_POINTWISE_MAX
-	Sqrt       PointwiseMode = C.CUDNN_POINTWISE_SQRT
-	ReluFwd    PointwiseMode = C.CUDNN_POINTWISE_RELU_FWD
-	TanhFwd    PointwiseMode = C.CUDNN_POINTWISE_TANH_FWD
-	SigmoidFwd PointwiseMode = C.CUDNN_POINTWISE_SIGMOID_FWD
-	EluFwd     PointwiseMode = C.CUDNN_POINTWISE_ELU_FWD
+	PointwiseAdd        PointwiseMode = C.CUDNN_POINTWISE_ADD
+	PointwiseMul        PointwiseMode = C.CUDNN_POINTWISE_MUL
+	PointwiseMin        PointwiseMode = C.CUDNN_POINTWISE_MIN
+	PointwiseMax        PointwiseMode = C.CUDNN_POINTWISE_MAX
+	PointwiseSqrt       PointwiseMode = C.CUDNN_POINTWISE_SQRT
+	PointwiseReluFwd    PointwiseMode = C.CUDNN_POINTWISE_RELU_FWD
+	PointwiseTanhFwd    PointwiseMode = C.CUDNN_POINTWISE_TANH_FWD
+	PointwiseSigmoidFwd PointwiseMode = C.CUDNN_POINTWISE_SIGMOID_FWD
+	PointwiseEluFwd     PointwiseMode = C.CUDNN_POINTWISE_ELU_FWD
 )
 
 // C returns the C representation of PointwiseMode
@@ -624,10 +624,10 @@ func (e PoolingMode) C() C.cudnnPoolingMode_t { return C.cudnnPoolingMode_t(e) }
 type RNNAlgo int
 
 const (
-	Standard       RNNAlgo = C.CUDNN_RNN_ALGO_STANDARD
-	PersistStatic  RNNAlgo = C.CUDNN_RNN_ALGO_PERSIST_STATIC
-	PersistDynamic RNNAlgo = C.CUDNN_RNN_ALGO_PERSIST_DYNAMIC
-	Count          RNNAlgo = C.CUDNN_RNN_ALGO_COUNT
+	StandardRNN       RNNAlgo = C.CUDNN_RNN_ALGO_STANDARD
+	PersistStaticRNN  RNNAlgo = C.CUDNN_RNN_ALGO_PERSIST_STATIC
+	PersistDynamicRNN RNNAlgo = C.CUDNN_RNN_ALGO_PERSIST_DYNAMIC
+	CountRNN          RNNAlgo = C.CUDNN_RNN_ALGO_COUNT
 )
 
 // C returns the C representation of RNNAlgo
@@ -636,10 +636,10 @@ func (e RNNAlgo) C() C.cudnnRNNAlgo_t { return C.cudnnRNNAlgo_t(e) }
 type RNNBiasMode int
 
 const (
-	NoBias        RNNBiasMode = C.CUDNN_RNN_NO_BIAS
-	SingleInpBias RNNBiasMode = C.CUDNN_RNN_SINGLE_INP_BIAS
-	DoubleBias    RNNBiasMode = C.CUDNN_RNN_DOUBLE_BIAS
-	SingleRecBias RNNBiasMode = C.CUDNN_RNN_SINGLE_REC_BIAS
+	RNNNoBias        RNNBiasMode = C.CUDNN_RNN_NO_BIAS
+	RNNSingleInpBias RNNBiasMode = C.CUDNN_RNN_SINGLE_INP_BIAS
+	RNNDoubleBias    RNNBiasMode = C.CUDNN_RNN_DOUBLE_BIAS
+	RNNSingleRecBias RNNBiasMode = C.CUDNN_RNN_SINGLE_REC_BIAS
 )
 
 // C returns the C representation of RNNBiasMode
@@ -648,8 +648,8 @@ func (e RNNBiasMode) C() C.cudnnRNNBiasMode_t { return C.cudnnRNNBiasMode_t(e) }
 type RNNClipMode int
 
 const (
-	None   RNNClipMode = C.CUDNN_RNN_CLIP_NONE
-	Minmax RNNClipMode = C.CUDNN_RNN_CLIP_MINMAX
+	RNNClipNone   RNNClipMode = C.CUDNN_RNN_CLIP_NONE
+	RNNClipMinmax RNNClipMode = C.CUDNN_RNN_CLIP_MINMAX
 )
 
 // C returns the C representation of RNNClipMode
