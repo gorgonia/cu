@@ -444,33 +444,6 @@ func (co *Context) FindConvolutionForwardAlgorithmEx(xDesc *TensorDescriptor, x 
 	return
 }
 
-// GetRNNParamsSize has been deprecated in cuDNN 8.0. Use cudnnGetRNNWeightSpaceSize() instead of GetRNNParamsSize().
-func (co *Context) GetRNNParamsSize(rnnDesc *RNN, xDesc *TensorDescriptor, dataType DataType) (sizeInBytes uintptr, err error) {
-	var sizeInBytesC C.size_t
-	// call cudnnGetRNNParamsSize
-	err = result(C.cudnnGetRNNParamsSize(co.internal, rnnDesc.internal, xDesc.internal, &sizeInBytesC, dataType.C()))
-	sizeInBytes = uintptr(sizeInBytesC)
-	return
-}
-
-// GetRNNTrainingReserveSize has been deprecated in cuDNN 8.0. Use cudnnGetRNNTempSpaceSizes() instead of cudnnGetRNNWorkspaceSize().
-func (co *Context) GetRNNTrainingReserveSize(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor) (sizeInBytes uintptr, err error) {
-	var sizeInBytesC C.size_t
-	// call cudnnGetRNNTrainingReserveSize
-	err = result(C.cudnnGetRNNTrainingReserveSize(co.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, &sizeInBytesC))
-	sizeInBytes = uintptr(sizeInBytesC)
-	return
-}
-
-// GetRNNWorkspaceSize has been deprecated in cuDNN 8.0. Use cudnnGetRNNTempSpaceSizes() instead of GetRNNWorkspaceSize().
-func (co *Context) GetRNNWorkspaceSize(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor) (sizeInBytes uintptr, err error) {
-	var sizeInBytesC C.size_t
-	// call cudnnGetRNNWorkspaceSize
-	err = result(C.cudnnGetRNNWorkspaceSize(co.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, &sizeInBytesC))
-	sizeInBytes = uintptr(sizeInBytesC)
-	return
-}
-
 // GetReductionIndicesSize is a helper function to return the minimum size of the index space to be passed to the reduction given the input and output tensors.
 func (co *Context) GetReductionIndicesSize(reduceTensorDesc *Reduction, aDesc *TensorDescriptor, cDesc *TensorDescriptor) (sizeInBytes uintptr, err error) {
 	var sizeInBytesC C.size_t
@@ -621,28 +594,6 @@ func (co *Context) PoolingForward(poolingDesc *Pooling, alpha float64, xDesc *Te
 	}
 	// call cudnnPoolingForward
 	return result(C.cudnnPoolingForward(co.internal, poolingDesc.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
-}
-
-// RNNBackwardData has been deprecated in cuDNN 8.0. Use RNNBackwardData_v8() instead of RNNBackwardData().
-//	reserveSpace is both an input and output
-func (co *Context) RNNBackwardData(rnnDesc *RNN, seqLength int, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, dhyDesc *TensorDescriptor, dhy Memory, dcyDesc *TensorDescriptor, dcy Memory, wDesc *Filter, w Memory, hxDesc *TensorDescriptor, hx Memory, cxDesc *TensorDescriptor, cx Memory, dxDesc *TensorDescriptor, dx Memory, dhxDesc *TensorDescriptor, dhx Memory, dcxDesc *TensorDescriptor, dcx Memory, workSpace Memory, workSpaceSizeInBytes uintptr, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
-	// DOUBLECHECK: "cudnnRNNBackwardData" returns Memory type in Parameter 22
-	// call cudnnRNNBackwardData
-	return result(C.cudnnRNNBackwardData(co.internal, rnnDesc.internal, C.int(seqLength), yDesc.internal, unsafe.Pointer(y.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), dhyDesc.internal, unsafe.Pointer(dhy.Uintptr()), dcyDesc.internal, unsafe.Pointer(dcy.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), hxDesc.internal, unsafe.Pointer(hx.Uintptr()), cxDesc.internal, unsafe.Pointer(cx.Uintptr()), dxDesc.internal, unsafe.Pointer(dx.Uintptr()), dhxDesc.internal, unsafe.Pointer(dhx.Uintptr()), dcxDesc.internal, unsafe.Pointer(dcx.Uintptr()), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
-}
-
-// RNNBackwardWeights has been deprecated in cuDNN 8.0. Use RNNBackwardWeights_v8() instead of RNNBackwardWeights().
-//	dw is both an input and output
-func (co *Context) RNNBackwardWeights(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, x Memory, hxDesc *TensorDescriptor, hx Memory, yDesc *TensorDescriptor, y Memory, workSpace Memory, workSpaceSizeInBytes uintptr, dwDesc *Filter, dw Memory, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
-	// call cudnnRNNBackwardWeights
-	return result(C.cudnnRNNBackwardWeights(co.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, unsafe.Pointer(x.Uintptr()), hxDesc.internal, unsafe.Pointer(hx.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), dwDesc.internal, unsafe.Pointer(dw.Uintptr()), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
-}
-
-// RNNForwardInference has been deprecated in cuDNN 8.0. Use cudnnRNNForward() instead of RNNForwardInference().
-func (co *Context) RNNForwardInference(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, x Memory, hxDesc *TensorDescriptor, hx Memory, cxDesc *TensorDescriptor, cx Memory, wDesc *Filter, w Memory, yDesc *TensorDescriptor, y Memory, hyDesc *TensorDescriptor, hy Memory, cyDesc *TensorDescriptor, cy Memory, workSpace Memory, workSpaceSizeInBytes uintptr) error {
-	// DOUBLECHECK: "cudnnRNNForwardInference" returns Memory type in Parameter 16
-	// call cudnnRNNForwardInference
-	return result(C.cudnnRNNForwardInference(co.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, unsafe.Pointer(x.Uintptr()), hxDesc.internal, unsafe.Pointer(hx.Uintptr()), cxDesc.internal, unsafe.Pointer(cx.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), hyDesc.internal, unsafe.Pointer(hy.Uintptr()), cyDesc.internal, unsafe.Pointer(cy.Uintptr()), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
 }
 
 // Use cudnnRNNForward() instead of RNNForwardTraining().

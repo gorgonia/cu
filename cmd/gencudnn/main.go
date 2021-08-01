@@ -448,16 +448,17 @@ func generateFunctions(pkg *PkgState) {
 			if _, ok := ignored[name]; ok {
 				continue
 			}
+			if _, ok := deprecated[name]; ok {
+				log.Printf("Ignoring %v becasue it's been deprecated", csig.Name)
+				continue
+			}
+
 			sig := GoSignature{}
 			sig.Receiver.Name = strings.ToLower(depointerize(goNameOfStr(rec))[0:2])
 			sig.Receiver.Type = reqPtr(goNameOfStr(rec))
 			sig.Name = fnNameMap[name]
 
 			_, err := csig2gosig(csig, &sig)
-			if csig.Name == "cudnnDropoutGetStatesSize" {
-				log.Printf("csig %v sig %v", csig.Name, sig)
-			}
-
 			fmt.Fprintf(buf, "%v { \n", sig)
 			if err != nil {
 				fmt.Fprintf(buf, "// DOUBLECHECK: %v\n", err)

@@ -116,3 +116,14 @@ var fnParamTypes = map[string]map[string]string{
 	"cudnnFindConvolutionBackwardDataAlgorithm":     {"returnedAlgoCount": "int"},
 	"cudnnFindConvolutionBackwardDataAlgorithmEx":   {"returnedAlgoCount": "int"},
 }
+
+
+var deprecated map[string]struct{}{}
+
+func init(){
+	for n, doc :=  range docs {
+		if strings.Contains(doc, "has been deprecated in cuDNN 8.0."){
+			deprecated[n] = struct{}{}
+		}
+	}
+}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	bg "github.com/gorgonia/bindgen"
@@ -100,9 +99,6 @@ func csig2gosig(cs *bg.CSignature, retVal *GoSignature) (*GoSignature, error) {
 	var err error
 	params := cs.Parameters()
 	retValPos := getRetValOnly(cs)
-	if cs.Name == "cudnnDropoutGetStatesSize" {
-		log.Printf("csig2gosisg %v | %v", cs.Name, retValPos)
-	}
 
 	ioParamList := ioParams[cs.Name]
 	for i, p := range params {

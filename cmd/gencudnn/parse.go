@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/gorgonia/bindgen"
@@ -313,9 +312,7 @@ func getRetVal(cs *bindgen.CSignature) map[int]string {
 func getRetValOnly(cs *bindgen.CSignature) map[int]string {
 	name := cs.Name
 	outputs := outputParams[name]
-	if cs.Name == "cudnnDropoutGetStatesSize" {
-		log.Printf("getRetValsOnly outputs %v", outputs)
-	}
+
 	if len(outputs) == 0 {
 		return nil
 	}
