@@ -30,6 +30,7 @@ def main():
 	#print(topics[0])
 	for i, topic in enumerate(topics):
 		rawFnName = topic.find_all(class_='title topictitle2')[0].text
+		rawFnName = rawFnName.rstrip('()')
 		try:
 			fnName = re.search('cudnn.+$', rawFnName).group(0)
 		except AttributeError as e:

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/gorgonia/bindgen"
@@ -291,12 +292,14 @@ func toCType(goType string) string {
 }
 
 func getRetVal(cs *bindgen.CSignature) map[int]string {
+
 	name := cs.Name
 	outputs := outputParams[name]
 	ios := ioParams[name]
 	if len(outputs)+len(ios) == 0 {
 		return nil
 	}
+
 	retVal := make(map[int]string)
 	for i, p := range cs.Parameters() {
 		param := p.Name()
@@ -310,9 +313,13 @@ func getRetVal(cs *bindgen.CSignature) map[int]string {
 func getRetValOnly(cs *bindgen.CSignature) map[int]string {
 	name := cs.Name
 	outputs := outputParams[name]
+	if cs.Name == "cudnnDropoutGetStatesSize" {
+		log.Printf("getRetValsOnly outputs %v", outputs)
+	}
 	if len(outputs) == 0 {
 		return nil
 	}
+
 	retVal := make(map[int]string)
 	for i, p := range cs.Parameters() {
 		param := p.Name()

@@ -454,6 +454,9 @@ func generateFunctions(pkg *PkgState) {
 			sig.Name = fnNameMap[name]
 
 			_, err := csig2gosig(csig, &sig)
+			if csig.Name == "cudnnDropoutGetStatesSize" {
+				log.Printf("csig %v sig %v", csig.Name, sig)
+			}
 
 			fmt.Fprintf(buf, "%v { \n", sig)
 			if err != nil {
