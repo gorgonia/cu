@@ -13,6 +13,7 @@ import (
 type Backend struct {
 	internal C.cudnnBackendDescriptor_t
 
+	backendType     BackendDescriptorType
 	attributeName   BackendAttributeName
 	attributeType   BackendAttributeType
 	elementCount    int64
@@ -20,9 +21,9 @@ type Backend struct {
 }
 
 // NewBackend creates a new Backend.
-func NewBackend(attributeName BackendAttributeName, attributeType BackendAttributeType, elementCount int64, arrayOfElements Memory) (retVal *Backend, err error) {
+func NewBackend(attributeName BackendAttributeName, attributeType BackendAttributeType, backendType BackendDescriptorType, elementCount int64, arrayOfElements Memory) (retVal *Backend, err error) {
 	var internal C.cudnnBackendDescriptor_t
-	if err := result(C.cudnnBackendCreateDescriptor(&internal)); err != nil {
+	if err := result(C.cudnnBackendCreateDescriptor(backendType.C(), &internal)); err != nil {
 		return nil, err
 	}
 
@@ -32,6 +33,7 @@ func NewBackend(attributeName BackendAttributeName, attributeType BackendAttribu
 
 	retVal = &Backend{
 		internal:        internal,
+		backendType:     backendType,
 		attributeName:   attributeName,
 		attributeType:   attributeType,
 		elementCount:    elementCount,
@@ -43,6 +45,9 @@ func NewBackend(attributeName BackendAttributeName, attributeType BackendAttribu
 
 // C() returns the internal cgo representation
 func (b *Backend) C() C.cudnnBackendDescriptor_t { return b.internal }
+
+// Type returns the backend type.
+func (b *Backend) Type() BackendDescriptorType { return b.backendType }
 
 // AttributeName returns the internal attributeName.
 func (b *Backend) AttributeName() BackendAttributeName { return b.attributeName }
