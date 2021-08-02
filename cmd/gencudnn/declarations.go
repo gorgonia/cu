@@ -1,5 +1,7 @@
 package main
 
+import "strings"
+
 var empty struct{}
 
 var ignoredEnums = map[string]struct{}{
@@ -117,12 +119,11 @@ var fnParamTypes = map[string]map[string]string{
 	"cudnnFindConvolutionBackwardDataAlgorithmEx":   {"returnedAlgoCount": "int"},
 }
 
+var deprecated = make(map[string]struct{})
 
-var deprecated map[string]struct{}{}
-
-func init(){
-	for n, doc :=  range docs {
-		if strings.Contains(doc, "has been deprecated in cuDNN 8.0."){
+func init() {
+	for n, doc := range docs {
+		if strings.Contains(doc, "has been deprecated in cuDNN 8.0.") {
 			deprecated[n] = struct{}{}
 		}
 	}

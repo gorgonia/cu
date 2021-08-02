@@ -200,12 +200,12 @@ var ignored = map[string]struct{}{
 	"cudnnRNNForward":            {},
 	// "cudnnRNNForwardInference":{}, //
 	"cudnnRNNForwardInferenceEx": {},
-	// "cudnnRNNForwardTraining":{}, //
-	"cudnnRNNForwardTrainingEx": {},
-	"cudnnRNNGetClip":           {},
-	"cudnnRNNGetClip_v8":        {},
-	"cudnnRNNSetClip":           {},
-	"cudnnRNNSetClip_v8":        {},
+	"cudnnRNNForwardTraining":    {}, // looks to be deprecated
+	"cudnnRNNForwardTrainingEx":  {},
+	"cudnnRNNGetClip":            {},
+	"cudnnRNNGetClip_v8":         {},
+	"cudnnRNNSetClip":            {},
+	"cudnnRNNSetClip_v8":         {},
 	// "cudnnReduceTensor":{}, //
 	"cudnnReorderFilterAndBias": {},
 	"cudnnRestoreAlgorithm":     {},

@@ -10,29 +10,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// DeriveBNTensorDescriptor derives a secondary tensor descriptor for the batch normalization scale, invVariance, bnBias, and bnScale subtensors from the layer's x data descriptor.
-func (te *TensorDescriptor) DeriveBNTensorDescriptor(mode BatchNormMode) (derivedBnDesc *TensorDescriptor, err error) {
-	// TODO: xDesc cudnnTensorDescriptor_t
-	// call cudnnDeriveBNTensorDescriptor
-	err = result(C.cudnnDeriveBNTensorDescriptor(te.internal, xDesc.internal, mode.C()))
-	return
-}
-
-// DropoutGetReserveSpaceSize is used to query the amount of reserve needed to run dropout with the input dimensions given by xDesc. The same reserve space is expected to be passed to cudnnDropoutForward() and cudnnDropoutBackward(), and its contents is expected to remain unchanged between cudnnDropoutForward() and cudnnDropoutBackward() calls.
-func (te *TensorDescriptor) DropoutGetReserveSpaceSize() (sizeInBytes uintptr, err error) {
-	var sizeInBytesC C.size_t
-	// call cudnnDropoutGetReserveSpaceSize
-	err = result(C.cudnnDropoutGetReserveSpaceSize(te.internal, &sizeInBytesC))
-	sizeInBytes = uintptr(sizeInBytesC)
-	return
-}
-
-// RestoreDropoutDescriptor restores a dropout descriptor to a previously saved-off state.
-func (dr *Dropout) RestoreDropoutDescriptor(handle *Context, dropout float32, states Memory, stateSizeInBytes uintptr, seed uint64) error {
-	// call cudnnRestoreDropoutDescriptor
-	return result(C.cudnnRestoreDropoutDescriptor(dr.internal, handle.internal, C.float(dropout), unsafe.Pointer(states.Uintptr()), C.size_t(stateSizeInBytes), C.ulonglong(seed)))
-}
-
 // Input. Handle to a previously created cuDNN context. For more information, see cudnnHandle_t.
 func (co *Context) ActivationBackward(activationDesc *Activation, alpha float64, yDesc *TensorDescriptor, y Memory, dyDesc *TensorDescriptor, dy Memory, xDesc *TensorDescriptor, x Memory, beta float64, dxDesc *TensorDescriptor, dx Memory) error {
 	// DOUBLECHECK: "cudnnActivationBackward" returns Memory type in Parameter 11
@@ -596,14 +573,6 @@ func (co *Context) PoolingForward(poolingDesc *Pooling, alpha float64, xDesc *Te
 	return result(C.cudnnPoolingForward(co.internal, poolingDesc.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
 }
 
-// Use cudnnRNNForward() instead of RNNForwardTraining().
-//	reserveSpace is both an input and output
-func (co *Context) RNNForwardTraining(rnnDesc *RNN, seqLength int, xDesc *TensorDescriptor, x Memory, hxDesc *TensorDescriptor, hx Memory, cxDesc *TensorDescriptor, cx Memory, wDesc *Filter, w Memory, yDesc *TensorDescriptor, y Memory, hyDesc *TensorDescriptor, hy Memory, cyDesc *TensorDescriptor, cy Memory, workSpace Memory, workSpaceSizeInBytes uintptr, reserveSpace Memory, reserveSpaceSizeInBytes uintptr) error {
-	// DOUBLECHECK: "cudnnRNNForwardTraining" returns Memory type in Parameter 16
-	// call cudnnRNNForwardTraining
-	return result(C.cudnnRNNForwardTraining(co.internal, rnnDesc.internal, C.int(seqLength), xDesc.internal, unsafe.Pointer(x.Uintptr()), hxDesc.internal, unsafe.Pointer(hx.Uintptr()), cxDesc.internal, unsafe.Pointer(cx.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), hyDesc.internal, unsafe.Pointer(hy.Uintptr()), cyDesc.internal, unsafe.Pointer(cy.Uintptr()), unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes), unsafe.Pointer(reserveSpace.Uintptr()), C.size_t(reserveSpaceSizeInBytes)))
-}
-
 // ReduceTensor reduces tensor A by implementing the equation C = alpha * reduce op ( A ) + beta * C, given tensors A and C and scaling factors alpha and beta. The reduction op to use is indicated by the descriptor reduceTensorDesc. Currently-supported ops are listed by the ReduceTensorOp_t enum.
 //	C_ is both an input and output
 func (co *Context) ReduceTensor(reduceTensorDesc *Reduction, indices Memory, indicesSizeInBytes uintptr, workspace Memory, workspaceSizeInBytes uintptr, alpha float64, aDesc *TensorDescriptor, A Memory, beta float64, cDesc *TensorDescriptor, C_ Memory) error {
@@ -781,4 +750,27 @@ func (co *Context) TransformTensor(alpha float64, xDesc *TensorDescriptor, x Mem
 	}
 	// call cudnnTransformTensor
 	return result(C.cudnnTransformTensor(co.internal, alphaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), betaC, yDesc.internal, unsafe.Pointer(y.Uintptr())))
+}
+
+// DeriveBNTensorDescriptor derives a secondary tensor descriptor for the batch normalization scale, invVariance, bnBias, and bnScale subtensors from the layer's x data descriptor.
+func (te *TensorDescriptor) DeriveBNTensorDescriptor(mode BatchNormMode) (derivedBnDesc *TensorDescriptor, err error) {
+	// TODO: xDesc cudnnTensorDescriptor_t
+	// call cudnnDeriveBNTensorDescriptor
+	err = result(C.cudnnDeriveBNTensorDescriptor(te.internal, xDesc.internal, mode.C()))
+	return
+}
+
+// DropoutGetReserveSpaceSize is used to query the amount of reserve needed to run dropout with the input dimensions given by xDesc. The same reserve space is expected to be passed to cudnnDropoutForward() and cudnnDropoutBackward(), and its contents is expected to remain unchanged between cudnnDropoutForward() and cudnnDropoutBackward() calls.
+func (te *TensorDescriptor) DropoutGetReserveSpaceSize() (sizeInBytes uintptr, err error) {
+	var sizeInBytesC C.size_t
+	// call cudnnDropoutGetReserveSpaceSize
+	err = result(C.cudnnDropoutGetReserveSpaceSize(te.internal, &sizeInBytesC))
+	sizeInBytes = uintptr(sizeInBytesC)
+	return
+}
+
+// RestoreDropoutDescriptor restores a dropout descriptor to a previously saved-off state.
+func (dr *Dropout) RestoreDropoutDescriptor(handle *Context, dropout float32, states Memory, stateSizeInBytes uintptr, seed uint64) error {
+	// call cudnnRestoreDropoutDescriptor
+	return result(C.cudnnRestoreDropoutDescriptor(dr.internal, handle.internal, C.float(dropout), unsafe.Pointer(states.Uintptr()), C.size_t(stateSizeInBytes), C.ulonglong(seed)))
 }
