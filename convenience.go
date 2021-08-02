@@ -31,11 +31,6 @@ func (mem DevicePtr) MemSize() uintptr {
 	return uintptr(size)
 }
 
-// Pointer returns the pointer in form of unsafe.pointer. You shouldn't use it though, as the pointer is typically on the device
-func (mem DevicePtr) Pointer() unsafe.Pointer {
-	return unsafe.Pointer(uintptr(mem))
-}
-
 // ComputeCapability returns the compute capability of the device.
 // This method is a convenience method for the deprecated API call cuDeviceComputeCapability.
 func (d Device) ComputeCapability() (major, minor int, err error) {

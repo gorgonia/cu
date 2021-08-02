@@ -9,11 +9,13 @@ var ignoredFunctions = map[string]struct{}{
 	"cuInit":             empty,
 	"cuDriverGetVersion": empty,
 	"cuDeviceGetName":    empty, // wat?
+	"cuDeviceGetUuid":    empty,
 
 	// context stuff
-	"cuCtxCreate":              empty,
-	"cuCtxDestroy":             empty,
-	"cuDevicePrimaryCtxRetain": empty,
+	"cuCtxCreate":                 empty,
+	"cuCtxDestroy":                empty,
+	"cuDevicePrimaryCtxRetain":    empty,
+	"cuCtxResetPersistingL2Cache": empty,
 
 	// pointer/memory/unified addressing stuff
 	"cuPointerGetAttribute":   empty,
@@ -28,11 +30,14 @@ var ignoredFunctions = map[string]struct{}{
 	"cuMemGetAddressRange":    empty,
 
 	// dealing with voids and strings...
-	"cuLaunchKernel":      empty,
-	"cuModuleLoad":        empty, // dealing with strings
-	"cuModuleLoadData":    empty, // dealing with strings
-	"cuModuleGetFunction": empty, // dealing with strings
-	"cuModuleGetGlobal":   empty, // dealing with strings
+	"cuLaunchKernel":                       empty,
+	"cuLaunchCooperativeKernel":            empty, // TODO
+	"cuLaunchCooperativeKernelMultiDevice": empty, // TODO - possibly never (no bandwidth)
+	"cuLaunchHostFunc":                     empty, // TODO - possibly never, given the intricacies of calling Go functions in C.
+	"cuModuleLoad":                         empty, // dealing with strings
+	"cuModuleLoadData":                     empty, // dealing with strings
+	"cuModuleGetFunction":                  empty, // dealing with strings
+	"cuModuleGetGlobal":                    empty, // dealing with strings
 
 	// event stuff
 	"cuEventCreate":  empty,
@@ -50,6 +55,11 @@ var ignoredFunctions = map[string]struct{}{
 	// occupany stuff
 	"cuOccupancyMaxActiveBlocksPerMultiprocessor":          empty,
 	"cuOccupancyMaxActiveBlocksPerMultiprocessorWithFlags": empty,
+
+	// graph stuff
+	"cuGraphCreate":  empty,
+	"cuGraphDestroy": empty,
+	"cuGraphClone":   empty,
 
 	/* SUPPORT PLANNED BUT NOT YET DONE */
 	// memory stuff
@@ -70,6 +80,9 @@ var ignoredFunctions = map[string]struct{}{
 	"cuLinkDestroy":         empty,
 
 	/* Not planning to support anytime soon as these require extra attention */
+
+	// NvSciSync
+	"cuDeviceGetNvSciSyncAttributes": empty, // I have no idea what NvSciSync is.
 
 	// Stream Batching
 	"cuStreamBatchMemOp": empty,
@@ -120,6 +133,7 @@ var ignoredFunctions = map[string]struct{}{
 
 	// I have no clue what this is
 	"cuGetExportTable": empty,
+	"cuFuncGetModule":  empty, // NOT IN DOCS
 
 	// Deprecated from CUDA 8 API:
 	"cuDeviceGetProperties":     empty,
@@ -138,6 +152,70 @@ var ignoredFunctions = map[string]struct{}{
 	"cuParamSetTexRef":          empty,
 	"cuTexRefCreate":            empty,
 	"cuTexRefDestroy":           empty,
+
+	// virtual memory stuff - TODO because I don't have time right now
+	"cuMemAddressFree":                       empty,
+	"cuMemAddressReserve":                    empty,
+	"cuMemCreate":                            empty,
+	"cuMemExportToShareableHandle":           empty,
+	"cuMemGetAccess":                         empty,
+	"cuMemGetAllocationGranularity":          empty,
+	"cuMemGetAllocationPropertiesFromHandle": empty,
+	"cuMemImportFromShareableHandle":         empty,
+	"cuMemMap":                               empty,
+	"cuMemRelease":                           empty,
+	"cuMemRetainAllocationHandle":            empty,
+	"cuMemSetAccess":                         empty,
+	"cuMemUnmap":                             empty,
+
+	// External resource interop - UNSUPPORTED SO FAR
+	"cuDestroyExternalMemory":                 empty,
+	"cuDestroyExternalSemaphore":              empty,
+	"cuExternalMemoryGetMappedBuffer":         empty,
+	"cuExternalMemoryGetMappedMipmappedArray": empty,
+	"cuImportExternalMemory":                  empty,
+	"cuImportExternalSemaphore":               empty,
+	"cuSignalExternalSemaphoresAsync":         empty,
+	"cuWaitExternalSemaphoresAsync":           empty,
+
+	// TEMP TODO
+	"cuGraphAddChildGraphNode":                empty,
+	"cuGraphAddDependencies":                  empty,
+	"cuGraphAddEmptyNode":                     empty,
+	"cuGraphAddHostNode":                      empty,
+	"cuGraphAddKernelNode":                    empty,
+	"cuGraphAddMemcpyNode":                    empty,
+	"cuGraphAddMemsetNode":                    empty,
+	"cuGraphChildGraphNodeGetGraph":           empty,
+	"cuGraphDestroyNode":                      empty,
+	"cuGraphExecDestroy":                      empty,
+	"cuGraphExecHostNodeSetParams":            empty,
+	"cuGraphExecKernelNodeSetParams":          empty,
+	"cuGraphExecMemcpyNodeSetParams":          empty,
+	"cuGraphExecMemsetNodeSetParams":          empty,
+	"cuGraphExecUpdate":                       empty,
+	"cuGraphGetEdges":                         empty,
+	"cuGraphGetNodes":                         empty,
+	"cuGraphGetRootNodes":                     empty,
+	"cuGraphHostNodeGetParams":                empty,
+	"cuGraphHostNodeSetParams":                empty,
+	"cuGraphInstantiate":                      empty,
+	"cuGraphKernelNodeCopyAttributes":         empty,
+	"cuGraphKernelNodeGetAttribute":           empty,
+	"cuGraphKernelNodeGetParams":              empty,
+	"cuGraphKernelNodeSetAttribute":           empty,
+	"cuGraphKernelNodeSetParams":              empty,
+	"cuGraphLaunch":                           empty,
+	"cuGraphMemcpyNodeGetParams":              empty,
+	"cuGraphMemcpyNodeSetParams":              empty,
+	"cuGraphMemsetNodeGetParams":              empty,
+	"cuGraphMemsetNodeSetParams":              empty,
+	"cuGraphNodeFindInClone":                  empty,
+	"cuGraphNodeGetDependencies":              empty,
+	"cuGraphNodeGetDependentNodes":            empty,
+	"cuGraphNodeGetType":                      empty,
+	"cuGraphRemoveDependencies":               empty,
+	"cuOccupancyAvailableDynamicSMemPerBlock": empty,
 }
 
 var fnNameMap = map[string]string{
@@ -174,7 +252,7 @@ var fnNameMap = map[string]string{
 	"cuModuleGetGlobal":   "Module Global",
 	"cuModuleGetFunction": "Module Function",
 
-	"cuModuleUnload": "Unload",
+	"cuModuleUnload": "Module Unload",
 
 	"cuMemGetInfo":              "MemInfo",
 	"cuMemAlloc":                "MemAlloc",
@@ -226,32 +304,44 @@ var fnNameMap = map[string]string{
 
 	"cuArrayCreate":          "MakeArray",
 	"cuArrayGetDescriptor":   "Array Descriptor",
-	"cuArrayDestroy":         "DestroyArray",
+	"cuArrayDestroy":         "Array Destroy",
 	"cuArray3DCreate":        "Make3DArray",
 	"cuArray3DGetDescriptor": "Array Descriptor3",
 
-	"cuStreamCreate":             "MakeStream",
-	"cuStreamCreateWithPriority": "MakeStreamWithPriority",
-	"cuStreamGetPriority":        "Stream Priority",
-	"cuStreamGetFlags":           "Stream Flags",
-	"cuStreamWaitEvent":          "Stream Wait",
-	"cuStreamAddCallback":        "Stream AddCallback",
-	"cuStreamAttachMemAsync":     "Stream AttachMemAsync",
-	"cuStreamQuery":              "Stream Query",
-	"cuStreamSynchronize":        "Stream Synchronize",
-	"cuStreamDestroy":            "DestroyStream",
+	"cuStreamCreate":                    "MakeStream",
+	"cuStreamCreateWithPriority":        "MakeStreamWithPriority",
+	"cuStreamGetPriority":               "Stream Priority",
+	"cuStreamGetFlags":                  "Stream Flags",
+	"cuStreamWaitEvent":                 "Stream Wait",
+	"cuStreamAddCallback":               "Stream AddCallback",
+	"cuStreamAttachMemAsync":            "Stream AttachMemAsync",
+	"cuStreamQuery":                     "Stream Query",
+	"cuStreamSynchronize":               "Stream Synchronize",
+	"cuStreamDestroy":                   "Stream Destroy",
+	"cuStreamBeginCapture":              "Stream BeginCapture",
+	"cuStreamCopyAttributes":            "Stream CopyAttributes",
+	"cuStreamEndCapture":                "Stream EndCapture",
+	"cuStreamGetAttribute":              "Stream Attribute",
+	"cuStreamGetCaptureInfo":            "Stream CaptureInfo",
+	"cuStreamGetCtx":                    "Stream Context",
+	"cuStreamIsCapturing":               "Stream IsCapturing",
+	"cuStreamSetAttribute":              "Stream SetAttribute",
+	"cuStreamWaitValue64":               "Stream WaitOnValue64",
+	"cuStreamWriteValue64":              "Stream WriteValue64",
+	"cuThreadExchangeStreamCaptureMode": "ExchangeStreamCaptureThreads", // TODO - possibly manual write
 
 	"cuEventCreate":        "MakeEvent",
 	"cuEventRecord":        "Event Record",
 	"cuEventQuery":         "Event Query",
 	"cuEventSynchronize":   "Event Synchronize",
-	"cuEventDestroy":       "DestroyEvent",
+	"cuEventDestroy":       "Event Destroy",
 	"cuEventElapsedTime":   "Event Elapsed", // getter
 	"cuStreamWaitValue32":  "Stream WaitOnValue32",
 	"cuStreamWriteValue32": "Stream WriteValue32",
 	"cuStreamBatchMemOp":   "Stream BatchMemOp",
 
 	"cuFuncGetAttribute":       "Function Attribute",
+	"cuFuncSetAttribute":       "Function SetAttribute",
 	"cuFuncSetCacheConfig":     "Function SetCacheConfig",
 	"cuFuncSetSharedMemConfig": "Function SetSharedMemConfig",
 
@@ -347,7 +437,12 @@ var ctypes2GoTypes = map[string]string{
 	"C.CUfilter_mode":           "FilterMode",
 	"C.CUdevice_P2PAttribute":   "P2PAttribute",
 
+	"C.CUgraph":         "Graph",
+	"C.CUgraphExec":     "ExecGraph",
+	"C.CUgraphNodeType": "Node",
+
 	"C.cuuint32_t": "uint32",
+	"C.cuuint64_t": "uint64",
 
 	"C.uint":   "uint",
 	"C.uchar":  "byte",
@@ -359,9 +454,10 @@ var ctypes2GoTypes = map[string]string{
 	"C.void":   "unsafe.Pointer",
 	"C.void*":  "*unsafe.Pointer",
 
-	"C.unsigned":       "uint",
-	"C.unsigned char":  "byte",
-	"C.unsigned short": "uint16",
+	"C.unsigned":           "uint",
+	"C.unsigned char":      "byte",
+	"C.unsigned short":     "uint16",
+	"C.unsigned long long": "uint64",
 }
 
 var gotypesConversion = map[string]string{
@@ -384,6 +480,10 @@ var gotypesConversion = map[string]string{
 	"ArrayDesc":         "%s.c()",
 	"Array3Desc":        "%s.c()",
 
+	"Graph":     "%s.c()",
+	"ExecGraph": "%s.c()",
+	"Node":      "%s.c()",
+
 	// flags, which are mostly uint in the C signature
 	"Format":          "C.CUarray_format(%s)",
 	"FuncCacheConfig": "C.CUfunc_cache(%s)",
@@ -401,6 +501,7 @@ var gotypesConversion = map[string]string{
 	"byte":            "C.uchar(%s)",
 	"uint16":          "C.ushort(%s)",
 	"uint32":          "C.cuuint32_t(%s)", // there is only one uint32
+	"uint64":          "C.cuuint64_t(%s)", // there are two uint64s, but both works because C.
 	"int":             "C.int(%s)",
 	"int64":           "C.size_t(%s)",
 	"float64":         "C.float(%s)", // there is only one instance of float64
@@ -409,8 +510,8 @@ var gotypesConversion = map[string]string{
 }
 
 var ctypesConversion = map[string]string{
-	"C.CUstream":                "Stream(uintptr(unsafe.Pointer(%s)))",
-	"C.CUevent":                 "Event(uintptr(unsafe.Pointer(%s)))",
+	//"C.CUstream":                "Stream(uintptr(unsafe.Pointer(%s)))",
+	//"C.CUevent":                 "Event(uintptr(unsafe.Pointer(%s)))",
 	"C.CUDA_ARRAY_DESCRIPTOR":   "goArrayDesc(&%s)",
 	"C.CUDA_ARRAY3D_DESCRIPTOR": "goArray3Desc(&%s)",
 	"C.CUarray":                 "goArray(&%s)",

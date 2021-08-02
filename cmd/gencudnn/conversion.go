@@ -102,6 +102,7 @@ func csig2gosig(cs *bg.CSignature, retVal *GoSignature) (*GoSignature, error) {
 
 	ioParamList := ioParams[cs.Name]
 	for i, p := range params {
+
 		_, isRetVal := retValPos[i]
 		name := p.Name()
 		typeName := goNameOf(p.Type())

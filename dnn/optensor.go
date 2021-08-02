@@ -101,9 +101,9 @@ func (ctx *Context) DoOp(op *Op,
 	}
 
 	res := C.cudnnOpTensor(ctx.internal, op.internal,
-		alpha1C, aDesc.internal, aData.Pointer(),
-		alpha2C, bDesc.internal, bData.Pointer(),
-		betaC, cDesc.internal, cData.Pointer(),
+		alpha1C, aDesc.internal, unsafe.Pointer(aData.Uintptr()),
+		alpha2C, bDesc.internal, unsafe.Pointer(bData.Uintptr()),
+		betaC, cDesc.internal, unsafe.Pointer(cData.Uintptr()),
 	)
 	return result(res)
 }

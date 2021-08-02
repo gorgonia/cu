@@ -11,8 +11,8 @@ import (
 	"os"
 	"path"
 
-	"github.com/cznic/cc"
 	"github.com/gorgonia/bindgen"
+	"modernc.org/cc"
 )
 
 var pkgloc string
@@ -53,8 +53,7 @@ func goimports(filename string) error {
 
 func main() {
 	var pkg *PkgState
-	// pkg = parsePkg(false)
-
+	pkg = parsePkg(false)
 	// Step 0: run parse.py to get more sanity about inputs and outputs
 	// Step 1: Explore
 	// explore(hdrfile, functions, enums, otherTypes)
@@ -64,17 +63,26 @@ func main() {
 	// Step 2: generate mappings for this package, then edit them manually
 	// 	Specifically, the `ignored` map is edited - things that will be manually written are not removed from the list
 	//	Some enum map names may also be changed
-	generateMappings(true)
+	//defaultPipeline := func(buf io.WriteCloser, t *cc.TranslationUnit) {
+	// bindgen.GenNameMap(buf, t, "fnNameMap", processNameBasic, functions, true)
+	// bindgen.GenNameMap(buf, t, "enumMappings", processNameBasic, enums, true)
+	// generateAlphaBeta(buf, t)
+	// generateCRUD(buf, t, "create")
+	// generateCRUD(buf, t, "set")
+	// generateCRUD(buf, t, "destroy")
+	//generateCRUD(buf, t, "methods")
+	//}
+	//generateMappings(true, defaultPipeline)
 
 	// Step 3: generate enums, then edit the file in the dnn package.
-	// generateEnums()
-	// generateEnumStrings()
-	// generateStubs(false, pkg) // true/false indicates debug mode
+	//generateEnums()
+	//generateEnumStrings()
+	//generateStubs(false, pkg) // true/false indicates debug mode
 
 	// Step 4: manual fix for inconsistent names (Spatial Transforms)
 
 	// step 5:
-	// generateFunctions(pkg)
+	generateFunctions(pkg)
 
 	// report things that aren't done yet
 	pkg = parsePkg(true)
@@ -177,7 +185,7 @@ func generateEnums() {
 		if isIgnored(e.Name) {
 			continue
 		}
-		fmt.Fprintf(buf, "type %v int\nconst (\n", enumMappings[e.Name], enumMappings[e.Name])
+		fmt.Fprintf(buf, "type %v int\nconst (\n", enumMappings[e.Name])
 
 		var names []string
 		for _, a := range e.Type.EnumeratorList() {
@@ -270,6 +278,7 @@ outer:
 			continue
 		}
 		if alreadyProcessedType(gotype, decls) {
+			log.Printf("Already processed %v", gotype)
 			continue
 		}
 
@@ -439,13 +448,17 @@ func generateFunctions(pkg *PkgState) {
 			if _, ok := ignored[name]; ok {
 				continue
 			}
+			if _, ok := deprecated[name]; ok {
+				log.Printf("Ignoring %v becasue it's been deprecated", csig.Name)
+				continue
+			}
+
 			sig := GoSignature{}
 			sig.Receiver.Name = strings.ToLower(depointerize(goNameOfStr(rec))[0:2])
 			sig.Receiver.Type = reqPtr(goNameOfStr(rec))
 			sig.Name = fnNameMap[name]
 
 			_, err := csig2gosig(csig, &sig)
-
 			fmt.Fprintf(buf, "%v { \n", sig)
 			if err != nil {
 				fmt.Fprintf(buf, "// DOUBLECHECK: %v\n", err)

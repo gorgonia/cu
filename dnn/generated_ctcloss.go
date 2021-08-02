@@ -4,35 +4,24 @@ package cudnn
 
 // #include <cudnn.h>
 import "C"
-import "runtime"
+import "github.com/pkg/errors"
 
 // CTCLoss is a representation of cudnnCTCLossDescriptor_t.
 type CTCLoss struct {
 	internal C.cudnnCTCLossDescriptor_t
 
-	compType DataType
+	//TODO
 }
 
 // NewCTCLoss creates a new CTCLoss.
 func NewCTCLoss(compType DataType) (retVal *CTCLoss, err error) {
-	var internal C.cudnnCTCLossDescriptor_t
-	if err := result(C.cudnnCreateCTCLossDescriptor(&internal)); err != nil {
-		return nil, err
-	}
-
-	if err := result(C.cudnnSetCTCLossDescriptor(internal, compType.C())); err != nil {
-		return nil, err
-	}
-
-	retVal = &CTCLoss{
-		internal: internal,
-		compType: compType,
-	}
-	runtime.SetFinalizer(retVal, destroyCTCLoss)
-	return retVal, nil
+	// available "Set" methods:
+	//	cudnnSetCTCLossDescriptor
+	//	cudnnSetCTCLossDescriptorEx
+	//	cudnnSetCTCLossDescriptor_v8
+	return nil, errors.Errorf("TODO: Manual Intervention required")
 }
 
-// CompType returns the internal compType.
-func (c *CTCLoss) CompType() DataType { return c.compType }
+// TODO: Getters for CTCLoss
 
 func destroyCTCLoss(obj *CTCLoss) { C.cudnnDestroyCTCLossDescriptor(obj.internal) }

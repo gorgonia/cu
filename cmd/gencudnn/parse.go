@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/cznic/cc"
 	"github.com/gorgonia/bindgen"
+	"modernc.org/cc"
 )
 
 // Functions returns the C function declarations in the givel set of file paths.
@@ -113,6 +113,18 @@ func processEnumName(lcp, name string) string {
 		return "PrecomputedMeans"
 	case "CUDNN_SAMPLER_BILINEAR":
 		return "Bilinear"
+	case "CUDNN_PTR_16B_ALIGNED": // processing would yield `16B_Aligned`, which is not a valid Go name
+		return "Ptr16"
+	case "CUDNN_PTR_NULL":
+		return "NullPtr"
+	case "CUDNN_PTR_ELEM_ALIGNED":
+		return "PtrElemAligned"
+	case "CUDNN_BATCHNORM_OPS_BN":
+		return "BatchNorm" //  name == lcp otherwise
+	case "CUDNN_GENSTATS_SUM_SQSUM":
+		return "SumSq" // it is the only enum in the list, so name == lcp
+	case "CUDNN_NORM_OPS_NORM":
+		return "Norm" // name == lcp otherwise
 	}
 
 	var trimmed string
@@ -123,6 +135,34 @@ func processEnumName(lcp, name string) string {
 	lowered := strings.ToLower(trimmed)
 
 	switch lcp {
+	case "CUDNN_RNN_CLIP_":
+		lowered = "RNNClip" + strings.Title(lowered)
+	case "CUDNN_RNN_":
+		lowered = "RNN" + strings.Title(lowered)
+	case "CUDNN_RNN_ALGO_":
+		lowered = strings.Title(lowered) + "RNN"
+	case "CUDNN_POINTWISE_":
+		lowered = "Pointwise" + strings.Title(lowered)
+	case "CUDNN_OP_TENSOR_":
+		lowered = "Tensor" + strings.Title(lowered)
+	case "CUDNN_NORM_OPS_NORM":
+		lowered = "Norm" + strings.Title(lowered)
+	case "CUDNN_NORM_PER_":
+		lowered = "NormPer" + strings.Title(lowered)
+	case "CUDNN_NORM_ALGO_":
+		lowered = strings.Title(lowered) + "Norm"
+	case "CUDNN_LOSS_NORMALIZATION_":
+		lowered = "LossNorm" + strings.Title(lowered)
+	case "CUDNN_BATCHNORM_OPS_BN":
+		lowered = "BatchNorm" + strings.Title(lowered)
+	case "CUDNN_LAYOUT_TYPE_":
+		lowered = "BELayout" + strings.Title(lowered)
+	case "CUDNN_BACKEND_":
+		lowered = "BEDescriptor" + strings.Title(lowered)
+	case "CUDNN_ATTR_":
+		lowered = "BEAttrName" + strings.Title(lowered)
+	case "CUDNN_TYPE_":
+		lowered = "BEAttr" + strings.Title(lowered)
 	case "CUDNN_TENSOR_N":
 		// tensor description
 		lowered = "n" + lowered
@@ -134,6 +174,7 @@ func processEnumName(lcp, name string) string {
 	case "CUDNN_CTC_LOSS_ALGO_":
 		// CTC Loss Algorithms
 		lowered = lowered + "CTCLoss"
+	case "CUDNN_PTR_":
 	default:
 	}
 
@@ -231,7 +272,7 @@ func toC(name, typ string) string {
 	}
 
 	if typ == "Memory" {
-		return fmt.Sprintf("%v.Pointer()", name)
+		return fmt.Sprintf("unsafe.Pointer(%v.Uintptr())", name)
 	}
 
 	// log.Printf("name %q typ %q", name, typ)
@@ -250,12 +291,14 @@ func toCType(goType string) string {
 }
 
 func getRetVal(cs *bindgen.CSignature) map[int]string {
+
 	name := cs.Name
 	outputs := outputParams[name]
 	ios := ioParams[name]
 	if len(outputs)+len(ios) == 0 {
 		return nil
 	}
+
 	retVal := make(map[int]string)
 	for i, p := range cs.Parameters() {
 		param := p.Name()
@@ -269,9 +312,11 @@ func getRetVal(cs *bindgen.CSignature) map[int]string {
 func getRetValOnly(cs *bindgen.CSignature) map[int]string {
 	name := cs.Name
 	outputs := outputParams[name]
+
 	if len(outputs) == 0 {
 		return nil
 	}
+
 	retVal := make(map[int]string)
 	for i, p := range cs.Parameters() {
 		param := p.Name()

@@ -38,6 +38,9 @@ func NewLRN(lrnN uint, lrnAlpha float64, lrnBeta float64, lrnK float64) (retVal 
 	return retVal, nil
 }
 
+// C returns the internal cgo representation
+func (l *LRN) C() C.cudnnLRNDescriptor_t { return l.internal }
+
 // LrnN returns the internal lrnN.
 func (l *LRN) LrnN() uint { return l.lrnN }
 

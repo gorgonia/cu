@@ -74,3 +74,9 @@ func (ctx *Ctx) LaunchKernel(fn Function, gridDimX, gridDimY, gridDimZ int, bloc
 
 	ctx.err = ctx.Do(f)
 }
+
+// STUB
+func LaunchCooperativeKernel() {}
+
+// STUB
+func LauncCooperativeKernelMultiDevice() {}

@@ -3,8 +3,11 @@ package cu
 import (
 	"log"
 	"runtime"
+	"sync/atomic"
 	"testing"
 	"unsafe"
+
+	_ "net/http/pprof"
 )
 
 func TestBatchContext(t *testing.T) {
@@ -123,8 +126,8 @@ func TestLargeBatch(t *testing.T) {
 
 	dev.TotalMem()
 
-	beforeFree, _, _ := MemInfo()
 	ctx := newContext(cuctx)
+	beforeFree, _, _ := MemInfo()
 	bctx := NewBatchedContext(ctx, dev)
 
 	runtime.LockOSThread()
@@ -140,7 +143,8 @@ func TestLargeBatch(t *testing.T) {
 	}
 	size := int64(len(a) * 4)
 
-	go func() {
+	var freeCount uint32
+	go func(fc *uint32) {
 		var memA, memB DevicePtr
 		var frees []DevicePtr
 
@@ -175,13 +179,13 @@ func TestLargeBatch(t *testing.T) {
 
 		bctx.MemcpyDtoH(unsafe.Pointer(&a[0]), memA, size)
 		bctx.MemcpyDtoH(unsafe.Pointer(&b[0]), memB, size)
-		log.Printf("Number of frees %v", len(frees))
 		for _, free := range frees {
 			bctx.MemFree(free)
 		}
+		atomic.AddUint32(fc, uint32(len(frees)))
 		bctx.workAvailable <- struct{}{}
 		doneChan <- struct{}{}
-	}()
+	}(&freeCount)
 
 loop:
 	for {
@@ -205,14 +209,18 @@ loop:
 			break
 		}
 	}
-
-	afterFree, _, _ := MemInfo()
-
-	if afterFree != beforeFree {
-		t.Errorf("Before: Freemem: %v. After %v | Diff %v", beforeFree, afterFree, (beforeFree-afterFree)/1024)
-	}
 	mod.Unload()
+	afterFree, _, _ := MemInfo()
 	cuctx.Destroy()
+	runtime.GC()
+
+	if freeCount != 16114 {
+		t.Errorf("Expected 16114 frees. Got %d instead", freeCount)
+	}
+	if afterFree != beforeFree {
+		t.Logf("Before: Freemem: %v. After %v | Diff %v", beforeFree, afterFree, (beforeFree-afterFree)/1024)
+	}
+
 }
 
 func BenchmarkNoBatching(bench *testing.B) {
@@ -285,6 +293,10 @@ func BenchmarkNoBatching(bench *testing.B) {
 				bench.Fatalf("Failed to copy memory to b: %v", err)
 			}
 		}
+		// useful for checking results
+		// if i == 0 {
+		// 	bench.Logf("%v", a[:10])
+		// }
 	}
 	MemFree(memA)
 	MemFree(memB)
@@ -347,20 +359,39 @@ func BenchmarkBatching(bench *testing.B) {
 	workAvailable := bctx.WorkAvailable()
 	for i := 0; i < bench.N; i++ {
 		for j := 0; j < 100; j++ {
-			select {
-			case <-workAvailable:
-				bctx.DoWork()
-			default:
+			done := make(chan struct{}, 1)
+			go func(done chan struct{}) {
 				bctx.MemcpyHtoD(memA, unsafe.Pointer(&a[0]), size)
 				bctx.MemcpyHtoD(memB, unsafe.Pointer(&b[0]), size)
 				bctx.LaunchKernel(fn, 100, 10, 1, 1000, 1, 1, 0, Stream{}, args)
 				bctx.Synchronize()
 				bctx.MemcpyDtoH(unsafe.Pointer(&a[0]), memA, size)
 				bctx.MemcpyDtoH(unsafe.Pointer(&b[0]), memB, size)
-			}
-		}
-	}
+				bctx.Signal()
+				done <- struct{}{}
+			}(done)
 
+		work:
+			for {
+				select {
+				case <-workAvailable:
+					bctx.DoWork()
+				case <-done:
+					break work
+				}
+			}
+
+		}
+
+		if err := bctx.Errors(); err != nil {
+			bench.Fatalf("Failed with errors in benchmark %d. Error: %v", i, err)
+		}
+
+		// useful for checking results
+		// if i == 0 {
+		// 	bench.Logf("%v", a[:10])
+		// }
+	}
 	MemFree(memA)
 	MemFree(memB)
 	mod.Unload()

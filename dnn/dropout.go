@@ -55,45 +55,45 @@ func NewDropoutWithContext(dropout float64, handle *Context, states Memory, stat
 }
 
 // Use is the second stage of the two-stage API.
-func (d *Dropout) Use(ctx *Context, states Memory, stateSizeInBytes uintptr, seed uint64) error {
-	d.handle = ctx
-	d.states = states
-	d.stateSizeInBytes = stateSizeInBytes
-	d.seed = seed
+func (dr *Dropout) Use(ctx *Context, states Memory, stateSizeInBytes uintptr, seed uint64) error {
+	dr.handle = ctx
+	dr.states = states
+	dr.stateSizeInBytes = stateSizeInBytes
+	dr.seed = seed
 
-	return result(C.cudnnSetDropoutDescriptor(d.internal, d.handle.internal, C.float(d.dropout), unsafe.Pointer(d.states.Uintptr()), C.size_t(d.stateSizeInBytes), C.ulonglong(d.seed)))
+	return result(C.cudnnSetDropoutDescriptor(dr.internal, dr.handle.internal, C.float(dr.dropout), unsafe.Pointer(dr.states.Uintptr()), C.size_t(dr.stateSizeInBytes), C.ulonglong(dr.seed)))
 }
 
 // IsReady indicates if the dropout operator is ready to be used
-func (d *Dropout) IsReady() bool {
-	return d.handle != nil && d.states != nil && d.stateSizeInBytes != 0
+func (dr *Dropout) IsReady() bool {
+	return dr.handle != nil && dr.states != nil && dr.stateSizeInBytes != 0
 }
 
 // Reset resets the state to be not ready. It does NOT reset the dropout ratio.
-func (d *Dropout) Reset() {
-	d.handle = nil
-	d.states = nil
-	d.stateSizeInBytes = 0
-	d.seed = 0
+func (dr *Dropout) Reset() {
+	dr.handle = nil
+	dr.states = nil
+	dr.stateSizeInBytes = 0
+	dr.seed = 0
 }
 
 // Handle returns the internal handle.
-func (d *Dropout) Handle() *Context { return d.handle }
+func (dr *Dropout) Handle() *Context { return dr.handle }
 
 // Dropout returns the internal dropout ratio.
-func (d *Dropout) Dropout() float32 { return d.dropout }
+func (dr *Dropout) Dropout() float32 { return dr.dropout }
 
 // StateSizeInBytes returns the internal stateSizeInBytes.
-func (d *Dropout) StateSizeInBytes() uintptr { return d.stateSizeInBytes }
+func (dr *Dropout) StateSizeInBytes() uintptr { return dr.stateSizeInBytes }
 
 // Seed returns the internal seed.
-func (d *Dropout) Seed() uint64 { return d.seed }
+func (dr *Dropout) Seed() uint64 { return dr.seed }
 
-func (d *Dropout) States() Memory { return d.states }
+func (dr *Dropout) States() Memory { return dr.states }
 
-func (d *Dropout) RequiredStateSize(ctx *Context) (uintptr, error) {
-	if d.reqStateSize > 0 {
-		return d.reqStateSize, nil
+func (dr *Dropout) RequiredStateSize(ctx *Context) (uintptr, error) {
+	if dr.reqStateSize > 0 {
+		return dr.reqStateSize, nil
 	}
 
 	var minSize C.size_t
@@ -101,8 +101,8 @@ func (d *Dropout) RequiredStateSize(ctx *Context) (uintptr, error) {
 		return 0, errors.Wrapf(err, "Unable to get minimum state size")
 	}
 
-	d.reqStateSize = uintptr(minSize)
-	return d.reqStateSize, nil
+	dr.reqStateSize = uintptr(minSize)
+	return dr.reqStateSize, nil
 }
 
 // BUG(anyone): the memory for the scratch space isn't freed. This could potentially lead to some issues

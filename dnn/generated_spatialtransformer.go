@@ -27,6 +27,7 @@ func NewSpatialTransformer(samplerType SamplerType, dataType DataType, nbDims in
 
 	dimAC, dimACManaged := ints2CIntPtr(dimA)
 	defer returnManaged(dimACManaged)
+
 	if err := result(C.cudnnSetSpatialTransformerNdDescriptor(internal, samplerType.C(), dataType.C(), C.int(nbDims), dimAC)); err != nil {
 		return nil, err
 	}
@@ -42,6 +43,9 @@ func NewSpatialTransformer(samplerType SamplerType, dataType DataType, nbDims in
 	return retVal, nil
 }
 
+// C() returns the internal C representation of the Spatial Transformer
+func (s *SpatialTransformer) C() C.cudnnSpatialTransformerDescriptor_t { return s.internal }
+
 // SamplerType returns the internal samplerType.
 func (s *SpatialTransformer) SamplerType() SamplerType { return s.samplerType }
 
@@ -51,7 +55,8 @@ func (s *SpatialTransformer) DataType() DataType { return s.dataType }
 // NbDims returns the internal nbDims.
 func (s *SpatialTransformer) NbDims() int { return s.nbDims }
 
-//TODO: "cudnnSetSpatialTransformerNdDescriptor": Parameter 4 Skipped "dimA" of const int[] - unmapped type
+// DimA returns the internal `dimA` slice.
+func (s *SpatialTransformer) DimA() []int { return s.dimA }
 
 func destroySpatialTransformer(obj *SpatialTransformer) {
 	C.cudnnDestroySpatialTransformerDescriptor(obj.internal)

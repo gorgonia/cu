@@ -5,6 +5,8 @@ import "C"
 import (
 	"fmt"
 	"unsafe"
+
+	"github.com/google/uuid"
 )
 
 // Device is the representation of a CUDA device
@@ -27,6 +29,17 @@ func (d Device) Name() (string, error) {
 		return "", err
 	}
 	return C.GoString(cstr), nil
+}
+
+// UUID returns the UUID of the device
+//
+// Wrapper over cuDeviceGetUuid: https://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__DEVICE.html#group__CUDA__DEVICE_1g987b46b884c101ed5be414ab4d9e60e4
+func (d Device) UUID() (retVal uuid.UUID, err error) {
+	ptr := &retVal
+	if err = result(C.cuDeviceGetUuid((*C.CUuuid)(unsafe.Pointer(ptr)), C.CUdevice(d))); err != nil {
+		return retVal, err
+	}
+	return retVal, nil
 }
 
 // String implementes fmt.Stringer (and runtime.stringer)

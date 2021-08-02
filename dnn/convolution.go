@@ -228,7 +228,7 @@ func destroyConvolution(obj *Convolution) { C.cudnnDestroyConvolutionDescriptor(
 
 // TODO
 type ConvolutionFwdPerf struct {
-	internal    C.cudnnConvolutionFwdAlgo_t
+	internal    C.cudnnConvolutionFwdAlgoPerf_t
 	Algo        ConvolutionFwdAlgo
 	Time        float64
 	Memory      uintptr // size
@@ -243,7 +243,7 @@ func convolutionFwdPerfFromC(p C.cudnnConvolutionFwdAlgo_t) *ConvolutionFwdPerf 
 }
 
 type ConvolutionBwdPerf struct {
-	internal *C.cudnnConvolutionBwdFilterAlgoPerf_t
+	internal C.cudnnConvolutionBwdFilterAlgoPerf_t
 	Err      error
 
 	Algo        ConvolutionBwdFilterAlgo
@@ -259,7 +259,7 @@ func convolutionBwdPerfFromC(p C.cudnnConvolutionBwdFilterAlgoPerf_t) *Convoluti
 }
 
 type ConvolutionBwdDataPerf struct {
-	internal *C.cudnnConvolutionBwdDataAlgoPerf_t
+	internal C.cudnnConvolutionBwdDataAlgoPerf_t
 	Algo     ConvolutionBwdDataAlgo
 	Err      error
 

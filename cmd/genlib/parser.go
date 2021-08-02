@@ -3,8 +3,8 @@ package main
 import (
 	"strings"
 
-	"github.com/cznic/cc"
 	"github.com/gorgonia/bindgen"
+	"modernc.org/cc"
 )
 
 func Parse() (retVal []*CSignature) {
@@ -49,6 +49,7 @@ func decl2csig(d *bindgen.CSignature) *CSignature {
 		params = append(params, bgparam2param(p))
 	}
 	retVal.Params = params
+	retVal.Fix()
 	return retVal
 }
 

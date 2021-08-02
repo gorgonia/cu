@@ -57,6 +57,7 @@ type RNN struct {
 	workspaceSize uintptr
 }
 
+/*
 // NewRNN creates a new RNN.
 func (handle *Context) NewRNN(hiddenSize int, numLayers int, dropout *Dropout, inputMode RNNInputMode, direction DirectionMode, mode RNNMode, algo RNNAlgo, dataType DataType) (retVal *RNN, err error) {
 	var internal C.cudnnRNNDescriptor_t
@@ -64,7 +65,7 @@ func (handle *Context) NewRNN(hiddenSize int, numLayers int, dropout *Dropout, i
 		return nil, err
 	}
 
-	if err := result(C.cudnnSetRNNDescriptor(handle.internal, internal, C.int(hiddenSize), C.int(numLayers), dropout.internal, inputMode.C(), direction.C(), mode.C(), algo.C(), dataType.C())); err != nil {
+	if err := result(C.cudnnSetRNNDescriptor_v8(handle.internal, internal, C.int(hiddenSize), C.int(numLayers), dropout.internal, inputMode.C(), direction.C(), mode.C(), algo.C(), dataType.C())); err != nil {
 		return nil, err
 	}
 
@@ -83,7 +84,7 @@ func (handle *Context) NewRNN(hiddenSize int, numLayers int, dropout *Dropout, i
 	}
 	runtime.SetFinalizer(retVal, destroyRNN)
 	return retVal, nil
-}
+}*/
 
 func (r *RNN) HiddenSize() int              { return r.hiddenSize }
 func (r *RNN) NumLayers() int               { return r.layers }
