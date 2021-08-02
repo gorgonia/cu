@@ -2,10 +2,10 @@ package cudnn
 
 // #include <cudnn.h>
 import "C"
-import (
-	"unsafe"
-)
 
+// TODO
+
+/*
 func (ctx *Context) GetRNNLinLayerBiasParams(rnnDesc *RNN, pseudoLayer int, xDesc *TensorDescriptor, wDesc *Filter, w Memory, linLayerID int, linLayerBiasDesc *Filter, linLayerBias TODO) error {
 	// call cudnnGetRNNLinLayerBiasParams
 	return result(C.cudnnGetRNNLinLayerBiasParams(ctx.internal, rnnDesc.internal, C.int(pseudoLayer), xDesc.internal, wDesc.internal, unsafe.Pointer(w.Uintptr()), C.int(linLayerID), linLayerBiasDesc.internal, linLayerBias))
@@ -21,3 +21,4 @@ func (co *Context) CTCLoss(probsDesc *TensorDescriptor, probs Memory, hostLabels
 	// call cudnnCTCLoss
 	return result(C.cudnnCTCLoss(co.internal, probsDesc.internal, unsafe.Pointer(probs.Uintptr()), hostLabels, hostLabelLengths, hostInputLengths, unsafe.Pointer(costs.Uintptr()), gradientsDesc.internal, unsafe.Pointer(gradients.Uintptr()), algo.C(), ctcLossDesc.internal, unsafe.Pointer(workspace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
 }
+*/
