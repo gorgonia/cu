@@ -160,13 +160,6 @@ func (co *Context) BatchNormalizationForwardTraining(mode BatchNormMode, alpha f
 	return result(C.cudnnBatchNormalizationForwardTraining(co.internal, mode.C(), alphaC, betaC, xDesc.internal, unsafe.Pointer(x.Uintptr()), yDesc.internal, unsafe.Pointer(y.Uintptr()), bnScaleBiasMeanVarDesc.internal, unsafe.Pointer(bnScale.Uintptr()), unsafe.Pointer(bnBias.Uintptr()), C.double(exponentialAverageFactor), unsafe.Pointer(resultRunningMean.Uintptr()), unsafe.Pointer(resultRunningVariance.Uintptr()), C.double(epsilon), unsafe.Pointer(resultSaveMean.Uintptr()), unsafe.Pointer(resultSaveInvVariance.Uintptr())))
 }
 
-// Input. Handle to a previously created cuDNN context. For more information, see cudnnHandle_t.
-func (co *Context) CTCLoss(probsDesc *TensorDescriptor, probs Memory, hostLabels TODO, hostLabelLengths TODO, hostInputLengths TODO, costs Memory, gradientsDesc *TensorDescriptor, gradients Memory, algo CTCLossAlgo, ctcLossDesc *CTCLoss, workspace Memory, workSpaceSizeInBytes uintptr) error {
-	// DOUBLECHECK: "cudnnCTCLoss" returns Memory type in Parameter 8
-	// call cudnnCTCLoss
-	return result(C.cudnnCTCLoss(co.internal, probsDesc.internal, unsafe.Pointer(probs.Uintptr()), hostLabels, hostLabelLengths, hostInputLengths, unsafe.Pointer(costs.Uintptr()), gradientsDesc.internal, unsafe.Pointer(gradients.Uintptr()), algo.C(), ctcLossDesc.internal, unsafe.Pointer(workspace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
-}
-
 // ConvolutionBackwardBias computes the convolution function gradient with respect to the bias, which is the sum of every element belonging to the same feature map across all of the images of the input tensor. Therefore, the number of elements produced is equal to the number of features maps of the input tensor.
 func (co *Context) ConvolutionBackwardBias(alpha float64, dyDesc *TensorDescriptor, dy Memory, beta float64, dbDesc *TensorDescriptor, db Memory) error {
 	// DOUBLECHECK: "cudnnConvolutionBackwardBias" returns Memory type in Parameter 6
@@ -363,7 +356,7 @@ func (co *Context) FindConvolutionBackwardDataAlgorithm(wDesc *Filter, dyDesc *T
 	var returnedAlgoCountC C.int
 	// TODO: perfResults cudnnConvolutionBwdDataAlgoPerf_t
 	// call cudnnFindConvolutionBackwardDataAlgorithm
-	err = result(C.cudnnFindConvolutionBackwardDataAlgorithm(co.internal, wDesc.internal, dyDesc.internal, convDesc.internal, dxDesc.internal, C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal))
+	err = result(C.cudnnFindConvolutionBackwardDataAlgorithm(co.internal, wDesc.internal, dyDesc.internal, convDesc.internal, dxDesc.internal, C.int(requestedAlgoCount), &returnedAlgoCountC, &perfResults.internal))
 	returnedAlgoCount = int(returnedAlgoCountC)
 	return
 }
@@ -374,7 +367,7 @@ func (co *Context) FindConvolutionBackwardDataAlgorithmEx(wDesc *Filter, w Memor
 	var returnedAlgoCountC C.int
 	// TODO: perfResults cudnnConvolutionBwdDataAlgoPerf_t
 	// call cudnnFindConvolutionBackwardDataAlgorithmEx
-	err = result(C.cudnnFindConvolutionBackwardDataAlgorithmEx(co.internal, wDesc.internal, unsafe.Pointer(w.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), convDesc.internal, dxDesc.internal, unsafe.Pointer(dx.Uintptr()), C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal, unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
+	err = result(C.cudnnFindConvolutionBackwardDataAlgorithmEx(co.internal, wDesc.internal, unsafe.Pointer(w.Uintptr()), dyDesc.internal, unsafe.Pointer(dy.Uintptr()), convDesc.internal, dxDesc.internal, unsafe.Pointer(dx.Uintptr()), C.int(requestedAlgoCount), &returnedAlgoCountC, &perfResults.internal, unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
 	returnedAlgoCount = int(returnedAlgoCountC)
 	return
 }
@@ -384,7 +377,7 @@ func (co *Context) FindConvolutionBackwardFilterAlgorithm(xDesc *TensorDescripto
 	var returnedAlgoCountC C.int
 	// TODO: perfResults cudnnConvolutionBwdFilterAlgoPerf_t
 	// call cudnnFindConvolutionBackwardFilterAlgorithm
-	err = result(C.cudnnFindConvolutionBackwardFilterAlgorithm(co.internal, xDesc.internal, dyDesc.internal, convDesc.internal, dwDesc.internal, C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal))
+	err = result(C.cudnnFindConvolutionBackwardFilterAlgorithm(co.internal, xDesc.internal, dyDesc.internal, convDesc.internal, dwDesc.internal, C.int(requestedAlgoCount), &returnedAlgoCountC, &perfResults.internal))
 	returnedAlgoCount = int(returnedAlgoCountC)
 	return
 }
@@ -395,7 +388,7 @@ func (co *Context) FindConvolutionBackwardFilterAlgorithmEx(xDesc *TensorDescrip
 	var returnedAlgoCountC C.int
 	// TODO: perfResults cudnnConvolutionBwdFilterAlgoPerf_t
 	// call cudnnFindConvolutionBackwardFilterAlgorithmEx
-	err = result(C.cudnnFindConvolutionBackwardFilterAlgorithmEx(co.internal, xDesc.internal, unsafe.Pointer(x.Uintptr()), dyDesc.internal, unsafe.Pointer(y.Uintptr()), convDesc.internal, dwDesc.internal, unsafe.Pointer(dw.Uintptr()), C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal, unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
+	err = result(C.cudnnFindConvolutionBackwardFilterAlgorithmEx(co.internal, xDesc.internal, unsafe.Pointer(x.Uintptr()), dyDesc.internal, unsafe.Pointer(y.Uintptr()), convDesc.internal, dwDesc.internal, unsafe.Pointer(dw.Uintptr()), C.int(requestedAlgoCount), &returnedAlgoCountC, &perfResults.internal, unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
 	returnedAlgoCount = int(returnedAlgoCountC)
 	return
 }
@@ -405,7 +398,7 @@ func (co *Context) FindConvolutionForwardAlgorithm(xDesc *TensorDescriptor, wDes
 	var returnedAlgoCountC C.int
 	// TODO: perfResults cudnnConvolutionFwdAlgoPerf_t
 	// call cudnnFindConvolutionForwardAlgorithm
-	err = result(C.cudnnFindConvolutionForwardAlgorithm(co.internal, xDesc.internal, wDesc.internal, convDesc.internal, yDesc.internal, C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal))
+	err = result(C.cudnnFindConvolutionForwardAlgorithm(co.internal, xDesc.internal, wDesc.internal, convDesc.internal, yDesc.internal, C.int(requestedAlgoCount), &returnedAlgoCountC, &perfResults.internal))
 	returnedAlgoCount = int(returnedAlgoCountC)
 	return
 }
@@ -416,7 +409,7 @@ func (co *Context) FindConvolutionForwardAlgorithmEx(xDesc *TensorDescriptor, x 
 	var returnedAlgoCountC C.int
 	// TODO: perfResults cudnnConvolutionFwdAlgoPerf_t
 	// call cudnnFindConvolutionForwardAlgorithmEx
-	err = result(C.cudnnFindConvolutionForwardAlgorithmEx(co.internal, xDesc.internal, unsafe.Pointer(x.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), convDesc.internal, yDesc.internal, unsafe.Pointer(y.Uintptr()), C.int(requestedAlgoCount), &returnedAlgoCountC, perfResults.internal, unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
+	err = result(C.cudnnFindConvolutionForwardAlgorithmEx(co.internal, xDesc.internal, unsafe.Pointer(x.Uintptr()), wDesc.internal, unsafe.Pointer(w.Uintptr()), convDesc.internal, yDesc.internal, unsafe.Pointer(y.Uintptr()), C.int(requestedAlgoCount), &returnedAlgoCountC, &perfResults.internal, unsafe.Pointer(workSpace.Uintptr()), C.size_t(workSpaceSizeInBytes)))
 	returnedAlgoCount = int(returnedAlgoCountC)
 	return
 }
@@ -753,7 +746,7 @@ func (co *Context) TransformTensor(alpha float64, xDesc *TensorDescriptor, x Mem
 }
 
 // DeriveBNTensorDescriptor derives a secondary tensor descriptor for the batch normalization scale, invVariance, bnBias, and bnScale subtensors from the layer's x data descriptor.
-func (te *TensorDescriptor) DeriveBNTensorDescriptor(mode BatchNormMode) (derivedBnDesc *TensorDescriptor, err error) {
+func (te *TensorDescriptor) DeriveBNTensorDescriptor(xDesc *TensorDescriptor, mode BatchNormMode) (derivedBnDesc *TensorDescriptor, err error) {
 	// TODO: xDesc cudnnTensorDescriptor_t
 	// call cudnnDeriveBNTensorDescriptor
 	err = result(C.cudnnDeriveBNTensorDescriptor(te.internal, xDesc.internal, mode.C()))
