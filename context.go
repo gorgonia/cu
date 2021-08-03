@@ -2,7 +2,10 @@ package cu
 
 // #include <cuda.h>
 import "C"
-import "unsafe"
+import (
+	"context"
+	"unsafe"
+)
 
 var (
 	_ Context = &Ctx{}
@@ -19,6 +22,11 @@ type Context interface {
 	Work() <-chan func() error
 	ErrChan() chan error
 	Close() error // Close closes all resources associated with the context
+
+	// context.Context
+
+	context.Context
+	Cancel() // context.CancelFunc
 
 	// actual methods
 	Address(hTexRef TexRef) (pdptr DevicePtr, err error)
