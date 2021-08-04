@@ -5,6 +5,7 @@ package cu
 // #include <cuda.h>
 import "C"
 import (
+	"gorgonia.org/internal/debug"
 	"runtime"
 	"unsafe"
 )
@@ -16,14 +17,14 @@ func newContext(c CUContext) *Ctx {
 		done:      make(chan struct{}),
 		errChan:   make(chan error, 100),
 	}
-	logf("Created Ctx: %p", ctx)
+	debug.Logf("Created Ctx: %p", ctx)
 	runtime.SetFinalizer(ctx, finalizeCtx)
 	return ctx
 }
 
 // Close destroys the CUDA context and associated resources that has been created. Additionally, all channels of communications will be closed.
 func (ctx *Ctx) Close() error {
-	logCaller("*Ctx.Close")
+	debug.LogCaller("*Ctx.Close")
 	ctx.mu.Lock()
 
 	if ctx.doneClosed {
@@ -58,6 +59,6 @@ func (ctx *Ctx) Close() error {
 }
 
 func finalizeCtx(ctx *Ctx) {
-	logf("Finalizing %p", ctx)
+	debug.Logf("Finalizing %p", ctx)
 	ctx.Close()
 }

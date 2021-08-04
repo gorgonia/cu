@@ -23,6 +23,8 @@ import (
 	"sync"
 	"time"
 	"unsafe"
+
+	"gorgonia.org/internal/debug"
 )
 
 const workBufLen = 64
@@ -215,7 +217,7 @@ func (ctx *BatchedContext) Signal() { ctx.workAvailable <- struct{}{} }
 // DoWork waits for work to come in from the queue. If it's blocking, the entire queue will be processed immediately.
 // Otherwise it will be added to the batch queue.
 func (ctx *BatchedContext) DoWork() {
-	logtid("*BatchedContext.DoWork()", 1)
+	debug.Logtid("*BatchedContext.DoWork()", 1)
 	for {
 		select {
 		case w := <-ctx.work:
@@ -255,8 +257,8 @@ func (ctx *BatchedContext) DoWork() {
 		}
 
 		// debug and instrumentation related stuff
-		logCaller("DoWork()")
-		logf(ctx.introspect())
+		debug.LogCaller("ctx.DoWork()")
+		debug.Logf(ctx.introspect())
 		addQueueLength(len(ctx.queue))
 		addBlockingCallers()
 
@@ -289,7 +291,7 @@ func (ctx *BatchedContext) DoWork() {
 				retVal = (*fnargs)(unsafe.Pointer(uintptr(ctx.fns[len(ctx.fns)-1])))
 				ctx.retVal <- DevicePtr(retVal.devptr0)
 			}
-			logf("\t[RET] %v", DevicePtr(retVal.devptr0))
+			debug.Logf("\t[RET] %v", DevicePtr(retVal.devptr0))
 		}
 
 		// clear queue
@@ -302,7 +304,7 @@ func (ctx *BatchedContext) DoWork() {
 func (ctx *BatchedContext) Run(errChan chan error) error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
-	logtid("*BatchedContext.Run() - locked thread", 1)
+	debug.Logtid("*BatchedContext.Run() - locked thread", 1)
 	for {
 		select {
 		case <-ctx.workAvailable:
@@ -491,7 +493,7 @@ func (ctx *BatchedContext) AllocAndCopy(p unsafe.Pointer, bytesize int64) (retVa
 		ptr0: p,
 	}
 	c := call{fn, true}
-	logf("Alloc And Copy")
+	debug.Logf("Alloc And Copy")
 	return ctx.enqueue(c)
 }
 

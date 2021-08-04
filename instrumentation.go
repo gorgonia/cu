@@ -1,5 +1,4 @@
 // +build instrumentation
-// +build !debug
 
 package cu
 
@@ -10,29 +9,13 @@ import (
 	"sync"
 )
 
-const DEBUG = false
-
-var tc uint32
-
-// var _logger_ = log.New(os.Stderr, "", 0)
-// var replacement = "\n"
-
-func tabcount() int                             { return 0 }
-func enterLoggingContext()                      {}
-func leaveLoggingContext()                      {}
-func logf(format string, others ...interface{}) {}
-
-func logCaller(inspect string) {
-	pc, _, _, _ := runtime.Caller(2)
-	logf("%q Called by %v", inspect, runtime.FuncForPC(pc).Name())
-}
-
 /* Operational statistics related debugging */
 
 var ql = new(sync.Mutex)
 var q = make([]int, 0, 1000) // 1000 calls to DoWork
 var blockingCallers = make(map[string]int)
 
+// addQueueLength adds the queue length to the operational statistics.
 func addQueueLength(l int) {
 	ql.Lock()
 	q = append(q, l)
@@ -56,6 +39,7 @@ func AverageQueueLength() int {
 	return avg
 }
 
+// addBlockingCallers adds to the list of blocking callers for instrumentation.
 func addBlockingCallers() {
 	pc, _, _, _ := runtime.Caller(3)
 	fn := runtime.FuncForPC(pc)
@@ -64,22 +48,18 @@ func addBlockingCallers() {
 	ql.Unlock()
 }
 
+// BlockingCallers returns the recorded list of blocking callers.
 func BlockingCallers() map[string]int {
 	return blockingCallers
 }
 
+// QUEUE returns the queue of a *BatchedContext for introspection.
 func (ctx *BatchedContext) QUEUE() []call {
 	log.Println(len(ctx.queue))
 	return ctx.queue
 }
 
+// Introspect returns the introspection code.
 func (ctx *BatchedContext) Introspect() string {
 	return ctx.introspect()
-}
-
-func getfuncname(a interface{}) string {
-	if a == nil {
-		return "nil"
-	}
-	return runtime.FuncForPC(reflect.ValueOf(a).Pointer()).Name()
 }
