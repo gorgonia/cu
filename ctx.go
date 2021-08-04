@@ -16,9 +16,12 @@ type Ctx struct {
 	err     error
 	mu      sync.Mutex // done chan's mutexc
 
-	device     Device
-	flags      ContextFlags
-	locked     bool
+	// state associated with the context
+
+	device Device
+	flags  ContextFlags
+
+	// state related to running of the context.
 	doneClosed bool // set to true when done is closed.
 }
 

@@ -5,6 +5,7 @@ package cu
 
 import (
 	"log"
+	"reflect"
 	"runtime"
 	"sync"
 )
@@ -74,4 +75,11 @@ func (ctx *BatchedContext) QUEUE() []call {
 
 func (ctx *BatchedContext) Introspect() string {
 	return ctx.introspect()
+}
+
+func getfuncname(a interface{}) string {
+	if a == nil {
+		return "nil"
+	}
+	return runtime.FuncForPC(reflect.ValueOf(a).Pointer()).Name()
 }

@@ -22,26 +22,40 @@ func newContext(c CUContext) *Ctx {
 
 // Close destroys the CUDA context and associated resources that has been created. Additionally, all channels of communications will be closed.
 func (ctx *Ctx) Close() error {
-	var empty C.CUcontext
-	if ctx.CUContext.ctx == empty {
+	ctx.mu.Lock()
+
+	if ctx.doneClosed {
+		ctx.mu.Unlock()
 		return nil
 	}
 
+	var empty C.CUcontext
+	if ctx.CUContext.ctx == empty {
+		ctx.mu.Unlock()
+		return nil
+	}
+
+	// close all the channels but do not nil them because we still need to drain them.
+
 	if ctx.errChan != nil {
 		close(ctx.errChan)
-		ctx.errChan = nil
 	}
 
 	if ctx.work != nil {
 		close(ctx.work)
-		ctx.work = nil
 	}
+	ctx.mu.Unlock()
+	ctx.Cancel() // there's a lock in Cancel, so we need to unlock it first
 
-	// don't close done
-
+	ctx.mu.Lock()
 	err := result(C.cuCtxDestroy(C.CUcontext(unsafe.Pointer(ctx.CUContext.ctx))))
 	ctx.CUContext.ctx = empty
+	ctx.mu.Unlock()
+
 	return err
 }
 
-func finalizeCtx(ctx *Ctx) { ctx.Close() }
+func finalizeCtx(ctx *Ctx) {
+	ctx.Close()
+
+}

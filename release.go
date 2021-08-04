@@ -31,3 +31,7 @@ func AverageQueueLength() int { return 0 }
 func addBlockingCallers() {}
 
 func BlockingCallers() map[string]int { return nil }
+
+func getfuncname(a interface{}) string { return "getfuncname doesn't work in release builds" }
+
+func logtid(category string, logcaller int) {}

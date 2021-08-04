@@ -215,13 +215,20 @@ func (ctx *BatchedContext) Signal() { ctx.workAvailable <- struct{}{} }
 // DoWork waits for work to come in from the queue. If it's blocking, the entire queue will be processed immediately.
 // Otherwise it will be added to the batch queue.
 func (ctx *BatchedContext) DoWork() {
+	logtid("*BatchedContext.DoWork()", 1)
 	for {
 		select {
 		case w := <-ctx.work:
 			ctx.queue = append(ctx.queue, w)
 		case w := <-ctx.Context.Work():
 			// unenqueued work
-			ctx.ErrChan() <- w()
+			if w != nil {
+				err := w()
+				ctx.Context.ErrChan() <- err
+			}
+			// if w == nil then it means the channel has cloed.
+			// TODO: handle that fact. Or maybe just returning works?
+			return
 		case <-ctx.done:
 			return
 		default:
@@ -278,6 +285,9 @@ func (ctx *BatchedContext) DoWork() {
 			case C.fn_allocAndCopy:
 				retVal = (*fnargs)(unsafe.Pointer(uintptr(ctx.fns[len(ctx.fns)-1])))
 				ctx.retVal <- DevicePtr(retVal.devptr0)
+			case C.fn_memcpyDtoH:
+				retVal = (*fnargs)(unsafe.Pointer(uintptr(ctx.fns[len(ctx.fns)-1])))
+				ctx.retVal <- DevicePtr(retVal.devptr0)
 			}
 			logf("\t[RET] %v", DevicePtr(retVal.devptr0))
 		}
@@ -292,14 +302,12 @@ func (ctx *BatchedContext) DoWork() {
 func (ctx *BatchedContext) Run(errChan chan error) error {
 	runtime.LockOSThread()
 	defer runtime.UnlockOSThread()
+	logtid("*BatchedContext.Run() - locked thread", 1)
 	for {
 		select {
 		case <-ctx.workAvailable:
 			ctx.DoWork()
 			if err := ctx.Errors(); err != nil {
-				if errChan == nil {
-					return err
-				}
 				errChan <- err
 			}
 
@@ -307,6 +315,7 @@ func (ctx *BatchedContext) Run(errChan chan error) error {
 			return nil
 		}
 	}
+	return ctx.Err()
 }
 
 // Cleanup is the cleanup function. It cleans up all the ancilliary allocations that has happened for all the batched calls.
@@ -394,6 +403,17 @@ func (ctx *BatchedContext) MemcpyHtoD(dst DevicePtr, src unsafe.Pointer, byteCou
 }
 
 func (ctx *BatchedContext) MemcpyDtoH(dst unsafe.Pointer, src DevicePtr, byteCount int64) {
+	fn := &fnargs{
+		fn:      C.fn_memcpyDtoH,
+		devptr0: C.CUdeviceptr(src),
+		ptr0:    dst,
+		size:    C.size_t(byteCount),
+	}
+	c := call{fn, false}
+	ctx.enqueue(c)
+}
+
+func (ctx *BatchedContext) MemcpyDtoHBlocking(dst unsafe.Pointer, src DevicePtr, byteCount int64) {
 	fn := &fnargs{
 		fn:      C.fn_memcpyDtoH,
 		devptr0: C.CUdeviceptr(src),

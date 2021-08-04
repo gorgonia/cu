@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"reflect"
 	"runtime"
 	"strings"
 	"sync/atomic"
@@ -73,6 +74,13 @@ func AverageQueueLength() int { return 0 }
 func addBlockingCallers() {}
 
 func BlockingCallers() map[string]int { return nil }
+
+func getfuncname(a interface{}) string {
+	if a == nil {
+		return "nil"
+	}
+	return runtime.FuncForPC(reflect.ValueOf(a).Pointer()).Name()
+}
 
 func init() {
 	logf("DEBUG MODE FOR PACKAGE cu")
