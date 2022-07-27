@@ -22,7 +22,7 @@ CUresult cuDeviceGetAttributes(int* retVal, CUdevice_attribute* attrs, int n, CU
 CUresult cuLaunchAndSync(CUfunction f, unsigned int  gridDimX, unsigned int  gridDimY, unsigned int  gridDimZ, unsigned int  blockDimX, unsigned int  blockDimY, unsigned int  blockDimZ, unsigned int  sharedMemBytes, CUstream hStream, void** kernelParams, void** extra) {
 	CUresult ret;
 
-	ret = cuLaunchKernel(f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimY, sharedMemBytes, hStream, kernelParams, extra);
+	ret = cuLaunchKernel(f, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, hStream, kernelParams, extra);
 	if (ret != CUDA_SUCCESS) {
 		return ret;
 	}
