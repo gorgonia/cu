@@ -24,7 +24,7 @@ However, package `cu` DOES depend on one major external dependency: CUDA. Specif
 To verify that this library works, install and run the `cudatest` program, which accompanies this package:
 
 ```
-go install gorgonia.org/cu/cmd/cudatest
+go install gorgonia.org/cu/cmd/cudatest@latest
 cudatest
 ```
 
