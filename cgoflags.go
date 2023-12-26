@@ -26,6 +26,6 @@ package cu
 //#cgo darwin CFLAGS: -I/usr/local/cuda/include/
 //
 ////WINDOWS:
-//#cgo windows LDFLAGS:-LC:/cuda/v5.0/lib/x64 -LC:/cuda/v5.5/lib/x64 -LC:/cuda/v6.0/lib/x64 -LC:/cuda/v6.5/lib/x64 -LC:/cuda/v7.0/lib/x64 -LC:/cuda/v8.0/lib/x64 -LC:/cuda/v9.0/x64
-//#cgo windows CFLAGS: -IC:/cuda/v5.0/include -IC:/cuda/v5.5/include -IC:/cuda/v6.0/include -IC:/cuda/v6.5/include -IC:/cuda/v7.0/include -IC:/cuda/v8.0/include -IC:/cuda/v9.0/include
+//#cgo windows LDFLAGS:-LC:/cuda/v5.0/lib/x64 -LC:/cuda/v5.5/lib/x64 -LC:/cuda/v6.0/lib/x64 -LC:/cuda/v6.5/lib/x64 -LC:/cuda/v7.0/lib/x64 -LC:/cuda/v8.0/lib/x64 -LC:/cuda/v9.0/x64 -LC:/cuda/v11.8/lib/x64
+//#cgo windows CFLAGS: -IC:/cuda/v5.0/include -IC:/cuda/v5.5/include -IC:/cuda/v6.0/include -IC:/cuda/v6.5/include -IC:/cuda/v7.0/include -IC:/cuda/v8.0/include -IC:/cuda/v9.0/include -IC:/cuda/v11.8/include
 import "C"

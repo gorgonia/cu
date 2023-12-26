@@ -24,7 +24,7 @@ However, package `cu` DOES depend on one major external dependency: CUDA. Specif
 To verify that this library works, install and run the `cudatest` program, which accompanies this package:
 
 ```
-go install gorgonia.org/cu/cmd/cudatest
+go install gorgonia.org/cu/cmd/cudatest@latest
 cudatest
 ```
 
@@ -50,11 +50,16 @@ To setup CUDA in Windows:
 2. Add `%CUDA_PATH%/bin` to your `%PATH%` environment variable (running `nvcc` from console should work)
 3. Make a symlink `mklink /D C:\cuda "c:\Program Files\NVIDIA GPU Computing Toolkit\CUDA"` (alternatively, install CUDA toolkit to `C:\cuda\`)
 
-To setup the compiler:
+To setup the compiler chain (MSYS2):
 
 1. Install MSYS2 (see https://www.msys2.org/)
 2. In `c:\msys64\msys2_shell.cmd` uncomment the line with `set MSYS2_PATH_TYPE=inherit` (this makes Windows PATH variable visible)
 3. Install `go` in MSYS2 (64 bit) with `pacman -S go`
+
+Alternatively, if you already have Go setup and only need to install cgo dependencies:
+
+1. Install TDM-GCC (see https://jmeubank.github.io/tdm-gcc/download/)
+2. Ensure `gcc` is in `%PATH%` environment variable (running `gcc` from console should work)
 
 ## FAQ ##
 
