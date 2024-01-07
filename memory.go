@@ -28,3 +28,6 @@ func (d DevicePtr) Uintptr() uintptr { return uintptr(d) }
 
 // IsCUDAMemory returns true.
 func (d DevicePtr) IsCUDAMemory() bool { return true }
+
+// IsManuallyManaged returns true
+func (d DevicePtr) IsManuallyManaged() bool { return true }
