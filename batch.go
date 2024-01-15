@@ -109,30 +109,31 @@ func (fn *fnargs) c() C.uintptr_t {
 // BatchedContext is a CUDA context where the CUDA calls are batched up.
 //
 // Typically a locked OS thread is made to execute the CUDA calls like so:
-// 		func main() {
-//			ctx := NewBatchedContext(...)
 //
-//			runtime.LockOSThread()
-//			defer runtime.UnlockOSThread()
+//	func main() {
+//		ctx := NewBatchedContext(...)
 //
-//			workAvailable := ctx.WorkAvailable()
-//			go doWhatever(ctx)
-//			for {
-//				select {
-//					case <- workAvailable:
-//						ctx.DoWork()
-//						err := ctx.Errors()
-//						handleErrors(err)
-//					case ...:
-//				}
+//		runtime.LockOSThread()
+//		defer runtime.UnlockOSThread()
+//
+//		workAvailable := ctx.WorkAvailable()
+//		go doWhatever(ctx)
+//		for {
+//			select {
+//				case <- workAvailable:
+//					ctx.DoWork()
+//					err := ctx.Errors()
+//					handleErrors(err)
+//				case ...:
 //			}
 //		}
+//	}
 //
-//		func doWhatever(ctx *BatchedContext) {
-//			ctx.Memcpy(...)
-//			// et cetera
-//			// et cetera
-//		}
+//	func doWhatever(ctx *BatchedContext) {
+//		ctx.Memcpy(...)
+//		// et cetera
+//		// et cetera
+//	}
 //
 // For the moment, BatchedContext only supports a limited number of CUDA Runtime APIs.
 // Feel free to send a pull request with more APIs.
@@ -214,6 +215,8 @@ func (ctx *BatchedContext) WorkAvailable() <-chan struct{} { return ctx.workAvai
 // Signal is used to tell the context that work is available
 func (ctx *BatchedContext) Signal() { ctx.workAvailable <- struct{}{} }
 
+func (ctx *BatchedContext) Queue() int { return len(ctx.queue) }
+
 // DoWork waits for work to come in from the queue. If it's blocking, the entire queue will be processed immediately.
 // Otherwise it will be added to the batch queue.
 func (ctx *BatchedContext) DoWork() {
@@ -262,10 +265,14 @@ func (ctx *BatchedContext) DoWork() {
 		addQueueLength(len(ctx.queue))
 		addBlockingCallers()
 
+		debug.LogCaller("fn 0x%x | 0x%x", ctx.fns[0], &ctx.fns[0])
+		debug.Logtid("DoWork ", 1)
 		cctx := ctx.CUDAContext().ctx
 		ctx.results = ctx.results[:cap(ctx.results)]                         // make sure of the maximum availability for ctx.results
 		C.process(cctx, &ctx.fns[0], &ctx.results[0], C.int(len(ctx.queue))) // process the queue
-		ctx.results = ctx.results[:len(ctx.queue)]                           // then  truncate it to the len of queue for reporting purposes
+		debug.LogCaller("Done")
+		ctx.results = ctx.results[:len(ctx.queue)] // then  truncate it to the len of queue for reporting purposes
+		debug.LogCaller("Getting results")
 
 		if ctx.checkResults() {
 			log.Printf("Errors found %v", ctx.checkResults())
@@ -482,6 +489,7 @@ func (ctx *BatchedContext) Synchronize() {
 }
 
 func (ctx *BatchedContext) LaunchAndSync(function Function, gridDimX, gridDimY, gridDimZ int, blockDimX, blockDimY, blockDimZ int, sharedMemBytes int, stream Stream, kernelParams []unsafe.Pointer) {
+	debug.Logtid("LaunchAndSync called by", 1)
 	ctx.LaunchKernel(function, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, stream, kernelParams)
 	ctx.Synchronize()
 }
@@ -570,21 +578,21 @@ func (ctx *BatchedContext) Deadline() (deadline time.Time, ok bool) { return tim
 //
 // Done is provided for use in select statements:
 //
-//  // Stream generates values with DoSomething and sends them to out
-//  // until DoSomething returns an error or ctx.Done is closed.
-//  func Stream(ctx context.Context, out chan<- Value) error {
-//  	for {
-//  		v, err := DoSomething(ctx)
-//  		if err != nil {
-//  			return err
-//  		}
-//  		select {
-//  		case <-ctx.Done():
-//  			return ctx.Err()
-//  		case out <- v:
-//  		}
-//  	}
-//  }
+//	// Stream generates values with DoSomething and sends them to out
+//	// until DoSomething returns an error or ctx.Done is closed.
+//	func Stream(ctx context.Context, out chan<- Value) error {
+//		for {
+//			v, err := DoSomething(ctx)
+//			if err != nil {
+//				return err
+//			}
+//			select {
+//			case <-ctx.Done():
+//				return ctx.Err()
+//			case out <- v:
+//			}
+//		}
+//	}
 //
 // See https://blog.golang.org/pipelines for more examples of how to use
 // a Done channel for cancellation.
@@ -615,33 +623,33 @@ func (ctx *BatchedContext) Err() error { return ctx.Context.Error() }
 // Packages that define a Context key should provide type-safe accessors
 // for the values stored using that key:
 //
-// 	// Package user defines a User type that's stored in Contexts.
-// 	package user
+//	// Package user defines a User type that's stored in Contexts.
+//	package user
 //
-// 	import "context"
+//	import "context"
 //
-// 	// User is the type of value stored in the Contexts.
-// 	type User struct {...}
+//	// User is the type of value stored in the Contexts.
+//	type User struct {...}
 //
-// 	// key is an unexported type for keys defined in this package.
-// 	// This prevents collisions with keys defined in other packages.
-// 	type key int
+//	// key is an unexported type for keys defined in this package.
+//	// This prevents collisions with keys defined in other packages.
+//	type key int
 //
-// 	// userKey is the key for user.User values in Contexts. It is
-// 	// unexported; clients use user.NewContext and user.FromContext
-// 	// instead of using this key directly.
-// 	var userKey key
+//	// userKey is the key for user.User values in Contexts. It is
+//	// unexported; clients use user.NewContext and user.FromContext
+//	// instead of using this key directly.
+//	var userKey key
 //
-// 	// NewContext returns a new Context that carries value u.
-// 	func NewContext(ctx context.Context, u *User) context.Context {
-// 		return context.WithValue(ctx, userKey, u)
-// 	}
+//	// NewContext returns a new Context that carries value u.
+//	func NewContext(ctx context.Context, u *User) context.Context {
+//		return context.WithValue(ctx, userKey, u)
+//	}
 //
-// 	// FromContext returns the User value stored in ctx, if any.
-// 	func FromContext(ctx context.Context) (*User, bool) {
-// 		u, ok := ctx.Value(userKey).(*User)
-// 		return u, ok
-// 	}
+//	// FromContext returns the User value stored in ctx, if any.
+//	func FromContext(ctx context.Context) (*User, bool) {
+//		u, ok := ctx.Value(userKey).(*User)
+//		return u, ok
+//	}
 func (ctx *BatchedContext) Value(key interface{}) interface{} { return nil }
 
 // Cancel is a context.CancelFunc
