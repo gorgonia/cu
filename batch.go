@@ -34,6 +34,10 @@ type call struct {
 	blocking bool
 }
 
+// doworknow is a "call" that can be used to immediately clear the queue that DoWork() is supposed to be handling.
+// this is only really used to clear the queue before cancelling the context.
+var doworknow call = call{blocking: true}
+
 // fnargs is a representation of function and arguments to the function
 // it's a super huge struct because it has to contain all the possible things that can be passed into a function
 type fnargs struct {
@@ -222,11 +226,12 @@ func (ctx *BatchedContext) Queue() int { return len(ctx.queue) }
 func (ctx *BatchedContext) DoWork() {
 	debug.Logtid("*BatchedContext.DoWork()", 1)
 	for {
+		// collect any more work that may come
 		select {
 		case w := <-ctx.work:
 			ctx.queue = append(ctx.queue, w)
 		case w := <-ctx.Context.Work():
-			// unenqueued work
+			// unenqueued work, must be instantly executed. Not part of the batch job
 			if w != nil {
 				err := w()
 				ctx.Context.ErrChan() <- err
@@ -244,6 +249,7 @@ func (ctx *BatchedContext) DoWork() {
 
 		blocking := ctx.queue[len(ctx.queue)-1].blocking
 
+		// as long as it's not blocking we try to collect more work
 	enqueue:
 		for len(ctx.queue) < cap(ctx.queue) && !blocking {
 			select {
@@ -254,25 +260,29 @@ func (ctx *BatchedContext) DoWork() {
 				break enqueue
 			}
 		}
+		// check if the last item in the queue is an imperative call
+		if ctx.queue[len(ctx.queue)-1].fnargs == nil {
+			ctx.queue = ctx.queue[:len(ctx.queue)-1] // a `call` with `fnargs` == nil is an imperative call. It's used to force DoWork() to do the work and clear the queue.
+		}
 
 		for _, c := range ctx.queue {
 			ctx.fns = append(ctx.fns, c.fnargs.c())
 		}
+		if len(ctx.fns) == 0 {
+			ctx.queue = ctx.queue[:0]
+			return
+		}
 
 		// debug and instrumentation related stuff
-		debug.LogCaller("ctx.DoWork()")
 		debug.Logf(ctx.introspect())
 		addQueueLength(len(ctx.queue))
 		addBlockingCallers()
 
-		debug.LogCaller("fn 0x%x | 0x%x", ctx.fns[0], &ctx.fns[0])
-		debug.Logtid("DoWork ", 1)
 		cctx := ctx.CUDAContext().ctx
 		ctx.results = ctx.results[:cap(ctx.results)]                         // make sure of the maximum availability for ctx.results
 		C.process(cctx, &ctx.fns[0], &ctx.results[0], C.int(len(ctx.queue))) // process the queue
-		debug.LogCaller("Done")
-		ctx.results = ctx.results[:len(ctx.queue)] // then  truncate it to the len of queue for reporting purposes
-		debug.LogCaller("Getting results")
+		ctx.results = ctx.results[:len(ctx.queue)]                           // then  truncate it to the len of queue for reporting purposes
+		debug.Logf("Done processing queue")
 
 		if ctx.checkResults() {
 			log.Printf("Errors found %v", ctx.checkResults())
@@ -304,7 +314,14 @@ func (ctx *BatchedContext) DoWork() {
 		// clear queue
 		ctx.queue = ctx.queue[:0]
 		ctx.fns = ctx.fns[:0]
+		if blocking {
+			return
+		}
 	}
+}
+
+func (ctx *BatchedContext) DoWorkNow() {
+	ctx.work <- doworknow
 }
 
 // Run manages the running of the BatchedContext. Because it's expected to run in a goroutine, an error channel is to be passed in
@@ -489,9 +506,31 @@ func (ctx *BatchedContext) Synchronize() {
 }
 
 func (ctx *BatchedContext) LaunchAndSync(function Function, gridDimX, gridDimY, gridDimZ int, blockDimX, blockDimY, blockDimZ int, sharedMemBytes int, stream Stream, kernelParams []unsafe.Pointer) {
-	debug.Logtid("LaunchAndSync called by", 1)
-	ctx.LaunchKernel(function, gridDimX, gridDimY, gridDimZ, blockDimX, blockDimY, blockDimZ, sharedMemBytes, stream, kernelParams)
-	ctx.Synchronize()
+	debug.Logtid("*BatchedContext.LaunchAndSync", 1)
+	argv := C.malloc(C.size_t(len(kernelParams) * pointerSize))
+	argp := C.malloc(C.size_t(len(kernelParams) * pointerSize))
+	for i := range kernelParams {
+		*((*unsafe.Pointer)(offset(argp, i))) = offset(argv, i)       // argp[i] = &argv[i]
+		*((*uint64)(offset(argv, i))) = *((*uint64)(kernelParams[i])) // argv[i] = *kernelParams[i]
+		debug.Logf("args[%d]: 0x%x", i, *((*uint64)(kernelParams[i])))
+	}
+
+	fn := &fnargs{
+		fn:             C.fn_launchAndSync,
+		f:              function.fn,
+		gridDimX:       C.uint(gridDimX),
+		gridDimY:       C.uint(gridDimY),
+		gridDimZ:       C.uint(gridDimZ),
+		blockDimX:      C.uint(blockDimX),
+		blockDimY:      C.uint(blockDimY),
+		blockDimZ:      C.uint(blockDimZ),
+		sharedMemBytes: C.uint(sharedMemBytes),
+		stream:         stream.c(),
+		kernelParams:   (*unsafe.Pointer)(argp),
+		extra:          (*unsafe.Pointer)(nil),
+	}
+	c := call{fn, false}
+	ctx.enqueue(c)
 }
 
 func (ctx *BatchedContext) AllocAndCopy(p unsafe.Pointer, bytesize int64) (retVal DevicePtr, err error) {

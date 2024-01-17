@@ -96,9 +96,9 @@ CUresult processFn(fnargs_t* args){
 		break;
 	case fn_launchKernel:
 		// fprintf(stderr, "launch kernel. Kernel Params: %p\n", args->kernelParams);
-		ret = cuLaunchKernel(args->f, args->gridDimX, args->gridDimY, args->gridDimZ, 
-			args->blockDimX, args->blockDimY, args->blockDimZ, 
-			args->sharedMemBytes, args->stream, 
+		ret = cuLaunchKernel(args->f, args->gridDimX, args->gridDimY, args->gridDimZ,
+			args->blockDimX, args->blockDimY, args->blockDimZ,
+			args->sharedMemBytes, args->stream,
 			(void**)(args->kernelParams), (void**)(args->extra));
 		// fprintf(stderr, "ret %d\n", ret);
 		break;
@@ -108,7 +108,14 @@ CUresult processFn(fnargs_t* args){
 		// fprintf(stderr, "ret %d\n", ret);
 		break;
 	case fn_launchAndSync:
-		abort();
+		ret = cuLaunchKernel(args->f, args->gridDimX, args->gridDimY, args->gridDimZ,
+			args->blockDimX, args->blockDimY, args->blockDimZ,
+			args->sharedMemBytes, args->stream,
+			(void**)(args->kernelParams), (void**)(args->extra));
+		if (ret != 0) {
+			return ret;
+		}
+		ret = cuCtxSynchronize();
 		break;
 	case fn_allocAndCopy:
 		// fprintf(stderr, "alloc and copy\n");
