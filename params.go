@@ -28,16 +28,14 @@ func (p *KernelNodeParams) c() *C.CUDA_KERNEL_NODE_PARAMS {
 	// here anonymous initialization of struct fields is used because `func` is a keyword.
 	// see also: https://github.com/golang/go/issues/41968
 	retVal := &C.CUDA_KERNEL_NODE_PARAMS{
-		p.Func.fn,
-		C.uint(p.GridDimX),
-		C.uint(p.GridDimY),
-		C.uint(p.GridDimZ),
-		C.uint(p.BlockDimX),
-		C.uint(p.BlockDimY),
-		C.uint(p.BlockDimZ),
-		C.uint(p.SharedMemBytes),
-		nil,
-		nil,
+		_func: p.Func.fn,
+		gridDimX: C.uint(p.GridDimX),
+		gridDimY: C.uint(p.GridDimY),
+		gridDimZ: C.uint(p.GridDimZ),
+		blockDimX: C.uint(p.BlockDimX),
+		blockDimY: C.uint(p.BlockDimY),
+		blockDimZ: C.uint(p.BlockDimZ),
+		sharedMemBytes: C.uint(p.SharedMemBytes),
 	}
 	return retVal
 }
