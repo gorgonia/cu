@@ -3,6 +3,7 @@ package cu
 /*
 #include <cuda.h>
 
+void handleCUDACB(void* fn);
 void CallHostFunc(void* fn){
 	handleCUDACB(fn);
 };
