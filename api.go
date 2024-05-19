@@ -1,6 +1,10 @@
 package cu
 
-// #include <cuda.h>
+/*
+#cgo CFLAGS: -Wno-deprecated-declarations
+
+#include <cuda.h>
+*/
 import "C"
 import "unsafe"
 
